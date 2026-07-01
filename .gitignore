@@ -1,0 +1,96 @@
+# ============================================
+# Go
+# ============================================
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.prof
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# Build artifacts
+/bin/
+/dist/
+/build/
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Tailwind CSS Standalone
+# ============================================
+tailwindcss
+tailwindcss.exe
+tailwindcss-*
+!tailwind.config.js
+
+# ============================================
+# Generated CSS (built by Tailwind)
+# ============================================
+/static/css/styles.css
+/static/css/*.min.css
+
+# ============================================
+# Terraform
+# ============================================
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars
+!*.tfvars.example
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+*.log.*
+*.out
+
+# ============================================
+# Temporary files
+# ============================================
+tmp/
+temp/
+*.tmp
+*.bak
+*.backup
+
+# ============================================
+# Docker
+# ============================================
+*.pid
+*.pid.lock
+*.seed
+*.pid
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+Thumbs.db
+desktop.ini

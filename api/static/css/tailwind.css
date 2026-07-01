@@ -1,0 +1,386 @@
+/* ============================================
+   Tailwind CSS v4 - Chiang Mai Business Website
+   Color Scheme: Brown (Meat Shop) + Green (Hostel/Villa)
+   ============================================ */
+
+/* Import Tailwind v4 */
+@import "tailwindcss";
+
+/* ============================================
+   Theme Variables (Custom Colors & Fonts)
+   ============================================ */
+@theme {
+    /* ---------- Brown Palette (Meat Shop) ---------- */
+    --color-brown-deep: #5D4037;
+    --color-brown-earth: #6D4C41;
+    --color-brown-light: #8D6E63;
+
+    /* ---------- Green Palette (Hostel/Villa) ---------- */
+    --color-forest-green: #2E7D32;
+    --color-olive-green: #6B8E23;
+    --color-moss-green: #7CB342;
+    --color-light-sage: #C5D8B5;
+
+    /* ---------- Neutrals ---------- */
+    --color-warm-sand: #F5E6D3;
+    --color-cream-white: #FAF7F2;
+    --color-charcoal: #333333;
+
+    /* ---------- Accents ---------- */
+    --color-amber: #E8A317;
+    --color-terracotta: #D2691E;
+
+    /* ---------- Fonts ---------- */
+    --font-sans: Inter, system-ui, -apple-system, sans-serif;
+    --font-heading: Poppins, Inter, sans-serif;
+}
+
+/* ============================================
+   Base Styles
+   ============================================ */
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        font-family: var(--font-sans);
+        color: var(--color-charcoal);
+        background-color: var(--color-cream-white);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-heading);
+        font-weight: 700;
+    }
+
+    a {
+        transition-property: color, background-color;
+        transition-duration: 200ms;
+    }
+
+    *:focus-visible {
+        outline: 2px solid var(--color-forest-green);
+        outline-offset: 2px;
+    }
+}
+
+/* ============================================
+   Custom Utilities
+   ============================================ */
+
+/* ---------- Container ---------- */
+@utility container-custom {
+    max-width: 72rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+
+    @media (width >= 640px) {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+
+    @media (width >= 1024px) {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+/* ---------- Buttons ---------- */
+@utility btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    transition: all 300ms;
+}
+
+@utility btn-amber {
+    background-color: var(--color-amber);
+}
+
+@utility btn-brown {
+    background-color: var(--color-brown-deep);
+}
+
+@utility btn-green {
+    background-color: var(--color-forest-green);
+}
+
+@utility btn-outline-white {
+    border: 2px solid white;
+    color: white;
+    background-color: transparent;
+}
+
+@utility btn-outline-brown {
+    border: 2px solid var(--color-brown-deep);
+    color: var(--color-brown-deep);
+    background-color: transparent;
+}
+
+@utility btn-outline-green {
+    border: 2px solid var(--color-forest-green);
+    color: var(--color-forest-green);
+    background-color: transparent;
+}
+
+/* Hover states for buttons - use variants in HTML instead */
+/* Example: <button class="btn-amber hover:opacity-90"> */
+
+/* ---------- Cards ---------- */
+@utility card {
+    overflow: hidden;
+    background-color: var(--color-cream-white);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    transition: all 300ms;
+}
+
+@utility card-brown {
+    border-top: 4px solid var(--color-brown-deep);
+}
+
+@utility card-green {
+    border-top: 4px solid var(--color-forest-green);
+}
+
+@utility card-olive {
+    border-top: 4px solid var(--color-olive-green);
+}
+
+@utility card-content {
+    padding: 1.5rem;
+}
+
+/* ---------- Sections ---------- */
+@utility section {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+
+    @media (width >= 768px) {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
+    }
+
+    @media (width >= 1024px) {
+        padding-top: 5rem;
+        padding-bottom: 5rem;
+    }
+}
+
+@utility section-warm {
+    background-color: var(--color-warm-sand);
+}
+
+@utility section-sage {
+    background-color: var(--color-light-sage);
+}
+
+@utility section-cream {
+    background-color: var(--color-cream-white);
+}
+
+@utility section-green {
+    background-color: var(--color-forest-green);
+    color: white;
+}
+
+@utility section-brown {
+    background-color: var(--color-brown-deep);
+    color: white;
+}
+
+/* ---------- Navigation ---------- */
+@utility nav-link {
+    color: white;
+    transition: color 200ms;
+}
+
+@utility nav-link-active {
+    color: var(--color-amber);
+}
+
+/* ---------- Hero ---------- */
+@utility hero-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: color-mix(in oklab, black 40%, transparent);
+}
+
+@utility hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: white;
+}
+
+/* ---------- Feature Icons ---------- */
+@utility feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-forest-green) 10%, transparent);
+    color: var(--color-forest-green);
+}
+
+@utility feature-icon-brown {
+    background-color: color-mix(in oklab, var(--color-brown-deep) 10%, transparent);
+    color: var(--color-brown-deep);
+}
+
+/* ---------- Testimonials ---------- */
+@utility testimonial {
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+@utility testimonial-quote {
+    font-size: 1.125rem;
+    font-style: italic;
+    color: var(--color-charcoal);
+}
+
+@utility testimonial-author {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: var(--color-brown-deep);
+}
+
+/* ---------- Footer ---------- */
+@utility footer-link {
+    color: color-mix(in oklab, white 80%, transparent);
+    transition: color 200ms;
+}
+
+@utility social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: white;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, white 10%, transparent);
+    transition: all 200ms;
+}
+
+/* ---------- Form Elements ---------- */
+@utility form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-olive-green);
+    border-radius: 0.5rem;
+    background-color: var(--color-cream-white);
+    transition: all 200ms;
+}
+
+@utility form-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    color: var(--color-charcoal);
+}
+
+@utility form-error {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #DC2626;
+}
+
+/* ---------- Badges ---------- */
+@utility badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+}
+
+@utility badge-halal {
+    background-color: var(--color-forest-green);
+    color: white;
+}
+
+@utility badge-brown {
+    background-color: var(--color-brown-deep);
+    color: white;
+}
+
+@utility badge-amber {
+    background-color: var(--color-amber);
+    color: white;
+}
+
+/* ---------- Blog ---------- */
+@utility blog-post {
+    max-width: none;
+    color: var(--color-charcoal);
+}
+
+/* ============================================
+   Utility Styles
+   ============================================ */
+@utility text-gradient-brown {
+    background-image: linear-gradient(to right, var(--color-brown-deep), var(--color-brown-light));
+    background-clip: text;
+    color: transparent;
+}
+
+@utility text-gradient-green {
+    background-image: linear-gradient(to right, var(--color-forest-green), var(--color-olive-green));
+    background-clip: text;
+    color: transparent;
+}
+
+@utility shadow-soft {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+@utility shadow-brown {
+    box-shadow: 0 8px 30px rgba(93, 64, 55, 0.25);
+}
+
+@utility shadow-green {
+    box-shadow: 0 8px 30px rgba(46, 125, 50, 0.25);
+}
+
+/* ---------- Animations ---------- */
+@utility animate-fade-in {
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+@utility animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

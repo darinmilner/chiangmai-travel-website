@@ -1,0 +1,132 @@
+{{ define "content" }}
+    <!-- Hero Section -->
+    <section class="relative overflow-hidden section" style="min-height: 80vh;">
+        <div class="hero-overlay" style="background: linear-gradient(135deg, rgba(46, 125, 50, 0.85) 0%, rgba(107, 142, 35, 0.75) 100%);"></div>
+
+        <div class="absolute inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('/static/images/hero-bg.jpg');"></div>
+
+        <div class="relative z-10 container-custom hero-content" style="min-height: 80vh; display: flex; align-items: center;">
+            <div class="max-w-3xl mx-auto text-center">
+                <h1 class="mb-6 text-4xl md:text-5xl lg:text-6xl font-bold animate-fade-in">
+                    Welcome to Your<br>
+                    <span class="text-amber">Chiang Mai</span> Home
+                </h1>
+                <p class="max-w-2xl mx-auto mb-8 text-xl text-white/90">
+                    Stay steps from the mosque. Halal food available. Perfect for families and digital nomads.
+                </p>
+                <div class="flex flex-col justify-center gap-4 sm:flex-row">
+                    <a href="/villa" class="btn-primary btn-amber">
+                        <i class="fas fa-home mr-2"></i> Book the Villa
+                    </a>
+                    <a href="/hostel" class="btn-primary btn-outline-white">
+                        <i class="fas fa-bed mr-2"></i> Book the Hostel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section section-warm">
+        <div class="container-custom">
+            <h2 class="mb-4 text-center text-3xl md:text-4xl font-bold text-forest-green">Our Businesses</h2>
+            <p class="max-w-2xl mx-auto mb-12 text-center text-charcoal/70">
+                Experience the best of Chiang Mai with our three unique offerings.
+            </p>
+
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+                {{ range .Features }}
+                <div class="card animate-slide-up">
+                    <img src="{{ .Image }}" alt="{{ .Name }}" class="object-cover w-full h-48">
+                    <div class="card-content">
+                        <h3 class="text-xl font-bold text-forest-green">{{ .Name }}</h3>
+                        <p class="mb-4 text-charcoal/70">{{ .Description }}</p>
+                        <a href="{{ .Link }}" class="text-forest-green font-semibold hover:underline">Learn More →</a>
+                    </div>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Stay Section -->
+    <section class="section section-sage">
+        <div class="container-custom">
+            <h2 class="mb-12 text-center text-3xl md:text-4xl font-bold text-forest-green">Why Stay With Us?</h2>
+            <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
+                {{ range .Reasons }}
+                <div class="text-center animate-slide-up">
+                    <div class="feature-icon"><i class="fas {{ .Icon }} text-2xl"></i></div>
+                    <h4 class="mb-2 text-lg font-semibold text-charcoal">{{ .Title }}</h4>
+                    <p class="text-charcoal/70">{{ .Text }}</p>
+                </div>
+                {{ end }}
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="section section-cream">
+        <div class="container-custom">
+            <h2 class="mb-4 text-center text-3xl md:text-4xl font-bold text-forest-green">What Our Guests Say</h2>
+            <p class="max-w-2xl mx-auto mb-12 text-center text-charcoal/70">
+                Real reviews from people who've stayed with us or visited our shop.
+            </p>
+
+            <div class="max-w-4xl mx-auto">
+                <div class="p-8 bg-white rounded-2xl shadow-soft animate-slide-up">
+                    <div class="flex flex-col items-start gap-6 md:flex-row md:items-center">
+                        <div class="flex-shrink-0">
+                            <div class="w-24 h-24 rounded-full bg-forest-green/20 flex items-center justify-center text-forest-green text-3xl">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex mb-2 text-amber">
+                                <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                            </div>
+                            <p class="mb-3 text-lg italic text-charcoal">"{{ .Testimonial.Text }}"</p>
+                            <p class="font-semibold text-brown-deep">{{ .Testimonial.Name }}</p>
+                            <p class="text-sm text-charcoal/60">{{ .Testimonial.Details }} &bull; {{ .Testimonial.Location }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6 mt-8 md:grid-cols-2">
+                    <div class="p-6 bg-white rounded-lg shadow-soft">
+                        <div class="flex mb-2 text-amber">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <p class="text-charcoal/80">"The best halal-friendly stay in Chiang Mai! The hosts were amazing and the location is perfect."</p>
+                        <p class="mt-3 font-semibold text-brown-deep">— Ahmad, Malaysia</p>
+                    </div>
+                    <div class="p-6 bg-white rounded-lg shadow-soft">
+                        <div class="flex mb-2 text-amber">
+                            <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        </div>
+                        <p class="text-charcoal/80">"I stayed for a month as a digital nomad. Fast WiFi, great community, and the meat shop is a bonus!"</p>
+                        <p class="mt-3 font-semibold text-brown-deep">— Sarah, UK</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="section section-green">
+        <div class="container-custom text-center">
+            <h2 class="text-3xl md:text-4xl font-bold text-white">Ready to Book Your Stay?</h2>
+            <p class="mb-8 text-white/80">Contact us today and start your Chiang Mai adventure.</p>
+            <div class="flex flex-col justify-center gap-4 sm:flex-row">
+                <a href="/contact" class="btn-primary btn-amber">
+                    <i class="fas fa-paper-plane mr-2"></i> Contact Us
+                </a>
+                <a href="https://line.me/ti/p/[LINE_ID]" target="_blank" class="btn-primary btn-outline-white">
+                    <i class="fab fa-line mr-2"></i> Chat on LINE
+                </a>
+            </div>
+        </div>
+    </section>
+{{ end }}
+
+{{ template "base" . }}
