@@ -1,0 +1,24 @@
+{
+    "reasons": [
+        {
+            "icon": "fa-mosque",
+            "title": "11km from Chiang Mai Mosque",
+            "text": "The villa is 11km from Chang Khlan mosque. The hostel is much closer - just minutes away."
+        },
+        {
+            "icon": "fa-tree",
+            "title": "Peaceful Resort Setting",
+            "text": "Our villa is set in a tranquil, nature-filled environment outside the city."
+        },
+        {
+            "icon": "fa-wifi",
+            "title": "Digital Nomad Ready",
+            "text": "Fast WiFi, workspaces, and a productive environment for remote workers."
+        },
+        {
+            "icon": "fa-utensils",
+            "title": "Halal Food Available",
+            "text": "Halal restaurants nearby and our own meat shop for your convenience."
+        }
+    ]
+}

@@ -1,0 +1,31 @@
+{
+    "features": [
+        {
+            "name": "The Villa",
+            "image": "/static/images/villa.jpg",
+            "description": "Private villa with pool, garden, and full kitchen. Perfect for families and groups.",
+            "link": "/villa",
+            "color_class": "green",
+            "location": "📍 11km from Chang Khlan mosque • Peaceful resort setting",
+            "badge": "Resort Style"
+        },
+        {
+            "name": "The Hostel",
+            "image": "/static/images/hostel.jpg",
+            "description": "Comfortable dorms and private rooms. Fast WiFi, common areas, and a welcoming vibe.",
+            "link": "/hostel",
+            "color_class": "teal",
+            "location": "📍 Steps from the mosque • City center location",
+            "badge": "Halal-Friendly"
+        },
+        {
+            "name": "The Meat Shop",
+            "image": "/static/images/meatshop.jpg",
+            "description": "Fresh, high-quality halal meat. Trusted by locals and travelers alike.",
+            "link": "/meatshop",
+            "color_class": "brown",
+            "location": "📍 Local halal butcher",
+            "badge": "Fresh Daily"
+        }
+    ]
+}

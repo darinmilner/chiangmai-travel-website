@@ -1,0 +1,36 @@
+{
+    "testimonials": [
+        {
+            "name": "Ahmad, Malaysia",
+            "photo": "/static/images/testimonial-ahmad.jpg",
+            "text": "The best halal-friendly stay in Chiang Mai! The hosts were amazing and the location is perfect. The villa was peaceful and the meat shop was a great bonus.",
+            "details": "Family traveler",
+            "location": "Kuala Lumpur, Malaysia",
+            "rating": 5
+        },
+        {
+            "name": "Sarah, UK",
+            "photo": "/static/images/testimonial-sarah.jpg",
+            "text": "I stayed for a month as a digital nomad. Fast WiFi, great community, and the meat shop is a bonus! The hostel was perfectly located near the mosque.",
+            "details": "Digital Nomad",
+            "location": "London, UK",
+            "rating": 5
+        },
+        {
+            "name": "Family from Jakarta",
+            "photo": "/static/images/testimonial-family.jpg",
+            "text": "Our family loved the villa. So peaceful and close to everything. The kids loved the pool and we appreciated the halal food options. Highly recommended!",
+            "details": "Family vacation",
+            "location": "Jakarta, Indonesia",
+            "rating": 5
+        },
+        {
+            "name": "Darin From USA",
+            "photo": "/static/images/testimonial-photo.jpg",
+            "text": "I visited this shop several times during my stay in Chiang Mai. The variety is impressive, from local sausages to fresh beef and chicken, and even samosas and sticky rice. The owners are incredibly welcoming, and their English is excellent. It's a must-visit for anyone looking for high-quality halal products in Chiang Mai.",
+            "details": "Digital Nomad & Food Enthusiast",
+            "location": "Chiang Mai, Thailand",
+            "rating": 5
+        }
+    ]
+}
