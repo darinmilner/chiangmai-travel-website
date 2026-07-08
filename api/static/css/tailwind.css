@@ -1,10 +1,14 @@
 /* ============================================
-   Tailwind CSS - Chiang Mai Business Website
+   Tailwind CSS v4 - Chiang Mai Business Website
    Color Scheme: Resort Green + Brown
    ============================================ */
 
+/* Import Tailwind v4 */
 @import "tailwindcss";
 
+/* ============================================
+   Theme Variables (Custom Colors)
+   ============================================ */
 @theme {
     /* ---------- Resort-Style Green Palette ---------- */
     --color-resort-green: #1B5E20;
@@ -32,6 +36,9 @@
     --font-heading: Poppins, Inter, sans-serif;
 }
 
+/* ============================================
+   Base Styles
+   ============================================ */
 @layer base {
     html {
         scroll-behavior: smooth;
@@ -48,169 +55,335 @@
         font-family: var(--font-heading);
         font-weight: 700;
     }
-}
 
-@layer components {
-    /* ---------- Buttons ---------- */
-    .btn-primary {
-        @apply inline-block px-6 py-3 font-semibold text-white rounded-lg shadow-md transition-all duration-300 hover:shadow-lg;
+    a {
+        transition-property: color, background-color;
+        transition-duration: 200ms;
     }
 
-    .btn-amber {
-        background-color: var(--color-amber);
-    }
-    .btn-amber:hover {
-        background-color: color-mix(in oklab, var(--color-amber) 90%, transparent);
-    }
-
-    .btn-green {
-        background-color: var(--color-resort-green);
-    }
-    .btn-green:hover {
-        background-color: color-mix(in oklab, var(--color-resort-green) 90%, transparent);
-    }
-
-    .btn-brown {
-        background-color: var(--color-brown-deep);
-    }
-    .btn-brown:hover {
-        background-color: color-mix(in oklab, var(--color-brown-deep) 90%, transparent);
-    }
-
-    .btn-outline-white {
-        border: 2px solid white;
-        color: white;
-        background: transparent;
-    }
-    .btn-outline-white:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    /* ---------- Cards ---------- */
-    .card {
-        @apply overflow-hidden bg-cream-white rounded-lg shadow-md transition-all duration-300 hover:shadow-xl;
-    }
-
-    .card-green {
-        border-top: 4px solid var(--color-resort-green);
-    }
-
-    .card-teal {
-        border-top: 4px solid var(--color-deep-teal);
-    }
-
-    .card-brown {
-        border-top: 4px solid var(--color-brown-deep);
-    }
-
-    .card-content {
-        @apply p-6;
-    }
-
-    /* ---------- Sections ---------- */
-    .section {
-        @apply py-12 md:py-16 lg:py-20;
-    }
-
-    .section-warm {
-        background-color: var(--color-warm-sand);
-    }
-
-    .section-palm {
-        background-color: var(--color-palm-green);
-    }
-
-    .section-cream {
-        background-color: var(--color-cream-white);
-    }
-
-    .section-green {
-        background-color: var(--color-resort-green);
-        color: white;
-    }
-
-    .container-custom {
-        @apply max-w-6xl px-4 mx-auto sm:px-6 lg:px-8;
-    }
-
-    /* ---------- Navigation ---------- */
-    .nav-link {
-        @apply text-white transition-colors duration-200 hover:text-amber;
-    }
-
-    .nav-link-active {
-        color: var(--color-amber);
-    }
-
-    /* ---------- Hero ---------- */
-    .hero-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(135deg, rgba(27, 94, 32, 0.85) 0%, rgba(0, 77, 64, 0.75) 100%);
-    }
-
-    .hero-content {
-        @apply relative z-10 text-center text-white;
-    }
-
-    /* ---------- Feature Icons ---------- */
-    .feature-icon {
-        @apply flex items-center justify-center w-12 h-12 rounded-full;
-        background: rgba(27, 94, 32, 0.1);
-        color: var(--color-resort-green);
-    }
-
-    /* ---------- Testimonials ---------- */
-    .testimonial {
-        @apply p-6 bg-white rounded-lg shadow-md;
-    }
-
-    .testimonial-quote {
-        @apply text-lg italic text-charcoal;
-    }
-
-    .testimonial-author {
-        @apply mt-4 font-semibold text-brown-deep;
-    }
-
-    /* ---------- Footer ---------- */
-    .footer-link {
-        @apply text-white/80 transition-colors duration-200 hover:text-amber;
-    }
-
-    .social-icon {
-        @apply inline-flex items-center justify-center w-10 h-10 text-white rounded-full bg-white/10 transition-all duration-200 hover:bg-amber hover:text-brown-deep;
+    *:focus-visible {
+        outline: 2px solid var(--color-resort-green);
+        outline-offset: 2px;
     }
 }
 
-@layer utilities {
-    .text-gradient-green {
-        background-image: linear-gradient(to right, var(--color-resort-green), var(--color-deep-teal));
-        background-clip: text;
-        color: transparent;
+/* ============================================
+   Component Utilities
+   ============================================ */
+
+/* ---------- Container ---------- */
+@utility container-custom {
+    max-width: 72rem;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+
+    @media (width >= 640px) {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
     }
 
-    .animate-fade-in {
-        animation: fadeIn 0.6s ease-in-out;
+    @media (width >= 1024px) {
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+}
+
+/* ---------- Buttons ---------- */
+@utility btn-primary {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    transition: all 300ms;
+    text-decoration: none;
+}
+
+@utility btn-amber {
+    background-color: var(--color-amber);
+}
+
+@utility btn-brown {
+    background-color: var(--color-brown-deep);
+}
+
+@utility btn-green {
+    background-color: var(--color-resort-green);
+}
+
+@utility btn-outline-white {
+    border: 2px solid white;
+    color: white;
+    background: transparent;
+}
+
+/* ---------- Cards ---------- */
+@utility card {
+    overflow: hidden;
+    background-color: var(--color-cream-white);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    transition: all 300ms;
+}
+
+@utility card-green {
+    border-top: 4px solid var(--color-resort-green);
+}
+
+@utility card-teal {
+    border-top: 4px solid var(--color-deep-teal);
+}
+
+@utility card-brown {
+    border-top: 4px solid var(--color-brown-deep);
+}
+
+@utility card-content {
+    padding: 1.5rem;
+}
+
+/* ---------- Sections ---------- */
+@utility section {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+
+    @media (width >= 768px) {
+        padding-top: 4rem;
+        padding-bottom: 4rem;
     }
 
-    .animate-slide-up {
-        animation: slideUp 0.6s ease-out;
+    @media (width >= 1024px) {
+        padding-top: 5rem;
+        padding-bottom: 5rem;
     }
+}
 
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
+@utility section-warm {
+    background-color: var(--color-warm-sand);
+}
 
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+@utility section-palm {
+    background-color: var(--color-palm-green);
+}
+
+@utility section-cream {
+    background-color: var(--color-cream-white);
+}
+
+@utility section-green {
+    background-color: var(--color-resort-green);
+    color: white;
+}
+
+@utility section-brown {
+    background-color: var(--color-brown-deep);
+    color: white;
+}
+
+/* ---------- Navigation ---------- */
+@utility nav-link {
+    color: white;
+    transition: color 200ms;
+    text-decoration: none;
+}
+
+@utility nav-link-active {
+    color: var(--color-amber);
+}
+
+/* ---------- Hero ---------- */
+@utility hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(27, 94, 32, 0.85) 0%, rgba(0, 77, 64, 0.75) 100%);
+}
+
+@utility hero-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: white;
+}
+
+/* ---------- Feature Icons ---------- */
+@utility feature-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-resort-green) 10%, transparent);
+    color: var(--color-resort-green);
+    margin: 0 auto 1rem;
+}
+
+@utility feature-icon-brown {
+    background-color: color-mix(in oklab, var(--color-brown-deep) 10%, transparent);
+    color: var(--color-brown-deep);
+}
+
+/* ---------- Testimonials ---------- */
+@utility testimonial {
+    padding: 1.5rem;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+@utility testimonial-quote {
+    font-size: 1.125rem;
+    font-style: italic;
+    color: var(--color-charcoal);
+}
+
+@utility testimonial-author {
+    margin-top: 1rem;
+    font-weight: 600;
+    color: var(--color-brown-deep);
+}
+
+/* ---------- Footer ---------- */
+@utility footer-link {
+    color: white;
+    transition: color 200ms;
+    text-decoration: none;
+}
+
+@utility social-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--color-charcoal);
+    background-color: color-mix(in oklab, white 50%, transparent);
+    border-radius: 9999px;
+    transition: all 200ms;
+    text-decoration: none;
+}
+
+/* ---------- Form Elements ---------- */
+@utility form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--color-sage-green);
+    border-radius: 0.5rem;
+    background-color: var(--color-cream-white);
+    transition: all 200ms;
+}
+
+@utility form-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    color: var(--color-charcoal);
+}
+
+@utility form-error {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: #DC2626;
+}
+
+/* ---------- Badges ---------- */
+@utility badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 9999px;
+}
+
+@utility badge-halal {
+    background-color: var(--color-resort-green);
+    color: white;
+}
+
+@utility badge-brown {
+    background-color: var(--color-brown-deep);
+    color: white;
+}
+
+@utility badge-amber {
+    background-color: var(--color-amber);
+    color: white;
+}
+
+/* ---------- Blog ---------- */
+@utility blog-post {
+    max-width: none;
+    color: var(--color-charcoal);
+}
+
+/* ---------- Video Container ---------- */
+@utility video-container {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+}
+
+/* ============================================
+   Utility Styles
+   ============================================ */
+@utility text-gradient-green {
+    background-image: linear-gradient(to right, var(--color-resort-green), var(--color-deep-teal));
+    background-clip: text;
+    color: transparent;
+}
+
+@utility text-gradient-brown {
+    background-image: linear-gradient(to right, var(--color-brown-deep), var(--color-brown-light));
+    background-clip: text;
+    color: transparent;
+}
+
+@utility shadow-soft {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+@utility shadow-brown {
+    box-shadow: 0 8px 30px rgba(93, 64, 55, 0.25);
+}
+
+@utility shadow-green {
+    box-shadow: 0 8px 30px rgba(27, 94, 32, 0.25);
+}
+
+/* ---------- Animations ---------- */
+@utility animate-fade-in {
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+@utility animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
     }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- Carousel ---------- */
+[x-cloak] {
+    display: none !important;
 }

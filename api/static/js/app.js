@@ -8,7 +8,6 @@ document.addEventListener('alpine:init', () => {
     }));
 });
 
-// Simple carousel (if needed in the future)
 // Smooth scroll for anchor links
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -23,3 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Carousel auto-advance (optional)
+// If you want the carousel to auto-advance, uncomment this:
+/*
+document.addEventListener('DOMContentLoaded', () => {
+    const carousels = document.querySelectorAll('[x-data*="currentSlide"]');
+    carousels.forEach(carousel => {
+        const data = Alpine.$data(carousel);
+        if (data && data.next) {
+            setInterval(() => {
+                data.next();
+            }, 5000);
+        }
+    });
+});
+*/

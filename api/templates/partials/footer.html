@@ -1,0 +1,49 @@
+{{ define "footer" }}
+<footer class="bg-brown-deep">
+    <div class="container-custom py-12">
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-4">
+            <!-- About -->
+            <div>
+                <h4 class="mb-4 text-lg font-bold text-white">VillaChiangMai</h4>
+                <p class="text-white/70">Your halal-friendly home in Chiang Mai. Villa, hostel, and halal meat shop.</p>
+            </div>
+
+            <!-- Quick Links -->
+            <div>
+                <h5 class="mb-4 font-semibold text-white">Quick Links</h5>
+                <ul class="space-y-2">
+                    <li><a href="/" class="footer-link">Home</a></li>
+                    <li><a href="/villa" class="footer-link">Villa</a></li>
+                    <li><a href="/hostel" class="footer-link">Hostel</a></li>
+                    <li><a href="/meatshop" class="footer-link">Meat Shop</a></li>
+                    <li><a href="/blog" class="footer-link">Blog</a></li>
+                    <li><a href="/contact" class="footer-link">Contact</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div>
+                <h5 class="mb-4 font-semibold text-white">Contact</h5>
+                <ul class="space-y-2 text-white/70">
+                    <li><i class="fas fa-phone mr-2"></i> +66 8X XXX XXXX</li>
+                    <li><i class="fas fa-envelope mr-2"></i> booking@yourvilla.com</li>
+                    <li><i class="fas fa-comment-dots mr-2"></i> LINE: @yourlineid</li>
+                </ul>
+            </div>
+
+            <!-- Social -->
+            <div>
+                <h5 class="mb-4 font-semibold text-white">Follow Us</h5>
+                <div class="flex space-x-3">
+                    <a href="#" class="social-icon"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-8 mt-8 text-center border-t border-white/20 text-white/50">
+            <p>&copy; 2026 VillaChiangMai. All rights reserved.</p>
+        </div>
+    </div>
+</footer>
+{{ end }}

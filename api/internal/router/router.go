@@ -2,7 +2,6 @@ package router
 
 import (
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -19,8 +18,8 @@ func SetupRouter() *gin.Engine {
 
 	r := gin.Default()
 
-	// ---------- Load Templates ----------
-	tmpl := template.New("").Funcs(template.FuncMap{
+	// ---------- Load Templates with Functions ----------
+	funcMap := template.FuncMap{
 		"add": func(a, b int) int { return a + b },
 		"iterate": func(count int) []int {
 			var result []int
@@ -32,27 +31,31 @@ func SetupRouter() *gin.Engine {
 		"safe": func(s string) template.HTML {
 			return template.HTML(s)
 		},
-	})
-
-	// Parse base layout
-	basePath := filepath.Join("templates", "layouts", "base.html")
-	tmpl, err := tmpl.ParseFiles(basePath)
-	if err != nil {
-		log.Fatalf("❌ Failed to parse base template: %v", err)
 	}
 
-	// Parse all page templates
-	pagePattern := filepath.Join("templates", "pages", "*.html")
-	tmpl, err = tmpl.ParseGlob(pagePattern)
-	if err != nil {
-		log.Fatalf("❌ Failed to parse page templates: %v", err)
+	// Create a new template set with functions
+	tmpl := template.New("").Funcs(funcMap)
+
+	// Try multiple path patterns
+	patterns := []string{
+		"templates/layouts/*.html",
+		"templates/partials/*.html",
+		"templates/pages/*.html",
+		"../templates/layouts/*.html",
+		"../templates/partials/*.html",
+		"../templates/pages/*.html",
+		"../../templates/layouts/*.html",
+		"../../templates/partials/*.html",
+		"../../templates/pages/*.html",
 	}
 
-	log.Println("📋 Available templates:")
-	for _, t := range tmpl.Templates() {
-		log.Printf("  - %s", t.Name())
+	for _, pattern := range patterns {
+		if matches, _ := filepath.Glob(pattern); len(matches) > 0 {
+			tmpl.ParseGlob(pattern)
+		}
 	}
 
+	// Set the parsed templates
 	r.SetHTMLTemplate(tmpl)
 
 	// ---------- Static Files ----------
@@ -60,27 +63,13 @@ func SetupRouter() *gin.Engine {
 	r.Static("/videos", "./videos")
 
 	// ---------- Routes ----------
+	// Health check
 	r.GET("/health", handlers.HealthCheck)
-	r.GET("/", handlers.HomePage)
-	
-	// Debug route
-	r.GET("/debug/data", func(c *gin.Context) {
-		data := handlers.GetHomepageData()
-		if data == nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Homepage data is nil",
-			})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"features":     len(data.Features),
-			"reasons":      len(data.Reasons),
-			"testimonials": len(data.Testimonials),
-			"sample_feature": data.Features,
-		})
-	})
 
-	// Placeholder routes
+	// HOME PAGE
+	r.GET("/", handlers.HomePage)
+
+	// Other pages - using unique content template names
 	r.GET("/villa", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "villa.html", gin.H{
 			"Title":      "The Villa",
@@ -113,6 +102,14 @@ func SetupRouter() *gin.Engine {
 		c.HTML(http.StatusOK, "contact.html", gin.H{
 			"Title":      "Contact Us",
 			"ActivePage": "contact",
+		})
+	})
+
+	// Debug route
+	r.GET("/debug/health", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"status": "ok",
+			"routes": []string{"/", "/villa", "/hostel", "/meatshop", "/blog", "/contact"},
 		})
 	})
 

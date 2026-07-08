@@ -18,7 +18,6 @@ func init() {
 	HomepageData, err = loader.LoadHomePageData()
 	if err != nil {
 		log.Printf("❌ Failed to load homepage data: %v", err)
-		log.Println("⚠️ Creating empty data structure")
 		HomepageData = &models.HomePageData{
 			Title:       "Chiang Mai Villa & Hostel",
 			Description: "Your halal-friendly home in Chiang Mai",
@@ -41,6 +40,9 @@ func HealthCheck(c *gin.Context) {
 }
 
 func HomePage(c *gin.Context) {
+	log.Println("🔵 HomePage handler called")
+	// Make sure ActivePage is set to "home"
+	HomepageData.ActivePage = "home"
 	c.HTML(http.StatusOK, "index.html", HomepageData)
 }
 

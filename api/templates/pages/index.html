@@ -1,9 +1,4 @@
-{{ define "content" }}
-    <!-- Debug: Show data count -->
-    <div class="hidden" id="debug-data">
-        Features: {{ len .Features }}, Reasons: {{ len .Reasons }}, Testimonials: {{ len .Testimonials }}
-    </div>
-
+{{ define "page-content" }}
     <!-- Hero Section -->
     <section class="relative overflow-hidden section" style="min-height: 80vh;">
         <div class="hero-overlay"></div>
@@ -31,7 +26,7 @@
     <!-- Features Section -->
     <section class="section section-warm">
         <div class="container-custom">
-            <h2 class="mb-4 text-center text-3xl md:text-4xl font-bold" style="color: var(--color-resort-green);">Our Businesses</h2>
+            <h2 class="mb-4 text-center text-3xl md:text-4xl font-bold text-resort-green">Our Businesses</h2>
             <p class="max-w-2xl mx-auto mb-12 text-center text-charcoal/70">
                 Experience the best of Chiang Mai with our three unique offerings.
             </p>
@@ -46,22 +41,23 @@
                             {{ .Badge }}
                         </span>
                         {{ end }}
-                        <h3 class="text-xl font-bold" style="color: var(--color-resort-green);">{{ .Name }}</h3>
+                        <h3 class="text-xl font-bold text-resort-green">{{ .Name }}</h3>
                         <p class="mb-2 text-charcoal/70">{{ .Description }}</p>
                         {{ if .Location }}
                         <p class="text-sm text-charcoal/50 mb-4">{{ .Location }}</p>
                         {{ end }}
-                        <a href="{{ .Link }}" class="font-semibold hover:underline" style="color: var(--color-resort-green);">Learn More →</a>
+                        <a href="{{ .Link }}" class="font-semibold hover:underline text-resort-green">Learn More →</a>
                     </div>
                 </div>
                 {{ end }}
             </div>
         </div>
     </section>
+
     <!-- Why Stay Section -->
     <section class="section section-palm">
         <div class="container-custom">
-            <h2 class="mb-12 text-center text-3xl md:text-4xl font-bold" style="color: var(--color-resort-green);">Why Stay With Us?</h2>
+            <h2 class="mb-12 text-center text-3xl md:text-4xl font-bold text-resort-green">Why Stay With Us?</h2>
             <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
                 {{ range .Reasons }}
                 <div class="text-center animate-slide-up">
@@ -79,7 +75,7 @@
     <!-- Testimonials Section -->
     <section class="section section-cream">
         <div class="container-custom">
-            <h2 class="mb-4 text-center text-3xl md:text-4xl font-bold" style="color: var(--color-resort-green);">What Our Guests Say</h2>
+            <h2 class="mb-4 text-center text-3xl md:text-4xl font-bold text-resort-green">What Our Guests Say</h2>
             <p class="max-w-2xl mx-auto mb-12 text-center text-charcoal/70">
                 Real reviews from people who've stayed with us or visited our shop.
             </p>
