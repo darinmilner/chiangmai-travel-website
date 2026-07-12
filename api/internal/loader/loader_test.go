@@ -5,130 +5,144 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"api/internal/models"
 )
 
 func TestLoadHomePageData(t *testing.T) {
-	// Get the current working directory
+	t.Log("🔍 Testing LoadHomePageData...")
+
+	// Get current working directory
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
 	t.Logf("📂 Current working directory: %s", cwd)
 
-	// Check if data directory exists
-	dataDir := filepath.Join(cwd, "data")
+	// Find data directory
+	dataDir := filepath.Join(cwd, "..", "..", "data")
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		// Try one level up (if running from api/internal/loader)
-		dataDir = filepath.Join(cwd, "..", "..", "data")
+		dataDir = filepath.Join(cwd, "data")
 		if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-			t.Fatalf("❌ Data directory not found. Looked in: %s and %s",
-				filepath.Join(cwd, "data"),
-				filepath.Join(cwd, "..", "..", "data"))
+			t.Skip("Skipping test: data directory not found")
 		}
 	}
-	t.Logf("📂 Data directory found at: %s", dataDir)
+	t.Logf("📂 Data directory: %s", dataDir)
 
-	// List files in data directory
-	files, err := os.ReadDir(dataDir)
-	if err != nil {
-		t.Fatalf("❌ Could not read data directory: %v", err)
-	}
-	t.Logf("📂 Files in data directory:")
-	for _, f := range files {
-		t.Logf("  - %s", f.Name())
+	// Verify JSON files exist
+	jsonFiles := []string{"features.json", "reasons.json", "testimonials.json"}
+	for _, f := range jsonFiles {
+		path := filepath.Join(dataDir, f)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			t.Errorf("❌ File not found: %s", path)
+		} else {
+			t.Logf("✅ File exists: %s", path)
+		}
 	}
 
-	// Test loading the data
+	// Test loading data
 	data, err := LoadHomePageData()
 	if err != nil {
-		t.Fatalf("❌ LoadHomePageData() failed: %v", err)
+		t.Fatalf("❌ LoadHomePageData failed: %v", err)
 	}
 
-	// Verify features
-	if len(data.Features) == 0 {
-		t.Errorf("❌ Expected at least 1 feature, got %d", len(data.Features))
-	} else {
-		t.Logf("✅ Features: %d", len(data.Features))
-		// Log first feature
-		if len(data.Features) > 0 {
-			t.Logf("   First feature: %+v", data.Features[0])
-		}
-	}
+	t.Log("✅ LoadHomePageData succeeded")
 
-	// Verify reasons
-	if len(data.Reasons) == 0 {
-		t.Errorf("❌ Expected at least 1 reason, got %d", len(data.Reasons))
-	} else {
-		t.Logf("✅ Reasons: %d", len(data.Reasons))
-	}
-
-	// Verify testimonials
-	if len(data.Testimonials) == 0 {
-		t.Errorf("❌ Expected at least 1 testimonial, got %d", len(data.Testimonials))
-	} else {
-		t.Logf("✅ Testimonials: %d", len(data.Testimonials))
-	}
-
-	// Verify JSON files are valid
-	t.Run("ValidateJSONFiles", func(t *testing.T) {
-		jsonFiles := []string{"features.json", "reasons.json", "testimonials.json"}
-		for _, fileName := range jsonFiles {
-			filePath := filepath.Join(dataDir, fileName)
-			t.Run(fileName, func(t *testing.T) {
-				file, err := os.Open(filePath)
-				if err != nil {
-					t.Fatalf("Could not open %s: %v", fileName, err)
-				}
-				defer file.Close()
-
-				var raw interface{}
-				decoder := json.NewDecoder(file)
-				if err := decoder.Decode(&raw); err != nil {
-					t.Errorf("❌ Invalid JSON in %s: %v", fileName, err)
-				} else {
-					t.Logf("✅ %s is valid JSON", fileName)
-				}
-			})
+	// Check features
+	t.Run("Features should be loaded", func(t *testing.T) {
+		if len(data.Features) == 0 {
+			t.Errorf("❌ Expected features, got %d", len(data.Features))
+		} else {
+			t.Logf("✅ Loaded %d features", len(data.Features))
+			for i, f := range data.Features {
+				t.Logf("   Feature %d: %s", i+1, f.Name)
+			}
 		}
 	})
+
+	// Check reasons
+	t.Run("Reasons should be loaded", func(t *testing.T) {
+		if len(data.Reasons) == 0 {
+			t.Errorf("❌ Expected reasons, got %d", len(data.Reasons))
+		} else {
+			t.Logf("✅ Loaded %d reasons", len(data.Reasons))
+			for i, r := range data.Reasons {
+				t.Logf("   Reason %d: %s", i+1, r.Title)
+			}
+		}
+	})
+
+	// Check testimonials
+	t.Run("Testimonials should be loaded", func(t *testing.T) {
+		if len(data.Testimonials) == 0 {
+			t.Errorf("❌ Expected testimonials, got %d", len(data.Testimonials))
+		} else {
+			t.Logf("✅ Loaded %d testimonials", len(data.Testimonials))
+			for i, tm := range data.Testimonials {
+				t.Logf("   Testimonial %d: %s", i+1, tm.Name)
+			}
+		}
+	})
+
+	// Check Hero
+	t.Run("Hero Headline should be set", func(t *testing.T) {
+		if data.Hero.Headline == "" {
+			t.Errorf("❌ Hero Headline is empty")
+		} else {
+			t.Logf("✅ Hero Headline: '%s'", data.Hero.Headline)
+		}
+	})
+
+	// Check CTA
+	t.Run("CTA Title should be set", func(t *testing.T) {
+		if data.CTA.Title == "" {
+			t.Errorf("❌ CTA Title is empty")
+		} else {
+			t.Logf("✅ CTA Title: '%s'", data.CTA.Title)
+		}
+	})
+
+	// Debug: Print full data structure
+	t.Log("📊 Full data summary:")
+	t.Logf("   Title: %s", data.Title)
+	t.Logf("   Description: %s", data.Description)
+	t.Logf("   ActivePage: %s", data.ActivePage)
+	t.Logf("   Hero Headline: %s", data.Hero.Headline)
+	t.Logf("   Hero Subheadline: %s", data.Hero.Subheadline)
+	t.Logf("   CTA Title: %s", data.CTA.Title)
+	t.Logf("   CTA Text: %s", data.CTA.Text)
 }
 
-// TestLoadFeatures tests loading just the features file
-func TestLoadFeatures(t *testing.T) {
-	// Get the current working directory
+// TestJSONFilesValid verifies the JSON files are properly formatted
+func TestJSONFilesValid(t *testing.T) {
 	cwd, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("Failed to get working directory: %v", err)
 	}
 
-	// Try to find data directory
-	dataDir := filepath.Join(cwd, "data")
+	dataDir := filepath.Join(cwd, "..", "..", "data")
 	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
-		dataDir = filepath.Join(cwd, "..", "..", "data")
+		dataDir = filepath.Join(cwd, "data")
 		if _, err := os.Stat(dataDir); os.IsNotExist(err) {
 			t.Skip("Skipping test: data directory not found")
 		}
 	}
 
-	filePath := filepath.Join(dataDir, "features.json")
-	file, err := os.Open(filePath)
-	if err != nil {
-		t.Fatalf("Could not open features.json: %v", err)
-	}
-	defer file.Close()
+	jsonFiles := []string{"features.json", "reasons.json", "testimonials.json"}
+	for _, fileName := range jsonFiles {
+		t.Run(fileName, func(t *testing.T) {
+			path := filepath.Join(dataDir, fileName)
+			file, err := os.Open(path)
+			if err != nil {
+				t.Fatalf("Could not open %s: %v", fileName, err)
+			}
+			defer file.Close()
 
-	var result struct {
-		Features []models.Feature `json:"features"`
-	}
-	decoder := json.NewDecoder(file)
-	if err := decoder.Decode(&result); err != nil {
-		t.Fatalf("Failed to decode features.json: %v", err)
-	}
-
-	t.Logf("✅ Loaded %d features directly", len(result.Features))
-	if len(result.Features) == 0 {
-		t.Error("❌ No features found in features.json")
+			var raw interface{}
+			decoder := json.NewDecoder(file)
+			if err := decoder.Decode(&raw); err != nil {
+				t.Errorf("❌ Invalid JSON in %s: %v", fileName, err)
+			} else {
+				t.Logf("✅ %s is valid JSON", fileName)
+			}
+		})
 	}
 }

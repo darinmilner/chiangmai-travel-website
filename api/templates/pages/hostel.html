@@ -1,16 +1,14 @@
-{{ define "page-content" }}
+{{ define "content" }}
 <section class="section section-warm" style="min-height: 60vh;">
     <div class="container-custom">
         <h1 class="text-4xl font-bold text-resort-green">The Hostel</h1>
         <p class="mt-4 text-xl text-charcoal/70">Coming soon...</p>
         <p class="mt-2 text-charcoal/60">This page is under construction. Check back soon for details about our cozy hostel.</p>
-        <div class="mt-6">
-            <a href="/" class="btn-primary btn-green">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Home
+        <div class="mt-8">
+            <a href="/hostel" class="btn-custom">
+                <i class="fas fa-bed mr-2"></i> Book the Hostel
             </a>
         </div>
     </div>
 </section>
 {{ end }}
-
-{{ template "base" . }}

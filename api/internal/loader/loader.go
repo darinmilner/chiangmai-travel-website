@@ -10,51 +10,30 @@ import (
 	"api/internal/models"
 )
 
-// Wrapper structs for JSON that has a top-level key
-type featuresWrapper struct {
-	Features []models.Feature `json:"features"`
-}
-
-type reasonsWrapper struct {
-	Reasons []models.Reason `json:"reasons"`
-}
-
-type testimonialsWrapper struct {
-	Testimonials []models.Testimonial `json:"testimonials"`
-}
-
 // LoadHomePageData loads all homepage data from JSON files
 func LoadHomePageData() (*models.HomePageData, error) {
 	log.Println("🔴 LOADER: LoadHomePageData() called")
 
-	// Try multiple possible paths
-	possiblePaths := []string{
-		"data",
-		"./data",
-		"../data",
-		filepath.Join("..", "data"),
-		filepath.Join("..", "..", "data"),
+	// Get current working directory
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get working directory: %w", err)
 	}
+	log.Printf("📂 Current working directory: %s", cwd)
 
-	var dataDir string
-	for _, path := range possiblePaths {
-		if _, err := os.Stat(path); err == nil {
-			dataDir = path
-			log.Printf("✅ Found data directory at: %s", dataDir)
-			break
+	// Try to find data directory
+	dataDir := filepath.Join(cwd, "data")
+	if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+		dataDir = filepath.Join(cwd, "..", "data")
+		if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+			dataDir = filepath.Join(cwd, "..", "..", "data")
+			if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+				return nil, fmt.Errorf("could not find data directory in any of: ./data, ../data, ../../data")
+			}
 		}
 	}
 
-	if dataDir == "" {
-		cwd, _ := os.Getwd()
-		log.Printf("🔍 Current working directory: %s", cwd)
-		files, _ := os.ReadDir(".")
-		log.Printf("📂 Files in current directory:")
-		for _, f := range files {
-			log.Printf("  - %s", f.Name())
-		}
-		return nil, fmt.Errorf("could not find data directory in any of: %v", possiblePaths)
-	}
+	log.Printf("✅ Found data directory at: %s", dataDir)
 
 	// List files in data directory
 	files, err := os.ReadDir(dataDir)
@@ -66,6 +45,7 @@ func LoadHomePageData() (*models.HomePageData, error) {
 		log.Printf("  - %s", f.Name())
 	}
 
+	// Initialize with default data
 	data := &models.HomePageData{
 		Title:       "Chiang Mai Villa & Hostel",
 		Description: "Your halal-friendly home in Chiang Mai",
@@ -83,45 +63,52 @@ func LoadHomePageData() (*models.HomePageData, error) {
 			Text:  "Contact us today and start your Chiang Mai adventure.",
 			Buttons: []models.Button{
 				{Text: "Contact Us", URL: "/contact", Icon: "fa-paper-plane", Style: "primary", Color: "amber"},
-				{Text: "Chat on LINE", URL: "https://line.me/ti/p/[LINE_ID]", Icon: "fa-line", Style: "outline", Color: "white"},
+				{Text: "Chat on LINE", URL: "https://line.me/ti/p/[LINE_ID]", Icon: "fa-comment-dots", Style: "outline", Color: "white"},
 			},
 		},
 	}
 
-	// Load features
+	// Load features with wrapper
 	featuresPath := filepath.Join(dataDir, "features.json")
 	log.Printf("📂 Loading features from: %s", featuresPath)
-	var featuresWrapper featuresWrapper
+	var featuresWrapper struct {
+		Features []models.Feature `json:"features"`
+	}
 	if err := loadJSONFile(featuresPath, &featuresWrapper); err != nil {
-		log.Printf("❌ Error loading features: %v", err)
 		return nil, fmt.Errorf("failed to load features.json: %w", err)
 	}
 	data.Features = featuresWrapper.Features
 	log.Printf("✅ Loaded %d features", len(data.Features))
 
-	// Load reasons
+	// Load reasons with wrapper
 	reasonsPath := filepath.Join(dataDir, "reasons.json")
 	log.Printf("📂 Loading reasons from: %s", reasonsPath)
-	var reasonsWrapper reasonsWrapper
+	var reasonsWrapper struct {
+		Reasons []models.Reason `json:"reasons"`
+	}
 	if err := loadJSONFile(reasonsPath, &reasonsWrapper); err != nil {
-		log.Printf("❌ Error loading reasons: %v", err)
 		return nil, fmt.Errorf("failed to load reasons.json: %w", err)
 	}
 	data.Reasons = reasonsWrapper.Reasons
 	log.Printf("✅ Loaded %d reasons", len(data.Reasons))
 
-	// Load testimonials
+	// Load testimonials with wrapper
 	testimonialsPath := filepath.Join(dataDir, "testimonials.json")
 	log.Printf("📂 Loading testimonials from: %s", testimonialsPath)
-	var testimonialsWrapper testimonialsWrapper
+	var testimonialsWrapper struct {
+		Testimonials []models.Testimonial `json:"testimonials"`
+	}
 	if err := loadJSONFile(testimonialsPath, &testimonialsWrapper); err != nil {
-		log.Printf("❌ Error loading testimonials: %v", err)
 		return nil, fmt.Errorf("failed to load testimonials.json: %w", err)
 	}
 	data.Testimonials = testimonialsWrapper.Testimonials
 	log.Printf("✅ Loaded %d testimonials", len(data.Testimonials))
 
 	log.Printf("🎉 LOADER: Successfully loaded all data")
+
+	// Debug: verify hero headline is set
+	log.Printf("🔍 Hero Headline: '%s'", data.Hero.Headline)
+
 	return data, nil
 }
 

@@ -1,80 +1,54 @@
 package router
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
-func TestTemplateFilesExist(t *testing.T) {
-	// Get the project root (where go.mod is)
-	projectRoot := filepath.Join("..", "..")
-	t.Logf("📂 Project root: %s", projectRoot)
-
-	// Test that template files exist on disk
-	requiredFiles := []string{
-		filepath.Join(projectRoot, "templates", "layouts", "base.html"),
-		filepath.Join(projectRoot, "templates", "partials", "header.html"),
-		filepath.Join(projectRoot, "templates", "partials", "footer.html"),
-		filepath.Join(projectRoot, "templates", "pages", "index.html"),
+func TestSetupRouter(t *testing.T) {
+	originalDir, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	for _, file := range requiredFiles {
-		t.Run(file, func(t *testing.T) {
-			_, err := os.Stat(file)
-			if err != nil {
-				t.Errorf("❌ File not found: %s", file)
-			} else {
-				t.Logf("✅ File exists: %s", file)
-			}
-		})
-	}
-}
-
-func TestTemplateFilesContent(t *testing.T) {
 	projectRoot := filepath.Join("..", "..")
+	if err := os.Chdir(projectRoot); err != nil {
+		t.Skip("Cannot locate project root")
+	}
+
+	defer os.Chdir(originalDir)
+
+	router := SetupRouter()
 
 	tests := []struct {
-		file     string
-		expected string
+		name string
+		url  string
 	}{
-		{filepath.Join(projectRoot, "templates", "layouts", "base.html"), `{{ define "base" }}`},
-		{filepath.Join(projectRoot, "templates", "partials", "header.html"), `{{ define "header" }}`},
-		{filepath.Join(projectRoot, "templates", "partials", "footer.html"), `{{ define "footer" }}`},
-		{filepath.Join(projectRoot, "templates", "pages", "index.html"), `{{ define "content" }}`},
+		{"home", "/"},
+		{"villa", "/villa"},
+		{"hostel", "/hostel"},
+		{"meatshop", "/meatshop"},
+		{"blog", "/blog"},
+		{"contact", "/contact"},
+		{"health", "/health"},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.file, func(t *testing.T) {
-			content, err := os.ReadFile(tt.file)
-			if err != nil {
-				t.Errorf("❌ Could not read file: %v", err)
-				return
-			}
-			if !strings.Contains(string(content), tt.expected) {
-				t.Errorf("❌ File %s does not contain %q", tt.file, tt.expected)
-			} else {
-				t.Logf("✅ File %s contains %q", tt.file, tt.expected)
+		t.Run(tt.name, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
+			w := httptest.NewRecorder()
+
+			router.ServeHTTP(w, req)
+
+			if w.Code != http.StatusOK {
+				t.Fatalf("%s returned %d\nBody:\n%s",
+					tt.url,
+					w.Code,
+					w.Body.String())
 			}
 		})
 	}
-}
-
-func TestRouterSetup(t *testing.T) {
-	t.Run("SetupRouter should not panic", func(t *testing.T) {
-		defer func() {
-			if r := recover(); r != nil {
-				t.Logf("❌ SetupRouter panicked: %v", r)
-				t.Fail()
-			}
-		}()
-
-		router := SetupRouter()
-		if router == nil {
-			t.Error("❌ SetupRouter returned nil")
-		} else {
-			t.Log("✅ SetupRouter created successfully")
-		}
-	})
 }

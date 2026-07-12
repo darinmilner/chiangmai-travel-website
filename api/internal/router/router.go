@@ -8,6 +8,7 @@ import (
 
 	"api/internal/handlers"
 
+	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,13 +19,14 @@ func SetupRouter() *gin.Engine {
 
 	r := gin.Default()
 
-	// ---------- Load Templates with Functions ----------
 	funcMap := template.FuncMap{
-		"add": func(a, b int) int { return a + b },
+		"add": func(a, b int) int {
+			return a + b
+		},
 		"iterate": func(count int) []int {
-			var result []int
+			result := make([]int, count)
 			for i := 0; i < count; i++ {
-				result = append(result, i)
+				result[i] = i
 			}
 			return result
 		},
@@ -33,43 +35,27 @@ func SetupRouter() *gin.Engine {
 		},
 	}
 
-	// Create a new template set with functions
-	tmpl := template.New("").Funcs(funcMap)
+	r.HTMLRender = createRenderer(funcMap)
 
-	// Try multiple path patterns
-	patterns := []string{
-		"templates/layouts/*.html",
-		"templates/partials/*.html",
-		"templates/pages/*.html",
-		"../templates/layouts/*.html",
-		"../templates/partials/*.html",
-		"../templates/pages/*.html",
-		"../../templates/layouts/*.html",
-		"../../templates/partials/*.html",
-		"../../templates/pages/*.html",
-	}
-
-	for _, pattern := range patterns {
-		if matches, _ := filepath.Glob(pattern); len(matches) > 0 {
-			tmpl.ParseGlob(pattern)
-		}
-	}
-
-	// Set the parsed templates
-	r.SetHTMLTemplate(tmpl)
-
-	// ---------- Static Files ----------
 	r.Static("/static", "./static")
 	r.Static("/videos", "./videos")
 
-	// ---------- Routes ----------
-	// Health check
 	r.GET("/health", handlers.HealthCheck)
 
-	// HOME PAGE
-	r.GET("/", handlers.HomePage)
+	r.GET("/", func(c *gin.Context) {
+		data := handlers.GetHomepageData()
+		if data == nil {
+			c.String(http.StatusInternalServerError, "Data not loaded")
+			return
+		}
 
-	// Other pages - using unique content template names
+		// If your homepage data doesn't already include this,
+		// uncomment the next line after adding ActivePage.
+		// data.ActivePage = "home"
+
+		c.HTML(http.StatusOK, "index.html", data)
+	})
+
 	r.GET("/villa", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "villa.html", gin.H{
 			"Title":      "The Villa",
@@ -105,13 +91,39 @@ func SetupRouter() *gin.Engine {
 		})
 	})
 
-	// Debug route
-	r.GET("/debug/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"routes": []string{"/", "/villa", "/hostel", "/meatshop", "/blog", "/contact"},
-		})
-	})
-
 	return r
+}
+
+func createRenderer(funcMap template.FuncMap) multitemplate.Renderer {
+	renderer := multitemplate.New()
+
+	layout := "templates/layouts/base.html"
+
+	partials, err := filepath.Glob("templates/partials/*.html")
+	if err != nil {
+		panic(err)
+	}
+
+	pages, err := filepath.Glob("templates/pages/*.html")
+	if err != nil {
+		panic(err)
+	}
+
+	for _, page := range pages {
+
+		files := []string{
+			layout,
+		}
+
+		files = append(files, partials...)
+		files = append(files, page)
+
+		renderer.AddFromFilesFuncs(
+			filepath.Base(page),
+			funcMap,
+			files...,
+		)
+	}
+
+	return renderer
 }

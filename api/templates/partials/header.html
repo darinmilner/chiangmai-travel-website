@@ -1,55 +1,33 @@
 {{ define "header" }}
-<nav class="bg-brown-deep shadow-lg" style="background-color: #5D4037;" x-data="{ mobileMenuOpen: false }">
-    <div class="container-custom" style="max-width: 72rem; margin: 0 auto; padding: 0 1rem;">
+<nav class="bg-brown-deep shadow-lg" x-data="{ mobileMenuOpen: false }">
+    <div class="container-custom">
         <div class="flex items-center justify-between h-16">
-            <!-- Logo -->
-            <a href="/" class="flex items-center text-2xl font-bold" style="color: white; text-decoration: none;">
-                Villa<span style="color: #E8A317;">ChiangMai</span>
+            <a href="/" class="flex items-center text-2xl font-bold text-white">
+                Villa<span class="text-amber">ChiangMai</span>
             </a>
 
-            <!-- Desktop Navigation -->
             <div class="hidden space-x-8 md:flex">
-                <a href="/" class="{{ if eq .ActivePage "home" }}nav-link-active{{ else }}nav-link{{ end }}" 
-                   style="color: {{ if eq .ActivePage "home" }}#E8A317{{ else }}white{{ end }}; text-decoration: none; transition: color 200ms;">
-                   Home
-                </a>
-                <a href="/villa" class="{{ if eq .ActivePage "villa" }}nav-link-active{{ else }}nav-link{{ end }}"
-                   style="color: {{ if eq .ActivePage "villa" }}#E8A317{{ else }}white{{ end }}; text-decoration: none; transition: color 200ms;">
-                   Villa
-                </a>
-                <a href="/hostel" class="{{ if eq .ActivePage "hostel" }}nav-link-active{{ else }}nav-link{{ end }}"
-                   style="color: {{ if eq .ActivePage "hostel" }}#E8A317{{ else }}white{{ end }}; text-decoration: none; transition: color 200ms;">
-                   Hostel
-                </a>
-                <a href="/meatshop" class="{{ if eq .ActivePage "meatshop" }}nav-link-active{{ else }}nav-link{{ end }}"
-                   style="color: {{ if eq .ActivePage "meatshop" }}#E8A317{{ else }}white{{ end }}; text-decoration: none; transition: color 200ms;">
-                   Meat Shop
-                </a>
-                <a href="/blog" class="{{ if eq .ActivePage "blog" }}nav-link-active{{ else }}nav-link{{ end }}"
-                   style="color: {{ if eq .ActivePage "blog" }}#E8A317{{ else }}white{{ end }}; text-decoration: none; transition: color 200ms;">
-                   Blog
-                </a>
-                <a href="/contact" class="{{ if eq .ActivePage "contact" }}nav-link-active{{ else }}nav-link{{ end }}"
-                   style="color: {{ if eq .ActivePage "contact" }}#E8A317{{ else }}white{{ end }}; text-decoration: none; transition: color 200ms;">
-                   Contact
-                </a>
+                <a href="/" class="nav-link {{ if eq .ActivePage "home" }}nav-link-active{{ end }}">Home</a>
+                <a href="/villa" class="nav-link {{ if eq .ActivePage "villa" }}nav-link-active{{ end }}">Villa</a>
+                <a href="/hostel" class="nav-link {{ if eq .ActivePage "hostel" }}nav-link-active{{ end }}">Hostel</a>
+                <a href="/meatshop" class="nav-link {{ if eq .ActivePage "meatshop" }}nav-link-active{{ end }}">Meat Shop</a>
+                <a href="/blog" class="nav-link {{ if eq .ActivePage "blog" }}nav-link-active{{ end }}">Blog</a>
+                <a href="/contact" class="nav-link {{ if eq .ActivePage "contact" }}nav-link-active{{ end }}">Contact</a>
             </div>
 
-            <!-- Mobile Menu Button -->
-            <button @click="mobileMenuOpen = !mobileMenuOpen" style="color: white; background: none; border: none; font-size: 1.5rem; cursor: pointer; display: block; md:display: none;">
-                <i class="fas fa-bars"></i>
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-white md:hidden">
+                <i class="fas fa-bars text-2xl"></i>
             </button>
         </div>
 
-        <!-- Mobile Navigation -->
         <div x-show="mobileMenuOpen" x-cloak class="pb-4 md:hidden">
             <div class="flex flex-col space-y-2">
-                <a href="/" style="color: {{ if eq .ActivePage "home" }}#E8A317{{ else }}white{{ end }}; text-decoration: none;">Home</a>
-                <a href="/villa" style="color: {{ if eq .ActivePage "villa" }}#E8A317{{ else }}white{{ end }}; text-decoration: none;">Villa</a>
-                <a href="/hostel" style="color: {{ if eq .ActivePage "hostel" }}#E8A317{{ else }}white{{ end }}; text-decoration: none;">Hostel</a>
-                <a href="/meatshop" style="color: {{ if eq .ActivePage "meatshop" }}#E8A317{{ else }}white{{ end }}; text-decoration: none;">Meat Shop</a>
-                <a href="/blog" style="color: {{ if eq .ActivePage "blog" }}#E8A317{{ else }}white{{ end }}; text-decoration: none;">Blog</a>
-                <a href="/contact" style="color: {{ if eq .ActivePage "contact" }}#E8A317{{ else }}white{{ end }}; text-decoration: none;">Contact</a>
+                <a href="/" class="nav-link {{ if eq .ActivePage "home" }}nav-link-active{{ end }}">Home</a>
+                <a href="/villa" class="nav-link {{ if eq .ActivePage "villa" }}nav-link-active{{ end }}">Villa</a>
+                <a href="/hostel" class="nav-link {{ if eq .ActivePage "hostel" }}nav-link-active{{ end }}">Hostel</a>
+                <a href="/meatshop" class="nav-link {{ if eq .ActivePage "meatshop" }}nav-link-active{{ end }}">Meat Shop</a>
+                <a href="/blog" class="nav-link {{ if eq .ActivePage "blog" }}nav-link-active{{ end }}">Blog</a>
+                <a href="/contact" class="nav-link {{ if eq .ActivePage "contact" }}nav-link-active{{ end }}">Contact</a>
             </div>
         </div>
     </div>
