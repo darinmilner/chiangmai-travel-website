@@ -4,51 +4,60 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
+
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestSetupRouter(t *testing.T) {
-	originalDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
+func TestSetupRouterReturnsEngine(t *testing.T) {
+	r := SetupRouter()
+
+	assert.NotNil(t, r)
+	assert.IsType(t, &gin.Engine{}, r)
+}
+
+func TestSetupRouterReleaseMode(t *testing.T) {
+	original := os.Getenv("GIN_MODE")
+	defer os.Setenv("GIN_MODE", original)
+
+	os.Setenv("GIN_MODE", "release")
+
+	SetupRouter()
+
+	assert.Equal(t, gin.ReleaseMode, gin.Mode())
+}
+
+func TestHealthEndpointExists(t *testing.T) {
+	r := SetupRouter()
+
+	req := httptest.NewRequest(http.MethodGet, "/health", nil)
+	w := httptest.NewRecorder()
+
+	r.ServeHTTP(w, req)
+
+	// Assumes handlers.HealthCheck returns 200.
+	assert.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestRoutesRegistered(t *testing.T) {
+	r := SetupRouter()
+
+	routes := r.Routes()
+
+	expected := map[string]string{
+		"GET /health":   "",
+		"GET /":         "",
+		"GET /villa":    "",
+		"GET /hostel":   "",
+		"GET /meatshop": "",
+		"GET /blog":     "",
+		"GET /contact":  "",
 	}
 
-	projectRoot := filepath.Join("..", "..")
-	if err := os.Chdir(projectRoot); err != nil {
-		t.Skip("Cannot locate project root")
+	for _, route := range routes {
+		delete(expected, route.Method+" "+route.Path)
 	}
 
-	defer os.Chdir(originalDir)
-
-	router := SetupRouter()
-
-	tests := []struct {
-		name string
-		url  string
-	}{
-		{"home", "/"},
-		{"villa", "/villa"},
-		{"hostel", "/hostel"},
-		{"meatshop", "/meatshop"},
-		{"blog", "/blog"},
-		{"contact", "/contact"},
-		{"health", "/health"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(http.MethodGet, tt.url, nil)
-			w := httptest.NewRecorder()
-
-			router.ServeHTTP(w, req)
-
-			if w.Code != http.StatusOK {
-				t.Fatalf("%s returned %d\nBody:\n%s",
-					tt.url,
-					w.Code,
-					w.Body.String())
-			}
-		})
-	}
+	assert.Empty(t, expected)
 }

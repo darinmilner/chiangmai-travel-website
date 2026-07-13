@@ -94,3 +94,6 @@ temp/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+venv
+__pychache__

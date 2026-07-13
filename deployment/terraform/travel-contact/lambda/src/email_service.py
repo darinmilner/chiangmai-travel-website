@@ -2,6 +2,7 @@ import boto3
 from typing import Dict, Any
 from botocore.exceptions import ClientError
 import logging
+from datetime import datetime
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -24,6 +25,10 @@ class EmailService:
 
         logger.info(f"EmailService initialized with SES in region: {region}")
 
+    def get_timestamp(self) -> str:
+        """Get current timestamp in ISO format"""
+        return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+
     def format_email_body(self, name: str, email: str, subject: str, message: str) -> str:
         """Create HTML email template"""
         # Escape special characters for HTML safety
@@ -35,6 +40,9 @@ class EmailService:
 
         # Convert newlines to <br> tags
         message_html = message.replace('\n', '<br>')
+
+        # Get current timestamp
+        timestamp = self.get_timestamp()
 
         return f"""
         <!DOCTYPE html>
@@ -179,26 +187,23 @@ class EmailService:
 
     def format_plain_body(self, name: str, email: str, subject: str, message: str) -> str:
         """Create plain text email body"""
+        timestamp = self.get_timestamp()
+
         return f"""
-        NEW CONTACT FORM SUBMISSION
-        ===========================
+NEW CONTACT FORM SUBMISSION
+===========================
 
-        From: {name} <{email}>
-        Subject: {subject}
-        Received: {self.get_timestamp()}
+From: {name} <{email}>
+Subject: {subject}
+Received: {timestamp}
 
-        Message:
-        ----------
-        {message}
-        ----------
+Message:
+----------
+{message}
+----------
 
-        To reply, send email to: {email}
-        """
-
-    def get_timestamp(self) -> str:
-        """Get current timestamp in ISO format"""
-        from datetime import datetime
-        return datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')
+To reply, send email to: {email}
+"""
 
     def send_email(self, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -227,12 +232,13 @@ class EmailService:
             )
 
             # Send email via SES
+            # Note: ReplyToAddresses is at the top level, not inside Destination
             response = self.ses_client.send_email(
                 Source=self.source_email,
                 Destination={
-                    'ToAddresses': [self.destination_email],
-                    'ReplyToAddresses': [form_data['email']]
+                    'ToAddresses': [self.destination_email]
                 },
+                ReplyToAddresses=[form_data['email']],  # This is correct - top level
                 Message={
                     'Subject': {
                         'Data': f"Contact Form: {form_data['subject']}",

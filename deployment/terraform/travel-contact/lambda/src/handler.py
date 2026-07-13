@@ -1,12 +1,16 @@
 import json
 import logging
-import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from config import AppConfig
-from email_service import EmailService
-from validators import ContactFormValidator
+# Use relative imports for local modules
+from .config import AppConfig
+from .email_service import EmailService
+from .validators import ContactFormValidator
+
+# Configure logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 # Configure logging
 logger = logging.getLogger()
@@ -53,9 +57,20 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
 
     # Log incoming request
-    request_id = context.aws_request_id if context else 'unknown'
+    request_id = context.aws_request_id if context else 'local-test'
     logger.info(f"📨 Processing request: {request_id}")
-    logger.debug(f"Event: {json.dumps(event, default=str)}")
+
+    # Mask sensitive data in logs
+    safe_event = {k: v for k, v in event.items() if k != 'body'}
+    if event.get('body'):
+        try:
+            body = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+            safe_body = {k: '***' if k == 'email' else v for k, v in body.items()}
+            safe_event['body'] = safe_body
+        except:
+            safe_event['body'] = '*** masked ***'
+
+    logger.debug(f"Event: {json.dumps(safe_event, default=str)}")
 
     try:
         # 1. Handle OPTIONS method (CORS preflight)
@@ -100,7 +115,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'message': 'Please check your input and try again'
             })
 
-        logger.info(f"✅ Validation passed for: {cleaned_data['email']}")
+        logger.info(f"✅ Validation passed for: {cleaned_data.get('email', 'unknown')}")
 
         # 5. Send email via SES
         logger.info("📧 Sending email via SES...")
@@ -119,7 +134,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
             return format_response(500, {
                 'error': 'Failed to send email',
                 'details': result.get('error', 'Unknown error'),
-                'message': 'Unable to send your message. Please try again later.'
+                'message': result.get('friendly_message', 'Unable to send your message. Please try again later.')
             })
 
     except json.JSONDecodeError as e:
@@ -169,13 +184,14 @@ def parse_request_body(event: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             import base64
             try:
                 body = base64.b64decode(body).decode('utf-8')
-            except Exception:
-                logger.warning("Failed to decode base64 body")
+            except Exception as e:
+                logger.warning(f"Failed to decode base64 body: {str(e)}")
                 return None
 
         try:
             return json.loads(body)
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.warning(f"Failed to parse JSON body: {str(e)}")
             return None
 
     return None

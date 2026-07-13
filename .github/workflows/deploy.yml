@@ -1,0 +1,513 @@
+name: 🚀 Deploy Application
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      deploy_lambda:
+        description: 'Deploy Lambda function'
+        required: true
+        default: true
+        type: boolean
+      deploy_infrastructure:
+        description: 'Deploy/Update Infrastructure'
+        required: true
+        default: false
+        type: boolean
+      deploy_frontend:
+        description: 'Deploy Frontend'
+        required: true
+        default: false
+        type: boolean
+      run_tests:
+        description: 'Run tests before deployment'
+        required: true
+        default: true
+        type: boolean
+      version_tag:
+        description: 'Version tag (e.g., v1.0.0)'
+        required: false
+        type: string
+        default: ''
+
+env:
+  AWS_REGION_BANGKOK: ap-southeast-7
+  AWS_REGION_SINGAPORE: ap-southeast-1
+  PROJECT_NAME: travel-contact
+  TERRAFORM_VERSION: 1.6.0
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Job 1: Run Tests (Optional)
+  test-lambda:
+    name: 🧪 Test Lambda
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.run_tests == 'true'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/lambda/requirements-test.txt
+
+      - name: Install Dependencies
+        run: |
+          cd backend/lambda
+          pip install -r requirements-test.txt
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        run: |
+          cd backend/lambda
+          pytest tests/ -v --cov=src --cov-report=xml --cov-report=term -m "not integration"
+
+      - name: Upload Coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-${{ github.run_id }}
+          path: backend/lambda/htmlcov/
+          retention-days: 7
+
+  # Job 2: Build Lambda Package
+  build-lambda:
+    name: 📦 Build Lambda
+    runs-on: ubuntu-latest
+    needs: test-lambda
+    if: always() && (github.event.inputs.deploy_lambda == 'true' || github.event.inputs.deploy_infrastructure == 'true')
+    timeout-minutes: 10
+    outputs:
+      package-hash: ${{ steps.hash.outputs.hash }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+          cache-dependency-path: backend/lambda/requirements.txt
+
+      - name: Install Dependencies
+        run: |
+          cd backend/lambda
+          pip install -r requirements.txt
+
+      - name: Build Lambda Package
+        run: |
+          cd backend/lambda
+          python3 build.py
+
+      - name: Calculate Hash
+        id: hash
+        run: |
+          cd backend/lambda
+          echo "hash=$(sha256sum dist/lambda-function.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+
+      - name: Upload Lambda Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: lambda-package-${{ github.run_id }}
+          path: backend/lambda/dist/lambda-function.zip
+          retention-days: 7
+
+  # Job 3: Build Frontend (Optional)
+  build-frontend:
+    name: 🏗️ Build Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event.inputs.deploy_frontend == 'true'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Upload Frontend Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build-${{ github.run_id }}
+          path: frontend/build/
+          retention-days: 7
+
+  # Job 4: Terraform Plan
+  terraform-plan:
+    name: 📋 Terraform Plan
+    runs-on: ubuntu-latest
+    needs:
+      - build-lambda
+      - build-frontend
+    if: always() && github.event.inputs.deploy_infrastructure == 'true'
+    timeout-minutes: 10
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Lambda Package
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package-${{ github.run_id }}
+          path: backend/lambda/dist/
+
+      - name: Download Frontend Build
+        if: github.event.inputs.deploy_frontend == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ github.run_id }}
+          path: frontend/build/
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init
+
+      - name: Terraform Plan
+        run: |
+          cd infrastructure/terraform
+          terraform plan \
+            -var="ses_source_email=${{ secrets.SES_SOURCE_EMAIL }}" \
+            -var="ses_destination_email=${{ secrets.SES_DESTINATION_EMAIL }}" \
+            -var="ses_domain=${{ secrets.SES_DOMAIN }}" \
+            -var="route53_zone_id=${{ secrets.ROUTE53_ZONE_ID }}" \
+            -var="allowed_origins=${{ vars.ALLOWED_ORIGINS }}" \
+            -var="environment=${{ github.event.inputs.environment }}" \
+            -out=tfplan
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.run_id }}
+          path: infrastructure/terraform/tfplan
+          retention-days: 7
+
+  # Job 5: Deploy Infrastructure
+  deploy-infrastructure:
+    name: 🔧 Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: terraform-plan
+    if: github.event.inputs.deploy_infrastructure == 'true'
+    timeout-minutes: 15
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Lambda Package
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package-${{ github.run_id }}
+          path: backend/lambda/dist/
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ github.run_id }}
+          path: infrastructure/terraform/
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Terraform Init
+        run: |
+          cd infrastructure/terraform
+          terraform init
+
+      - name: Terraform Apply
+        run: |
+          cd infrastructure/terraform
+          terraform apply tfplan
+
+      - name: Get API URL
+        id: api-url
+        run: |
+          cd infrastructure/terraform
+          API_URL=$(terraform output -raw api_endpoint)
+          echo "url=$API_URL" >> $GITHUB_OUTPUT
+
+      - name: Verify Deployment
+        run: |
+          echo "Verifying Lambda..."
+          aws lambda get-function \
+            --function-name ${{ env.PROJECT_NAME }}-contact-form \
+            --region ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Create Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Triggered By:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ github.event.inputs.version_tag || 'latest' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployed At:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🌐 API Endpoint" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.api-url.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📦 Deployed Components" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Lambda: ${{ env.AWS_REGION_BANGKOK }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ SES: ${{ env.AWS_REGION_SINGAPORE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ API Gateway: ${{ env.AWS_REGION_BANGKOK }}" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event.inputs.deploy_frontend }}" = "true" ]; then
+            echo "- ✅ Frontend: S3 + CloudFront" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Job 6: Deploy Lambda Only
+  deploy-lambda:
+    name: 🚀 Deploy Lambda
+    runs-on: ubuntu-latest
+    needs: build-lambda
+    if: github.event.inputs.deploy_lambda == 'true' && github.event.inputs.deploy_infrastructure == 'false'
+    timeout-minutes: 10
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Lambda Package
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-package-${{ github.run_id }}
+          path: backend/lambda/dist/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Update Lambda Code
+        run: |
+          FUNCTION_NAME="${{ env.PROJECT_NAME }}-contact-form"
+          echo "Updating Lambda function: $FUNCTION_NAME"
+
+          # Update Lambda code
+          aws lambda update-function-code \
+            --function-name $FUNCTION_NAME \
+            --zip-file fileb://backend/lambda/dist/lambda-function.zip \
+            --region ${{ env.AWS_REGION_BANGKOK }}
+
+          # Wait for update to complete
+          aws lambda wait function-updated \
+            --function-name $FUNCTION_NAME \
+            --region ${{ env.AWS_REGION_BANGKOK }}
+
+          # Get function info
+          aws lambda get-function \
+            --function-name $FUNCTION_NAME \
+            --region ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Update Lambda Environment Variables
+        run: |
+          FUNCTION_NAME="${{ env.PROJECT_NAME }}-contact-form"
+
+          # Update environment variables
+          aws lambda update-function-configuration \
+            --function-name $FUNCTION_NAME \
+            --environment "Variables={ \
+              SES_SOURCE_EMAIL=${{ secrets.SES_SOURCE_EMAIL }}, \
+              SES_DESTINATION_EMAIL=${{ secrets.SES_DESTINATION_EMAIL }}, \
+              SES_REGION=${{ env.AWS_REGION_SINGAPORE }}, \
+              AWS_REGION=${{ env.AWS_REGION_BANGKOK }}, \
+              ENVIRONMENT=${{ github.event.inputs.environment }}, \
+              VERSION=${{ github.event.inputs.version_tag || 'latest' }} \
+            }" \
+            --region ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Create Lambda Update Summary
+        run: |
+          echo "## ✅ Lambda Updated!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Update Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ github.event.inputs.version_tag || 'latest' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Updated At:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+  # Job 7: Deploy Frontend Only
+  deploy-frontend:
+    name: 🌐 Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    if: github.event.inputs.deploy_frontend == 'true'
+    timeout-minutes: 10
+    environment:
+      name: ${{ github.event.inputs.environment }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build-${{ github.run_id }}
+          path: frontend/build/
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION_BANGKOK }}
+
+      - name: Deploy to S3
+        run: |
+          BUCKET_NAME="${{ secrets.S3_BUCKET_NAME }}"
+          echo "Deploying to S3 bucket: $BUCKET_NAME"
+
+          # Sync build to S3
+          aws s3 sync frontend/build/ s3://$BUCKET_NAME --delete
+
+          # Invalidate CloudFront if configured
+          if [ -n "${{ secrets.CLOUDFRONT_ID }}" ]; then
+            echo "Invalidating CloudFront cache..."
+            aws cloudfront create-invalidation \
+              --distribution-id ${{ secrets.CLOUDFRONT_ID }} \
+              --paths "/*"
+          fi
+
+      - name: Create Frontend Summary
+        run: |
+          echo "## ✅ Frontend Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📋 Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL:** https://${{ secrets.S3_BUCKET_NAME }}.s3.amazonaws.com" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ secrets.CUSTOM_DOMAIN }}" ]; then
+            echo "- **Custom Domain:** https://${{ secrets.CUSTOM_DOMAIN }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Deployed At:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+
+  # Job 8: Smoke Test
+  smoke-test:
+    name: 🔥 Smoke Test
+    runs-on: ubuntu-latest
+    needs:
+      - deploy-infrastructure
+      - deploy-lambda
+    if: always() && (github.event.inputs.deploy_lambda == 'true' || github.event.inputs.deploy_infrastructure == 'true')
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get API URL from Terraform
+        run: |
+          cd infrastructure/terraform
+          API_URL=$(terraform output -raw api_endpoint 2>/dev/null || echo "")
+          if [ -z "$API_URL" ]; then
+            echo "⚠️ Could not get API URL from Terraform"
+            # Try to construct URL from known format
+            API_URL="https://${{ secrets.API_ID }}.execute-api.${{ env.AWS_REGION_BANGKOK }}.amazonaws.com/prod/contact"
+          fi
+          echo "API_URL=$API_URL" >> $GITHUB_ENV
+
+      - name: Test API Endpoint
+        run: |
+          echo "Testing API endpoint: $API_URL"
+
+          # Test valid request
+          RESPONSE=$(curl -s -X POST $API_URL \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "Smoke Test User",
+              "email": "smoke-test@example.com",
+              "subject": "Smoke Test",
+              "message": "This is a smoke test from GitHub Actions."
+            }')
+
+          echo "Response: $RESPONSE"
+
+          # Check if response contains success
+          if echo "$RESPONSE" | grep -q '"success":true'; then
+            echo "✅ Smoke test passed!"
+          else
+            echo "❌ Smoke test failed!"
+            exit 1
+          fi
+
+      - name: Test Validation
+        run: |
+          echo "Testing validation..."
+
+          # Test invalid request
+          RESPONSE=$(curl -s -X POST $API_URL \
+            -H "Content-Type: application/json" \
+            -d '{
+              "name": "A",
+              "email": "invalid",
+              "subject": "",
+              "message": "short"
+            }')
+
+          echo "Response: $RESPONSE"
+
+          if echo "$RESPONSE" | grep -q '"error":'; then
+            echo "✅ Validation test passed!"
+          else
+            echo "❌ Validation test failed!"
+            exit 1
+          fi
