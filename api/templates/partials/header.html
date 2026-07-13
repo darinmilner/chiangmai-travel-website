@@ -7,12 +7,22 @@
             </a>
 
             <div class="hidden space-x-8 md:flex">
-                <a href="/" class="nav-link {{ if eq .ActivePage "home" }}nav-link-active{{ end }}">Home</a>
-                <a href="/villa" class="nav-link {{ if eq .ActivePage "villa" }}nav-link-active{{ end }}">Villa</a>
-                <a href="/hostel" class="nav-link {{ if eq .ActivePage "hostel" }}nav-link-active{{ end }}">Hostel</a>
-                <a href="/meatshop" class="nav-link {{ if eq .ActivePage "meatshop" }}nav-link-active{{ end }}">Meat Shop</a>
-                <a href="/blog" class="nav-link {{ if eq .ActivePage "blog" }}nav-link-active{{ end }}">Blog</a>
-                <a href="/contact" class="nav-link {{ if eq .ActivePage "contact" }}nav-link-active{{ end }}">Contact</a>
+                <a
+    href="/"
+    style="color:white;"
+    onmouseover="this.style.color='red'"
+    onmouseout="this.style.color='white'">
+    Home
+</a>
+                <!-- <a href="/" class="nav-link text-white {{ if eq .ActivePage "home" }}nav-link-active{{ end }}">Home</a> -->
+                <!-- <a href="/villa" class="nav-link text-white {{ if eq .ActivePage "villa" }}nav-link-active{{ end }}">Villa</a> -->
+                <a href="/villa" class="nav-link">
+    Villa
+</a>
+                <a href="/hostel" class="nav-link text-white {{ if eq .ActivePage "hostel" }}nav-link-active{{ end }}">Hostel</a>
+                <a href="/meatshop" class="nav-link text-white {{ if eq .ActivePage "meatshop" }}nav-link-active{{ end }}">Meat Shop</a>
+                <a href="/blog" class="nav-link text-white {{ if eq .ActivePage "blog" }}nav-link-active{{ end }}">Blog</a>
+                <a href="/contact" class="nav-link text-white {{ if eq .ActivePage "contact" }}nav-link-active{{ end }}">Contact</a>
             </div>
 
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-white md:hidden">
@@ -22,12 +32,19 @@
 
         <div x-show="mobileMenuOpen" x-cloak class="pb-4 md:hidden">
             <div class="flex flex-col space-y-2">
-                <a href="/" class="nav-link {{ if eq .ActivePage "home" }}nav-link-active{{ end }}">Home</a>
-                <a href="/villa" class="nav-link {{ if eq .ActivePage "villa" }}nav-link-active{{ end }}">Villa</a>
-                <a href="/hostel" class="nav-link {{ if eq .ActivePage "hostel" }}nav-link-active{{ end }}">Hostel</a>
-                <a href="/meatshop" class="nav-link {{ if eq .ActivePage "meatshop" }}nav-link-active{{ end }}">Meat Shop</a>
-                <a href="/blog" class="nav-link {{ if eq .ActivePage "blog" }}nav-link-active{{ end }}">Blog</a>
-                <a href="/contact" class="nav-link {{ if eq .ActivePage "contact" }}nav-link-active{{ end }}">Contact</a>
+                <a
+    href="/"
+    style="color:white;"
+    onmouseover="this.style.color='red'"
+    onmouseout="this.style.color='white'">
+    Home
+</a>
+                <!-- <a href="/" class="ext-white hover:text-amber transition-colors {{ if eq .ActivePage "home" }}text-amber font-semibold{{ end }}">Home</a> -->
+                <a href="/villa" class="nav-link text-white {{ if eq .ActivePage "villa" }}text-amber font-semibold{{ end }}">Villa</a>
+                <a href="/hostel" class="nav-link text-white {{ if eq .ActivePage "hostel" }}text-amber font-semibold{{ end }}">Hostel</a>
+                <a href="/meatshop" class="nav-link text-white {{ if eq .ActivePage "meatshop" }}text-amber font-semibold{{ end }}">Meat Shop</a>
+                <a href="/blog" class="nav-link text-white {{ if eq .ActivePage "blog" }}text-amber font-semibold{{ end }}">Blog</a>
+                <a href="/contact" class="nav-link text-white {{ if eq .ActivePage "contact" }}text-amber font-semibold{{ end }}">Contact</a>
             </div>
         </div>
     </div>

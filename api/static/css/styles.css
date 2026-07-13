@@ -30,6 +30,8 @@
     --text-6xl--line-height: 1;
     --font-weight-semibold: 600;
     --font-weight-bold: 700;
+    --default-transition-duration: 150ms;
+    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
     --color-brown-deep: #5D4037;
@@ -489,6 +491,18 @@
     outline-style: var(--tw-outline-style);
     outline-width: 1px;
   }
+  .transition-colors {
+    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+    transition-duration: var(--tw-duration, var(--default-transition-duration));
+  }
+  .hover\:text-amber {
+    &:hover {
+      @media (hover: hover) {
+        color: var(--color-amber);
+      }
+    }
+  }
   .hover\:underline {
     &:hover {
       @media (hover: hover) {
@@ -622,25 +636,6 @@
     color: var(--color-charcoal);
     transform: scale(1.1);
   }
-  .footer-link {
-    color: white;
-    transition: color 200ms;
-    text-decoration: none;
-  }
-  .footer-link:hover {
-    color: var(--color-amber);
-  }
-  .nav-link {
-    color: white;
-    transition: color 200ms;
-    text-decoration: none;
-  }
-  .nav-link:hover {
-    color: var(--color-amber);
-  }
-  .nav-link-active {
-    color: var(--color-amber);
-  }
   .hero-overlay {
     position: absolute;
     inset: 0;
@@ -754,6 +749,27 @@
   }
 }
 @layer utilities {
+  .footer-link {
+    color: white;
+    transition: color 200ms;
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    color: var(--color-amber);
+  }
+  .nav-link {
+    color: white;
+    transition: color 200ms;
+    text-decoration: none;
+  }
+  .nav-link:hover {
+    color: var(--color-amber);
+    font-weight: 600;
+  }
+  .nav-link-active {
+    color: var(--color-amber);
+    font-weight: 600;
+  }
   .animate-fade-in {
     animation: fadeIn 0.6s ease-in-out;
   }

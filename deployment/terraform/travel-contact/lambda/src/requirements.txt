@@ -1,0 +1,8 @@
+# AWS SDK
+boto3
+# Email validation
+email-validator
+
+# Note: The following are optional but recommended
+# requests>=2.31.0  # If you need to call external APIs
+# python-dotenv>=1.0.0  # For local development

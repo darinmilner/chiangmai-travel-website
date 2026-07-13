@@ -120,31 +120,6 @@
         transform: scale(1.1);
     }
 
-    /* ---------- Footer Links ---------- */
-    .footer-link {
-        color: white;
-        transition: color 200ms;
-        text-decoration: none;
-    }
-
-    .footer-link:hover {
-        color: var(--color-amber);
-    }
-
-    /* ---------- Navigation ---------- */
-    .nav-link {
-        color: white;
-        transition: color 200ms;
-        text-decoration: none;
-    }
-
-    .nav-link:hover {
-        color: var(--color-amber);
-    }
-
-    .nav-link-active {
-        color: var(--color-amber);
-    }
 
     /* ---------- Hero ---------- */
     .hero-overlay {
@@ -285,6 +260,34 @@
 
 /* 5. Utilities Layer */
 @layer utilities {
+      /* ---------- Footer Links ---------- */
+    .footer-link {
+        color: white;
+        transition: color 200ms;
+        text-decoration: none;
+    }
+
+    .footer-link:hover {
+        color: var(--color-amber);
+    }
+
+    /* ---------- Navigation ---------- */
+    .nav-link {
+        color: white;
+        transition: color 200ms;
+        text-decoration: none;
+    }
+
+    .nav-link:hover {
+        color: var(--color-amber);
+        font-weight: 600;
+    }
+
+    .nav-link-active {
+        color: var(--color-amber);
+        font-weight: 600;
+    }
+
     /* ---------- Animations ---------- */
     .animate-fade-in {
         animation: fadeIn 0.6s ease-in-out;

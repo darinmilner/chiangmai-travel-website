@@ -1,0 +1,61 @@
+variable "project_name" {
+  description = "Project name prefix"
+  type        = string
+}
+
+variable "bangkok_region" {
+  description = "AWS Bangkok region"
+  type        = string
+  default     = "ap-southeast-7"
+}
+
+variable "lambda_zip_path" {
+  description = "Path to Lambda deployment zip file"
+  type        = string
+}
+
+variable "ses_source_email" {
+  description = "SES source email (from Singapore region)"
+  type        = string
+}
+
+variable "ses_destination_email" {
+  description = "SES destination email (from Singapore region)"
+  type        = string
+}
+
+variable "ses_region" {
+  description = "SES region (Singapore)"
+  type        = string
+  default     = "ap-southeast-1"
+}
+
+variable "ses_iam_policy_arn" {
+  description = "ARN of IAM policy for SES access"
+  type        = string
+  default     = ""
+}
+
+variable "max_email_size_kb" {
+  description = "Maximum email size in KB"
+  type        = number
+  default     = 10240
+}
+
+variable "rate_limit_per_minute" {
+  description = "Rate limit per minute for contact form"
+  type        = number
+  default     = 10
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 14
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
