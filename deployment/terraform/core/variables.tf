@@ -7,7 +7,7 @@ variable "environment" {
 variable "app_name" {
   description = "Application name"
   type        = string
-  default     = "ShareDrive"
+  default     = "ChiangmaiVilla"
 }
 
 variable "region" {

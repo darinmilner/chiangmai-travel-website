@@ -1,3 +1,7 @@
+provider "aws" {
+  region = var.region
+}
+
 module "backend" {
   source      = "./modules/backend"
   aws_region  = var.region

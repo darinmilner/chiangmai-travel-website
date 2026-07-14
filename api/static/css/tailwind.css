@@ -256,22 +256,8 @@
         font-weight: 600;
         color: var(--color-brown-deep);
     }
-}
 
-/* 5. Utilities Layer */
-@layer utilities {
-      /* ---------- Footer Links ---------- */
-    .footer-link {
-        color: white;
-        transition: color 200ms;
-        text-decoration: none;
-    }
-
-    .footer-link:hover {
-        color: var(--color-amber);
-    }
-
-    /* ---------- Navigation ---------- */
+     /* ---------- Navigation ---------- */
     .nav-link {
         color: white;
         transition: color 200ms;
@@ -286,6 +272,21 @@
     .nav-link-active {
         color: var(--color-amber);
         font-weight: 600;
+    }
+
+}
+
+/* 5. Utilities Layer */
+@layer utilities {
+      /* ---------- Footer Links ---------- */
+    .footer-link {
+        color: white;
+        transition: color 200ms;
+        text-decoration: none;
+    }
+
+    .footer-link:hover {
+        color: var(--color-amber);
     }
 
     /* ---------- Animations ---------- */

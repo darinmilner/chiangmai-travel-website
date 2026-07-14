@@ -747,16 +747,6 @@
     font-weight: 600;
     color: var(--color-brown-deep);
   }
-}
-@layer utilities {
-  .footer-link {
-    color: white;
-    transition: color 200ms;
-    text-decoration: none;
-  }
-  .footer-link:hover {
-    color: var(--color-amber);
-  }
   .nav-link {
     color: white;
     transition: color 200ms;
@@ -769,6 +759,16 @@
   .nav-link-active {
     color: var(--color-amber);
     font-weight: 600;
+  }
+}
+@layer utilities {
+  .footer-link {
+    color: white;
+    transition: color 200ms;
+    text-decoration: none;
+  }
+  .footer-link:hover {
+    color: var(--color-amber);
   }
   .animate-fade-in {
     animation: fadeIn 0.6s ease-in-out;
