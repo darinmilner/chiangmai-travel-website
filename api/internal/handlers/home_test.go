@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"html/template"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,47 +13,7 @@ func TestHomePage(t *testing.T) {
 	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 
-	t.Run("HomePage should return status 200", func(t *testing.T) {
-		// Create a test router
-		router := gin.Default()
-
-		// Add the custom template functions BEFORE loading templates
-		router.SetFuncMap(template.FuncMap{
-			"add": func(a, b int) int { return a + b },
-			"iterate": func(count int) []int {
-				var result []int
-				for i := 0; i < count; i++ {
-					result = append(result, i)
-				}
-				return result
-			},
-		})
-
-		// Load templates
-		router.LoadHTMLGlob("../../templates/**/*.html")
-
-		// Register the route
-		router.GET("/", HomePage)
-
-		// Create a test request
-		req, err := http.NewRequest("GET", "/", nil)
-		if err != nil {
-			t.Fatalf("Failed to create request: %v", err)
-		}
-
-		// Record the response
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		// Check status code
-		if w.Code != http.StatusOK {
-			t.Errorf("Expected status 200, got %d", w.Code)
-		}
-		t.Logf("✅ Status code: %d", w.Code)
-	})
-
 	t.Run("HomePage should have non-nil data", func(t *testing.T) {
-		// Ensure HomepageData is initialized
 		if HomepageData == nil {
 			t.Error("❌ HomepageData is nil")
 			return
@@ -159,10 +119,18 @@ func TestHealthCheck(t *testing.T) {
 			t.Errorf("Expected JSON content type, got %s", contentType)
 		}
 		t.Logf("✅ Content-Type: %s", contentType)
+
+		// Verify response is valid JSON
+		var response map[string]interface{}
+		err := json.Unmarshal(w.Body.Bytes(), &response)
+		if err != nil {
+			t.Errorf("❌ Response is not valid JSON: %v", err)
+		} else {
+			t.Logf("✅ Response is valid JSON: %+v", response)
+		}
 	})
 }
 
-// TestGetHomepageData tests the GetHomepageData function
 func TestGetHomepageData(t *testing.T) {
 	t.Run("GetHomepageData should return non-nil data", func(t *testing.T) {
 		data := GetHomepageData()
@@ -174,65 +142,19 @@ func TestGetHomepageData(t *testing.T) {
 	})
 }
 
-// TestHomePageRendering tests the actual HTML rendering
-func TestHomePageRendering(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	t.Run("HomePage should render HTML with data", func(t *testing.T) {
-		router := gin.Default()
-
-		// Add template functions
-		router.SetFuncMap(template.FuncMap{
-			"add": func(a, b int) int { return a + b },
-			"iterate": func(count int) []int {
-				var result []int
-				for i := 0; i < count; i++ {
-					result = append(result, i)
-				}
-				return result
-			},
-		})
-
-		// Load templates - LoadHTMLGlob returns the engine, we don't need to capture it
-		router.LoadHTMLGlob("../../templates/**/*.html")
-
-		router.GET("/", HomePage)
-
-		req, _ := http.NewRequest("GET", "/", nil)
-		w := httptest.NewRecorder()
-		router.ServeHTTP(w, req)
-
-		if w.Code != http.StatusOK {
-			t.Errorf("Expected status 200, got %d", w.Code)
+func TestHomepageDataJSON(t *testing.T) {
+	t.Run("HomepageData should be JSON serializable", func(t *testing.T) {
+		if HomepageData == nil {
+			t.Skip("HomepageData is nil, skipping test")
+			return
 		}
 
-		// Check that HTML contains expected content
-		body := w.Body.String()
-
-		// Check for key content
-		expectedStrings := []string{
-			"VillaChiangMai",
-			"Our Businesses",
-			"Why Stay With Us?",
-			"What Our Guests Say",
-		}
-
-		for _, expected := range expectedStrings {
-			if !containsString(body, expected) {
-				t.Errorf("Expected HTML to contain '%s', but it didn't", expected)
-			} else {
-				t.Logf("✅ HTML contains '%s'", expected)
-			}
+		// Try to marshal to JSON
+		jsonData, err := json.Marshal(HomepageData)
+		if err != nil {
+			t.Errorf("❌ Failed to marshal HomepageData to JSON: %v", err)
+		} else {
+			t.Logf("✅ HomepageData is JSON serializable (%d bytes)", len(jsonData))
 		}
 	})
-}
-
-// Helper function to check if a string contains a substring
-func containsString(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

@@ -39,9 +39,11 @@ func HealthCheck(c *gin.Context) {
 	})
 }
 
+func HomePage(c *gin.Context) {
+	HomepageData.ActivePage = "home"
+	c.HTML(http.StatusOK, "index.html", HomepageData)
+}
+
 func GetHomepageData() *models.HomePageData {
-	if HomepageData != nil {
-		HomepageData.PageContent = "index-content"
-	}
 	return HomepageData
 }

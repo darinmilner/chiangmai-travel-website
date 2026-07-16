@@ -91,6 +91,9 @@ func SetupRouter() *gin.Engine {
 		})
 	})
 
+	// Contact form API
+	r.POST("/api/contact", handlers.ContactForm)
+
 	return r
 }
 

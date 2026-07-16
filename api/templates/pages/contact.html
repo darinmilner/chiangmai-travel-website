@@ -1,11 +1,146 @@
 {{ define "content" }}
-<section class="section section-warm" style="min-height: 60vh;">
-    <div class="container-custom">
-        <h1 class="text-4xl font-bold text-resort-green">Contact Us</h1>
-        <p class="mt-4 text-xl text-charcoal/70">Coming soon...</p>
-        <p class="mt-2 text-charcoal/60">
-            This page is under construction. Contact form and details coming soon!
+<section class="section section-warm">
+    <div class="container-custom max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold text-resort-green mb-6 text-center">Contact Us</h1>
+        <p class="text-center text-charcoal/70 mb-10 max-w-2xl mx-auto">
+            Have questions about your stay? Want to book a room? Send us a message and we'll get back to you within 24 hours.
         </p>
+
+        <!-- Success/Error Messages -->
+        <div id="form-message" class="hidden mb-6 p-4 rounded-lg"></div>
+
+        <!-- Contact Form -->
+        <form id="contact-form" class="bg-white rounded-xl shadow-soft p-8 md:p-10">
+            <!-- Name -->
+            <div class="mb-6">
+                <label for="name" class="form-label">Your Name <span class="text-red-500">*</span></label>
+                <input type="text" id="name" name="name" required
+                       class="form-input w-full px-4 py-3 border border-resort-green rounded-lg focus:border-resort-green focus:ring-2 focus:ring-resort-green/20 bg-cream-white transition-all"
+                       placeholder="Enter your full name">
+            </div>
+
+            <!-- Email -->
+            <div class="mb-6">
+                <label for="email" class="form-label">Email Address <span class="text-red-500">*</span></label>
+                <input type="email" id="email" name="email" required
+                class="form-input w-full px-4 py-3 border border-resort-green rounded-lg focus:border-resort-green focus:ring-2 focus:ring-resort-green/20 bg-cream-white transition-all"
+                       placeholder="your@email.com">
+            </div>
+
+            <!-- Phone -->
+            <div class="mb-6">
+                <label for="phone" class="form-label">Phone Number</label>
+                       <input type="tel" id="phone" name="phone"
+                       class="form-input w-full px-4 py-3 border border-resort-green rounded-lg focus:border-resort-green focus:ring-2 focus:ring-resort-green/20 bg-cream-white transition-all"
+                       placeholder="+66 8X XXX XXXX">
+            </div>
+
+            <!-- Subject -->
+            <div class="mb-6">
+                <label for="subject" class="form-label">Subject <span class="text-red-500">*</span></label>
+                <select id="subject" name="subject" required
+                        class="form-input w-full px-4 py-3 border border-resort-green rounded-lg focus:border-resort-green focus:ring-2 focus:ring-resort-green/20 bg-cream-white transition-all appearance-none">
+                    <option value="">Select a subject...</option>
+                    <option value="Booking Inquiry">Booking Inquiry</option>
+                    <option value="Room Availability">Room Availability</option>
+                    <option value="Halal Food Questions">Halal Food Questions</option>
+                    <option value="Meat Shop Order">Meat Shop Order</option>
+                    <option value="General Question">General Question</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+
+            <!-- Message -->
+            <div class="mb-6">
+                <label for="message" class="form-label">Message <span class="text-red-500">*</span></label>
+                <textarea id="message" name="message" required rows="5"
+                          class="form-input w-full px-4 py-3 border border-resort-green rounded-lg focus:border-resort-green focus:ring-2 focus:ring-resort-green/20 bg-cream-white transition-all resize-y"
+                          placeholder="Tell us about your stay or any questions you have..."></textarea>
+            </div>
+
+            <!-- Honeypot (Anti-spam) -->
+            <div class="hidden">
+                <label for="website">Website</label>
+                <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+            </div>
+
+            <!-- Submit -->
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                <button type="submit" id="submit-btn"
+                        class="btn-custom w-full sm:w-auto px-8 py-3">
+                    <i class="fas fa-paper-plane mr-2"></i> Send Message
+                </button>
+                <p class="text-sm text-charcoal/50">
+                    <i class="fas fa-lock mr-1"></i> Your information is secure
+                </p>
+            </div>
+
+            <!-- Loading spinner -->
+            <div id="form-loading" class="hidden mt-4 text-center">
+                <i class="fas fa-spinner fa-spin text-resort-green text-2xl"></i>
+                <p class="text-charcoal/60 mt-2">Sending your message...</p>
+            </div>
+        </form>
+
+        <!-- Alternative Contact Methods -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center p-6 bg-white rounded-lg shadow-soft">
+                <div class="w-12 h-12 bg-resort-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-phone text-resort-green text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-charcoal mb-1">Phone</h4>
+                <p class="text-charcoal/60">+66 8X XXX XXXX</p>
+            </div>
+            <div class="text-center p-6 bg-white rounded-lg shadow-soft">
+                <div class="w-12 h-12 bg-resort-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-envelope text-resort-green text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-charcoal mb-1">Email</h4>
+                <p class="text-charcoal/60">booking@yourvilla.com</p>
+            </div>
+            <div class="text-center p-6 bg-white rounded-lg shadow-soft">
+                <div class="w-12 h-12 bg-resort-green/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fab fa-line text-resort-green text-xl"></i>
+                </div>
+                <h4 class="font-semibold text-charcoal mb-1">LINE</h4>
+                <p class="text-charcoal/60">@yourlineid</p>
+            </div>
+        </div>
     </div>
 </section>
+
+<!-- Include contact form JavaScript -->
+<script src="/static/js/contact.js" defer></script>
+
+<!-- Custom styles for the form -->
+<style>
+    .form-input {
+        transition: all 0.2s ease;
+    }
+    .form-input:focus {
+        outline: none;
+        border-color: #1B5E20;
+        box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.15);
+    }
+    .form-input.error {
+        border-color: #DC2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+    }
+    .form-input.success {
+        border-color: #1B5E20;
+        box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.15);
+    }
+    #form-message.success {
+        background-color: #dcfce7;
+        color: #166534;
+        border: 1px solid #86efac;
+    }
+    #form-message.error {
+        background-color: #fecaca;
+        color: #991b1b;
+        border: 1px solid #f87171;
+    }
+</style>
 {{ end }}
+
+{{ template "base" . }}
