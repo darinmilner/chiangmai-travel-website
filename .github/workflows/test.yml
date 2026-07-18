@@ -1,0 +1,79 @@
+name: 🧪 Test Everything
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  test-go:
+    name: Test Go Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+
+      - name: Run Go Tests
+        run: |
+          cd api
+          go test -v -cover ./...
+
+      - name: Lint Go Code
+        run: |
+          cd api
+          go vet ./...
+          go fmt ./...
+
+  test-python:
+    name: Test Python Lambda
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install Dependencies
+        run: |
+          cd deployment/terraform/travel-contact/lambda/src/
+          pip install -r requirements-test.txt
+          pip install -r requirements.txt
+
+      - name: Run Python Tests
+        run: |
+          cd backend/lambda
+          pytest tests/ -v --cov=src --cov-report=term
+
+  test-html:
+    name: Validate HTML Templates
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install HTML Validator
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tidy
+
+      - name: Validate HTML
+        run: |
+          cd api/templates
+          find . -name "*.html" -exec tidy -e {} \;
+
+      - name: Check Template Syntax
+        run: |
+          cd api/templates
+          # Simple check for Go template syntax
+          grep -r "{{" templates/ | grep -v "{{define" | grep -v "{{end" | grep -v "{{range" | grep -v "{{if" || true

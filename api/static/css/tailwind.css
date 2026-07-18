@@ -207,6 +207,23 @@
         }
     }
 
+    .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--color-charcoal);
+    }
+
+     .form-input {
+        transition: all 0.2s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--color-resort-green);
+        box-shadow: 0 0 0 3px rgba(27, 94, 32, 0.15);
+    }
+
     .section-warm {
         background-color: var(--color-warm-sand);
     }
@@ -296,6 +313,10 @@
 
     .animate-slide-up {
         animation: slideUp 0.6s ease-out;
+    }
+
+    .shadow-soft {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
     }
 
     @keyframes fadeIn {
