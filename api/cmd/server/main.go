@@ -13,6 +13,14 @@ import (
 )
 
 func main() {
+	// Load configuration from environment (local development)
+	config, err := secrets.LoadConfigFromEnv()
+	if err != nil {
+		log.Printf("⚠️ Warning: Could not load config: %v", err)
+	}
+
+	log.Printf("📧 Contact form will send to: %s", config.Contact.RecipientEmail)
+
 	r := router.SetupRouter()
 
 	port := os.Getenv("PORT")

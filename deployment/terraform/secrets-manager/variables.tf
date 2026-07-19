@@ -1,141 +1,169 @@
 # ============================================
-# Variables for Root Module
+# Variables for Secrets Manager Module
 # ============================================
 
-variable "aws_region" {
-  description = "AWS region to deploy resources"
-  type        = string
-  default     = "ap-southeast-1"
-}
+variable "secrets" {
+  description = "Map of secrets to create in AWS Secrets Manager"
+  type = map(object({
+    value               = string
+    description         = optional(string)
+    rotation_days       = optional(number, 0)
+    schedule_expression = optional(string)
+  }))
+  default   = {}
+  sensitive = true
 
-variable "aws_profile" {
-  description = "AWS CLI profile name"
-  type        = string
-  default     = "default"
+  validation {
+    condition     = alltrue([for k, v in var.secrets : length(k) > 0])
+    error_message = "Secret names cannot be empty."
+  }
 }
 
 variable "environment" {
   description = "Environment name (dev, staging, prod)"
   type        = string
   default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, staging, prod."
+  }
 }
 
-# Variables for secrets (should be set in terraform.tfvars)
-variable "db_username" {
-  description = "Database username"
-  type        = string
-  sensitive   = true
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default = {
+    Project   = "default-project"
+    ManagedBy = "Terraform"
+    Service   = "SecretsManager"
+  }
 }
 
-variable "db_password" {
-  description = "Database password"
-  type        = string
-  sensitive   = true
+variable "recovery_window_days" {
+  description = "Number of days to retain secrets after deletion (7-30)"
+  type        = number
+  default     = 30
+
+  validation {
+    condition     = var.recovery_window_days >= 7 && var.recovery_window_days <= 30
+    error_message = "Recovery window days must be between 7 and 30."
+  }
 }
 
-variable "db_host" {
-  description = "Database host"
+variable "kms_key_id" {
+  description = "KMS key ID or ARN to use for encryption. If not provided, AWS managed key is used."
   type        = string
+  default     = null
 }
 
-variable "db_port" {
-  description = "Database port"
-  type        = string
-  default     = "5432"
+# IAM Configuration
+variable "create_iam_policy" {
+  description = "Whether to create an IAM policy for secret access"
+  type        = bool
+  default     = true
 }
 
-variable "db_name" {
-  description = "Database name"
-  type        = string
+variable "create_iam_role" {
+  description = "Whether to create an IAM role for secret access"
+  type        = bool
+  default     = true
 }
 
-variable "google_maps_api_key" {
-  description = "Google Maps API key"
+variable "create_instance_profile" {
+  description = "Whether to create an EC2 instance profile"
+  type        = bool
+  default     = true
+}
+
+variable "iam_policy_path" {
+  description = "Path for the IAM policy"
   type        = string
-  sensitive   = true
+  default     = "/"
+}
+
+variable "iam_role_path" {
+  description = "Path for the IAM role"
+  type        = string
+  default     = "/"
+}
+
+variable "allowed_services" {
+  description = "List of AWS services allowed to assume the IAM role"
+  type        = list(string)
+  default = [
+    "ec2.amazonaws.com",
+    "lambda.amazonaws.com",
+    "ecs-tasks.amazonaws.com",
+    "eks.amazonaws.com"
+  ]
+}
+
+# Rotation Configuration
+variable "rotation_lambda_arn" {
+  description = "ARN of the Lambda function for secret rotation"
+  type        = string
+  default     = null
+}
+
+# Monitoring Configuration
+variable "enable_monitoring" {
+  description = "Enable CloudWatch alarms for secret access"
+  type        = bool
+  default     = false
+}
+
+variable "alarm_threshold" {
+  description = "Threshold for CloudWatch alarm"
+  type        = number
+  default     = 10
+}
+
+variable "alarm_period" {
+  description = "Period for CloudWatch alarm in seconds"
+  type        = number
+  default     = 300
+}
+
+variable "alarm_evaluation_periods" {
+  description = "Number of evaluation periods for CloudWatch alarm"
+  type        = number
+  default     = 2
+}
+
+variable "alarm_comparison_operator" {
+  description = "Comparison operator for CloudWatch alarm"
+  type        = string
+  default     = "GreaterThanThreshold"
+}
+
+variable "alarm_actions" {
+  description = "List of actions to take when alarm triggers (e.g., SNS topics)"
+  type        = list(string)
+  default     = []
+}
+
+variable "ok_actions" {
+  description = "List of actions to take when alarm recovers"
+  type        = list(string)
+  default     = []
+}
+
+variable "insufficient_data_actions" {
+  description = "List of actions to take when alarm has insufficient data"
+  type        = list(string)
+  default     = []
+}
+
+# SNS Configuration
+variable "create_sns_topic" {
+  description = "Whether to create an SNS topic for alerts"
+  type        = bool
+  default     = false
+}
+
+variable "alert_email" {
+  description = "Email address for alert notifications"
+  type        = string
   default     = ""
-}
-
-variable "stripe_secret_key" {
-  description = "Stripe secret key"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "sendgrid_api_key" {
-  description = "SendGrid API key"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "smtp_host" {
-  description = "SMTP host"
-  type        = string
-  default     = ""
-}
-
-variable "smtp_port" {
-  description = "SMTP port"
-  type        = string
-  default     = "587"
-}
-
-variable "smtp_username" {
-  description = "SMTP username"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "smtp_password" {
-  description = "SMTP password"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "from_email" {
-  description = "From email address"
-  type        = string
-  default     = "noreply@yourvilla.com"
-}
-
-variable "admin_email" {
-  description = "Admin email address"
-  type        = string
-  default     = "admin@yourvilla.com"
-}
-
-variable "jwt_secret_key" {
-  description = "JWT secret key"
-  type        = string
-  sensitive   = true
-}
-
-variable "jwt_refresh_key" {
-  description = "JWT refresh key"
-  type        = string
-  sensitive   = true
-}
-
-variable "aws_access_key_id" {
-  description = "AWS access key ID"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "aws_secret_access_key" {
-  description = "AWS secret access key"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
-variable "s3_bucket_name" {
-  description = "S3 bucket name for static assets"
-  type        = string
-  default     = "chiang-mai-travel-assets"
 }

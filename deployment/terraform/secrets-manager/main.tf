@@ -1,171 +1,70 @@
 # ============================================
-# Root Terraform Configuration
-# For Chiang Mai Travel Website
+# AWS Secrets Manager Module
+# Standalone module for managing secrets
 # ============================================
 
-terraform {
-  required_version = ">= 1.0"
+# Create secrets in AWS Secrets Manager
+resource "aws_secretsmanager_secret" "secrets" {
+  for_each = var.secrets
 
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
+  name                    = each.key
+  description             = lookup(each.value, "description", "Secret for ${each.key}")
+  recovery_window_in_days = var.recovery_window_days
+  kms_key_id              = var.kms_key_id
+
+  # Enable automatic rotation if specified
+  dynamic "rotation_rules" {
+    for_each = lookup(each.value, "rotation_days", 0) > 0 ? [1] : []
+    content {
+      automatically_after_days = lookup(each.value, "rotation_days", 0)
+      schedule_expression      = lookup(each.value, "schedule_expression", null)
     }
   }
-}
 
-provider "aws" {
-  region = var.aws_region
-
-  # For production, use named profiles
-  # profile = var.aws_profile
-}
-
-# Backend configuration (using S3 for state storage)
-terraform {
-  backend "s3" {
-    bucket         = "chiang-mai-travel-terraform-state"
-    key            = "terraform.tfstate"
-    region         = "ap-southeast-1"
-    encrypt        = true
-    dynamodb_table = "terraform-state-lock"
-  }
-}
-
-# Local variables for common tags
-locals {
-  common_tags = {
-    Project     = "chiang-mai-travel"
+  tags = merge(var.tags, {
+    Name        = each.key
     Environment = var.environment
     ManagedBy   = "Terraform"
-    Repository  = "chiang-mai-travel-website"
+    Module      = "secrets-manager"
+  })
+
+  lifecycle {
+    ignore_changes = [
+      tags["LastUpdated"],
+    ]
+  }
+}
+
+# Store secret values
+resource "aws_secretsmanager_secret_version" "secret_values" {
+  for_each = var.secrets
+
+  secret_id = aws_secretsmanager_secret.secrets[each.key].id
+
+  # Convert the secret value to JSON string
+  secret_string = jsonencode({
+    value       = each.value.value
+    created_at  = timestamp()
+    environment = var.environment
+  })
+
+  lifecycle {
+    ignore_changes = [
+      secret_string,
+    ]
   }
 }
 
 # ============================================
-# Secrets Manager Module
+# IAM Policy for Reading Secrets
 # ============================================
 
-module "secrets" {
-  source = "./modules/secrets-manager"
+resource "aws_iam_policy" "secrets_reader" {
+  count = var.create_iam_policy ? 1 : 0
 
-  environment = var.environment
-  tags        = local.common_tags
-
-  # Enable monitoring for production
-  enable_monitoring = var.environment == "prod" ? true : false
-
-  # Alarm actions (SNS topics)
-  alarm_actions = var.environment == "prod" ? [aws_sns_topic.alerts[0].arn] : []
-  ok_actions    = var.environment == "prod" ? [aws_sns_topic.alerts[0].arn] : []
-
-  secrets = {
-    # Database secrets
-    "db/credentials" = {
-      value = jsonencode({
-        username = var.db_username
-        password = var.db_password
-        host     = var.db_host
-        port     = var.db_port
-        database = var.db_name
-      })
-      description   = "Database credentials for the travel website"
-      rotation_days = 30
-    }
-
-    # API Keys
-    "api/keys" = {
-      value = jsonencode({
-        google_maps_key   = var.google_maps_api_key
-        stripe_secret_key = var.stripe_secret_key
-        sendgrid_api_key  = var.sendgrid_api_key
-      })
-      description   = "API keys for third-party services"
-      rotation_days = 90
-    }
-
-    # Email configuration
-    "email/config" = {
-      value = jsonencode({
-        smtp_host     = var.smtp_host
-        smtp_port     = var.smtp_port
-        smtp_username = var.smtp_username
-        smtp_password = var.smtp_password
-        from_email    = var.from_email
-        admin_email   = var.admin_email
-      })
-      description   = "Email configuration for the website"
-      rotation_days = 90
-    }
-
-    # JWT secrets
-    "jwt/secrets" = {
-      value = jsonencode({
-        secret_key     = var.jwt_secret_key
-        refresh_key    = var.jwt_refresh_key
-        issuer         = "chiang-mai-travel-website"
-        expiry_minutes = 1440
-      })
-      description   = "JWT authentication secrets"
-      rotation_days = 180
-    }
-
-    # AWS credentials for application
-    "aws/credentials" = {
-      value = jsonencode({
-        access_key_id     = var.aws_access_key_id
-        secret_access_key = var.aws_secret_access_key
-        region            = var.aws_region
-        s3_bucket         = var.s3_bucket_name
-      })
-      description   = "AWS credentials for the application"
-      rotation_days = 90
-    }
-  }
-}
-
-# ============================================
-# SNS Topic for Alerts
-# ============================================
-
-resource "aws_sns_topic" "alerts" {
-  count = var.environment == "prod" ? 1 : 0
-
-  name = "chiang-mai-travel-alerts-${var.environment}"
-
-  tags = local.common_tags
-}
-
-# Optional: SNS subscription for email alerts
-resource "aws_sns_topic_subscription" "email_alerts" {
-  count = var.environment == "prod" && var.admin_email != "" ? 1 : 0
-
-  topic_arn = aws_sns_topic.alerts[0].arn
-  protocol  = "email"
-  endpoint  = var.admin_email
-}
-
-# ============================================
-# Outputs
-# ============================================
-
-output "secrets_info" {
-  description = "Information about the created secrets"
-  value = {
-    secret_names  = module.secrets.secret_names
-    secret_arns   = module.secrets.secret_arns
-    iam_role_arn  = module.secrets.secrets_role_arn
-    iam_role_name = module.secrets.secrets_role_name
-  }
-  sensitive = true
-}
-
-# ============================================
-# Golang Application IAM Policy (Example)
-# ============================================
-
-resource "aws_iam_policy" "app_secrets_policy" {
-  name = "chiang-mai-travel-app-secrets-${var.environment}"
+  name        = "${var.environment}-secrets-reader-policy"
+  description = "Policy to read secrets from AWS Secrets Manager"
+  path        = var.iam_policy_path
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -174,12 +73,137 @@ resource "aws_iam_policy" "app_secrets_policy" {
         Effect = "Allow"
         Action = [
           "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:ListSecretVersionIds",
+          "secretsmanager:GetResourcePolicy",
+          "secretsmanager:GetSecretRotationPolicy"
         ]
-        Resource = module.secrets.secret_arns[*].arn
+        Resource = [
+          for secret in aws_secretsmanager_secret.secrets : secret.arn
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetRandomPassword"
+        ]
+        Resource = ["*"]
       }
     ]
   })
 
-  tags = local.common_tags
+  tags = var.tags
+}
+
+# ============================================
+# IAM Role for Secret Access
+# ============================================
+
+resource "aws_iam_role" "secrets_reader_role" {
+  count = var.create_iam_role ? 1 : 0
+
+  name = "${var.environment}-secrets-reader-role"
+  path = var.iam_role_path
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = var.allowed_services
+        }
+      }
+    ]
+  })
+
+  tags = var.tags
+}
+
+# Attach the secrets reader policy to the role
+resource "aws_iam_role_policy_attachment" "secrets_reader_attachment" {
+  count = var.create_iam_role && var.create_iam_policy ? 1 : 0
+
+  role       = aws_iam_role.secrets_reader_role[0].name
+  policy_arn = aws_iam_policy.secrets_reader[0].arn
+}
+
+# Create instance profile for EC2
+resource "aws_iam_instance_profile" "secrets_reader_profile" {
+  count = var.create_iam_role && var.create_instance_profile ? 1 : 0
+
+  name = "${var.environment}-secrets-reader-profile"
+  role = aws_iam_role.secrets_reader_role[0].name
+
+  tags = var.tags
+}
+
+# ============================================
+# Secret Rotation (Optional)
+# ============================================
+
+resource "aws_secretsmanager_secret_rotation" "rotation" {
+  for_each = {
+    for k, v in var.secrets : k => v
+    if lookup(v, "rotation_days", 0) > 0 && var.rotation_lambda_arn != null
+  }
+
+  secret_id = aws_secretsmanager_secret.secrets[each.key].id
+
+  rotation_lambda_arn = var.rotation_lambda_arn
+
+  rotation_rules {
+    automatically_after_days = lookup(each.value, "rotation_days", 0)
+    schedule_expression      = lookup(each.value, "schedule_expression", null)
+  }
+}
+
+# ============================================
+# CloudWatch Monitoring
+# ============================================
+
+resource "aws_cloudwatch_metric_alarm" "secret_access_alarm" {
+  count = var.enable_monitoring ? length(aws_secretsmanager_secret.secrets) : 0
+
+  alarm_name          = "${var.environment}-secret-access-${values(aws_secretsmanager_secret.secrets)[count.index].name}"
+  comparison_operator = var.alarm_comparison_operator
+  evaluation_periods  = var.alarm_evaluation_periods
+  metric_name         = "GetSecretValue"
+  namespace           = "AWS/SecretsManager"
+  period              = var.alarm_period
+  statistic           = "Sum"
+  threshold           = var.alarm_threshold
+  alarm_description   = "Secret access alarm for ${values(aws_secretsmanager_secret.secrets)[count.index].name}"
+  treat_missing_data  = "notBreaching"
+
+  dimensions = {
+    SecretName = values(aws_secretsmanager_secret.secrets)[count.index].name
+  }
+
+  alarm_actions             = var.alarm_actions
+  ok_actions                = var.ok_actions
+  insufficient_data_actions = var.insufficient_data_actions
+
+  tags = var.tags
+}
+
+# ============================================
+# SNS Topic for Alerts (Optional)
+# ============================================
+
+resource "aws_sns_topic" "secrets_alerts" {
+  count = var.create_sns_topic ? 1 : 0
+
+  name = "${var.environment}-secrets-alerts"
+
+  tags = var.tags
+}
+
+resource "aws_sns_topic_subscription" "email_alerts" {
+  count = var.create_sns_topic && var.alert_email != "" ? 1 : 0
+
+  topic_arn = aws_sns_topic.secrets_alerts[0].arn
+  protocol  = "email"
+  endpoint  = var.alert_email
 }

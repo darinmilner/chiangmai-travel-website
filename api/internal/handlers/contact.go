@@ -9,6 +9,8 @@ import (
 	"os"
 	"time"
 
+	"api/internal/secrets"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -41,7 +43,6 @@ func ContactForm(c *gin.Context) {
 
 	// Check honeypot
 	if req.Website != "" {
-		// Silently succeed - likely a bot
 		c.JSON(http.StatusOK, ContactResponse{
 			Success: true,
 			Message: "Thank you for your message! We'll get back to you soon.",
@@ -58,8 +59,19 @@ func ContactForm(c *gin.Context) {
 		return
 	}
 
+	// Get contact configuration
+	config, err := getContactConfig()
+	if err != nil {
+		log.Printf("❌ Error loading config: %v", err)
+		c.JSON(http.StatusInternalServerError, ContactResponse{
+			Success: false,
+			Message: "Unable to send message. Please try again later.",
+		})
+		return
+	}
+
 	// Send to Lambda via API Gateway
-	if err := sendToLambda(req); err != nil {
+	if err := sendToLambda(req, config.APIURL); err != nil {
 		log.Printf("❌ Error sending to Lambda: %v", err)
 		c.JSON(http.StatusInternalServerError, ContactResponse{
 			Success: false,
@@ -74,13 +86,26 @@ func ContactForm(c *gin.Context) {
 	})
 }
 
+// getContactConfig loads contact configuration
+func getContactConfig() (*secrets.ContactConfig, error) {
+	// Try to get from secrets manager first
+	sm, err := secrets.NewSecretManager()
+	if err == nil {
+		config, err := sm.GetContactConfig()
+		if err == nil {
+			return config, nil
+		}
+	}
+
+	// Fallback to environment variables
+	return secrets.LoadConfigFromEnv()
+}
+
 // sendToLambda sends the contact data to AWS Lambda via API Gateway
-func sendToLambda(req ContactRequest) error {
-	// Get API Gateway URL from environment
-	apiURL := os.Getenv("CONTACT_API_URL")
-	if apiURL == "" {
-		// Fallback for development - log the message
-		log.Printf("📧 Contact message (dev mode):\n")
+func sendToLambda(req ContactRequest, apiURL string) error {
+	// If no API URL is provided, log the message (development mode)
+	if apiURL == "" || apiURL == "https://your-api-gateway-url.com/contact" {
+		log.Printf("📧 Contact message (dev mode):")
 		log.Printf("   Name: %s", req.Name)
 		log.Printf("   Email: %s", req.Email)
 		log.Printf("   Phone: %s", req.Phone)

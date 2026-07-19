@@ -1,30 +1,74 @@
 package secrets
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/secretsmanager"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
+
+// SecretManagerInterface defines the interface for Secrets Manager operations
+type SecretManagerInterface interface {
+	GetSecret(secretName string) (string, error)
+	GetSecretJSON(secretName string, target interface{}) error
+	GetContactConfig() (*ContactConfig, error)
+}
+
+// ContactConfig holds the configuration for the contact form
+type ContactConfig struct {
+	RecipientEmail string `json:"recipient_email"`
+	SenderEmail    string `json:"sender_email"`
+	APIURL         string `json:"api_url"`
+}
+
+// AppConfig holds all application configuration from secrets
+type AppConfig struct {
+	Contact ContactConfig `json:"contact"`
+}
 
 // SecretManager handles AWS Secrets Manager operations
 type SecretManager struct {
-	client *secretsmanager.SecretsManager
+	client *secretsmanager.Client
+	ctx    context.Context
 }
 
 // NewSecretManager creates a new SecretManager instance
 func NewSecretManager() (*SecretManager, error) {
-	sess, err := session.NewSession()
+	ctx := context.Background()
+
+	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS session: %w", err)
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	client := secretsmanager.New(sess)
-	return &SecretManager{client: client}, nil
+	client := secretsmanager.NewFromConfig(cfg)
+
+	return &SecretManager{
+		client: client,
+		ctx:    ctx,
+	}, nil
+}
+
+// NewSecretManagerWithRegion creates a new SecretManager with specific region
+func NewSecretManagerWithRegion(region string) (*SecretManager, error) {
+	ctx := context.Background()
+
+	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
+	if err != nil {
+		return nil, fmt.Errorf("failed to load AWS config: %w", err)
+	}
+
+	client := secretsmanager.NewFromConfig(cfg)
+
+	return &SecretManager{
+		client: client,
+		ctx:    ctx,
+	}, nil
 }
 
 // GetSecret retrieves a secret value from AWS Secrets Manager
@@ -33,7 +77,7 @@ func (sm *SecretManager) GetSecret(secretName string) (string, error) {
 		SecretId: aws.String(secretName),
 	}
 
-	result, err := sm.client.GetSecretValue(input)
+	result, err := sm.client.GetSecretValue(sm.ctx, input)
 	if err != nil {
 		return "", fmt.Errorf("failed to get secret %s: %w", secretName, err)
 	}
@@ -55,55 +99,68 @@ func (sm *SecretManager) GetSecretJSON(secretName string, target interface{}) er
 	return json.Unmarshal([]byte(secretString), target)
 }
 
-// DatabaseConfig represents database configuration from secrets
-type DatabaseConfig struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Host     string `json:"host"`
-	Port     string `json:"port"`
-	Database string `json:"database"`
-}
+// GetContactConfig retrieves contact configuration from secrets
+func (sm *SecretManager) GetContactConfig() (*ContactConfig, error) {
+	var config ContactConfig
 
-// GetDatabaseConfig retrieves database configuration from secrets
-func (sm *SecretManager) GetDatabaseConfig() (*DatabaseConfig, error) {
-	var config DatabaseConfig
-	err := sm.GetSecretJSON("db/credentials", &config)
-	if err != nil {
-		return nil, err
+	// Try to get from secrets first
+	err := sm.GetSecretJSON("contact/config", &config)
+	if err == nil {
+		return &config, nil
 	}
+
+	// Fallback to environment variables
+	config.RecipientEmail = os.Getenv("RECIPIENT_EMAIL")
+	config.SenderEmail = os.Getenv("SENDER_EMAIL")
+	config.APIURL = os.Getenv("CONTACT_API_URL")
+
+	// If still empty, use defaults (local development)
+	if config.RecipientEmail == "" {
+		config.RecipientEmail = "admin@yourvilla.com"
+	}
+	if config.SenderEmail == "" {
+		config.SenderEmail = "noreply@yourvilla.com"
+	}
+	if config.APIURL == "" {
+		config.APIURL = "https://your-api-gateway-url.com/contact"
+	}
+
 	return &config, nil
 }
 
-// GetConnectionString returns a PostgreSQL connection string
-func (sm *SecretManager) GetConnectionString() (string, error) {
-	config, err := sm.GetDatabaseConfig()
-	if err != nil {
-		return "", err
+// LoadConfigFromEnv loads configuration from environment variables (for local development)
+func LoadConfigFromEnv() (*AppConfig, error) {
+	config := &AppConfig{
+		Contact: ContactConfig{
+			RecipientEmail: os.Getenv("RECIPIENT_EMAIL"),
+			SenderEmail:    os.Getenv("SENDER_EMAIL"),
+			APIURL:         os.Getenv("CONTACT_API_URL"),
+		},
 	}
 
-	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=require",
-		config.Host, config.Port, config.Username, config.Password, config.Database,
-	), nil
+	// Set defaults if not provided
+	if config.Contact.RecipientEmail == "" {
+		config.Contact.RecipientEmail = "admin@yourvilla.com"
+	}
+	if config.Contact.SenderEmail == "" {
+		config.Contact.SenderEmail = "noreply@yourvilla.com"
+	}
+	if config.Contact.APIURL == "" {
+		config.Contact.APIURL = "https://your-api-gateway-url.com/contact"
+	}
+
+	log.Printf("📧 Contact config loaded:")
+	log.Printf("   Recipient: %s", config.Contact.RecipientEmail)
+	log.Printf("   Sender: %s", config.Contact.SenderEmail)
+	log.Printf("   API URL: %s", config.Contact.APIURL)
+
+	return config, nil
 }
 
-// LoadSecretsFromEnv loads secrets from environment (for local development)
-func LoadSecretsFromEnv() error {
-	// This is a fallback for local development
-	// In production, use AWS Secrets Manager
-	requiredSecrets := []string{
-		"DB_USERNAME",
-		"DB_PASSWORD",
-		"DB_HOST",
-		"DB_NAME",
-		"JWT_SECRET_KEY",
+// GetEnv gets an environment variable with a default fallback
+func GetEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
 	}
-
-	for _, secret := range requiredSecrets {
-		if os.Getenv(secret) == "" {
-			log.Printf("⚠️ Warning: %s environment variable is not set", secret)
-		}
-	}
-
-	return nil
+	return defaultValue
 }
