@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"api/internal/router"
+	"api/internal/secrets"
 )
 
 func main() {

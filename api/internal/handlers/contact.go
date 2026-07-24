@@ -6,35 +6,21 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
+	"api/internal/models"
 	"api/internal/secrets"
 
 	"github.com/gin-gonic/gin"
 )
 
-type ContactRequest struct {
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Phone   string `json:"phone"`
-	Subject string `json:"subject"`
-	Message string `json:"message"`
-	Website string `json:"website"` // Honeypot
-}
-
-type ContactResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-}
-
 // ContactForm handles the contact form submission
 func ContactForm(c *gin.Context) {
-	var req ContactRequest
+	var req models.ContactRequest
 
 	// Parse JSON request
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, ContactResponse{
+		c.JSON(http.StatusBadRequest, models.ContactResponse{
 			Success: false,
 			Message: "Invalid request format",
 		})
@@ -43,7 +29,7 @@ func ContactForm(c *gin.Context) {
 
 	// Check honeypot
 	if req.Website != "" {
-		c.JSON(http.StatusOK, ContactResponse{
+		c.JSON(http.StatusOK, models.ContactResponse{
 			Success: true,
 			Message: "Thank you for your message! We'll get back to you soon.",
 		})
@@ -52,7 +38,7 @@ func ContactForm(c *gin.Context) {
 
 	// Validate required fields
 	if req.Name == "" || req.Email == "" || req.Subject == "" || req.Message == "" {
-		c.JSON(http.StatusBadRequest, ContactResponse{
+		c.JSON(http.StatusBadRequest, models.ContactResponse{
 			Success: false,
 			Message: "All fields except phone are required",
 		})
@@ -63,7 +49,7 @@ func ContactForm(c *gin.Context) {
 	config, err := getContactConfig()
 	if err != nil {
 		log.Printf("❌ Error loading config: %v", err)
-		c.JSON(http.StatusInternalServerError, ContactResponse{
+		c.JSON(http.StatusInternalServerError, models.ContactResponse{
 			Success: false,
 			Message: "Unable to send message. Please try again later.",
 		})
@@ -73,14 +59,14 @@ func ContactForm(c *gin.Context) {
 	// Send to Lambda via API Gateway
 	if err := sendToLambda(req, config.APIURL); err != nil {
 		log.Printf("❌ Error sending to Lambda: %v", err)
-		c.JSON(http.StatusInternalServerError, ContactResponse{
+		c.JSON(http.StatusInternalServerError, models.ContactResponse{
 			Success: false,
 			Message: "Unable to send message. Please try again later.",
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, ContactResponse{
+	c.JSON(http.StatusOK, models.ContactResponse{
 		Success: true,
 		Message: "Thank you for your message! We'll get back to you within 24 hours.",
 	})
@@ -98,11 +84,17 @@ func getContactConfig() (*secrets.ContactConfig, error) {
 	}
 
 	// Fallback to environment variables
-	return secrets.LoadConfigFromEnv()
+	appConfig, err := secrets.LoadConfigFromEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the ContactConfig from AppConfig
+	return &appConfig.Contact, nil
 }
 
 // sendToLambda sends the contact data to AWS Lambda via API Gateway
-func sendToLambda(req ContactRequest, apiURL string) error {
+func sendToLambda(req models.ContactRequest, apiURL string) error {
 	// If no API URL is provided, log the message (development mode)
 	if apiURL == "" || apiURL == "https://your-api-gateway-url.com/contact" {
 		log.Printf("📧 Contact message (dev mode):")

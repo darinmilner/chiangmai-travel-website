@@ -54,6 +54,60 @@ variable "recovery_window_days" {
 variable "kms_key_id" {
   description = "KMS key ID or ARN to use for encryption. If not provided, AWS managed key is used."
   type        = string
+}
+
+variable "secrets" {
+  description = "Map of secrets to create in AWS Secrets Manager"
+  type = map(object({
+    value               = string
+    description         = optional(string)
+    rotation_days       = optional(number, 0)
+    schedule_expression = optional(string)
+  }))
+  default   = {}
+  sensitive = true
+
+  validation {
+    condition     = alltrue([for k, v in var.secrets : length(k) > 0])
+    error_message = "Secret names cannot be empty."
+  }
+}
+
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, staging, prod."
+  }
+}
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default = {
+    Project   = "chiang-mai-travel"
+    ManagedBy = "Terraform"
+    Service   = "SecretsManager"
+  }
+}
+
+variable "recovery_window_days" {
+  description = "Number of days to retain secrets after deletion (7-30)"
+  type        = number
+  default     = 30
+
+  validation {
+    condition     = var.recovery_window_days >= 7 && var.recovery_window_days <= 30
+    error_message = "Recovery window days must be between 7 and 30."
+  }
+}
+
+variable "kms_key_id" {
+  description = "KMS key ID or ARN to use for encryption. If not provided, AWS managed key is used."
+  type        = string
   default     = null
 }
 
@@ -94,8 +148,7 @@ variable "allowed_services" {
   default = [
     "ec2.amazonaws.com",
     "lambda.amazonaws.com",
-    "ecs-tasks.amazonaws.com",
-    "eks.amazonaws.com"
+    "ecs-tasks.amazonaws.com"
   ]
 }
 

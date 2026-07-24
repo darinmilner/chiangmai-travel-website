@@ -12,13 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
-// SecretManagerInterface defines the interface for Secrets Manager operations
-type SecretManagerInterface interface {
-	GetSecret(secretName string) (string, error)
-	GetSecretJSON(secretName string, target interface{}) error
-	GetContactConfig() (*ContactConfig, error)
-}
-
 // ContactConfig holds the configuration for the contact form
 type ContactConfig struct {
 	RecipientEmail string `json:"recipient_email"`
@@ -42,23 +35,6 @@ func NewSecretManager() (*SecretManager, error) {
 	ctx := context.Background()
 
 	cfg, err := config.LoadDefaultConfig(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := secretsmanager.NewFromConfig(cfg)
-
-	return &SecretManager{
-		client: client,
-		ctx:    ctx,
-	}, nil
-}
-
-// NewSecretManagerWithRegion creates a new SecretManager with specific region
-func NewSecretManagerWithRegion(region string) (*SecretManager, error) {
-	ctx := context.Background()
-
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(region))
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
@@ -114,7 +90,6 @@ func (sm *SecretManager) GetContactConfig() (*ContactConfig, error) {
 	config.SenderEmail = os.Getenv("SENDER_EMAIL")
 	config.APIURL = os.Getenv("CONTACT_API_URL")
 
-	// If still empty, use defaults (local development)
 	if config.RecipientEmail == "" {
 		config.RecipientEmail = "admin@yourvilla.com"
 	}
@@ -138,7 +113,6 @@ func LoadConfigFromEnv() (*AppConfig, error) {
 		},
 	}
 
-	// Set defaults if not provided
 	if config.Contact.RecipientEmail == "" {
 		config.Contact.RecipientEmail = "admin@yourvilla.com"
 	}

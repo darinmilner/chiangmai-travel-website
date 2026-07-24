@@ -1,9 +1,5 @@
-provider "aws" {
-  region = var.region
-}
-
 module "backend" {
-  source      = "./modules/backend"
+  source      = "./backend"
   aws_region  = var.region
   common_tags = local.common_tags
   bucket_name = local.bucket_name
@@ -13,7 +9,7 @@ module "backend" {
 }
 
 module "github_role" {
-  source      = "./modules/github-roles"
+  source      = "./github-roles"
   app_name    = local.app_name
   github_repo = var.github_repo_name
   use_kms     = local.use_kms
