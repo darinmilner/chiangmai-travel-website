@@ -1,190 +1,221 @@
-name: 🚀 Deploy Lambda
+name: Deploy Lambdas with Terraform
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment'
-        required: true
-        default: 'staging'
+        description: "Deployment Environment"
         type: choice
         options:
+          - dev
           - staging
           - production
-      run_tests:
-        description: 'Run tests'
+        default: staging
         required: true
-        default: true
+      deploy:
+        description: 'Deploy to AWS'
         type: boolean
+        default: true
+  pull_request:
+    branches: [ main, develop ]
+    types: [ opened, synchronize, reopened ]
+  release:
+    types: [ published ]
 
 env:
-  AWS_REGION_BANGKOK: ap-southeast-7
-  AWS_REGION_SINGAPORE: ap-southeast-1
-  PROJECT_NAME: travel-contact
+  AWS_REGION: ap-southeast-7
+  TERRAFORM_VERSION: 1.15.8
+  PYTHON_VERSION: '3.14'
 
 jobs:
-  test:
-    name: 🧪 Test Lambda
+  test-and-package:
+    name: Test and Package Lambdas
     runs-on: ubuntu-latest
-    if: inputs.run_tests == true
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install Dependencies
-        run: |
-          cd deployment/terraform/travel-contact/lambda/src
-          pip install -r requirements-test.txt
-          pip install -r requirements.txt
-
-      - name: Run Tests
-        run: |
-          cd deployment/terraform/travel-contact/lambda/src
-          pytest tests/ -v --cov=src --cov-report=term
-
-  build:
-    name: 📦 Build Lambda
-    runs-on: ubuntu-latest
-    needs: test
-    if: always() && (needs.test.result == 'success' || inputs.run_tests == false)
-    timeout-minutes: 10
     outputs:
-      package_hash: ${{ steps.hash.outputs.hash }}
+      lambda_version: ${{ steps.set-version.outputs.lambda_version }}
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.14'
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
-      - name: Build Lambda Package
+      - name: Install Python dependencies for Lambdas
         run: |
-          cd backend/lambda
-          pip install -r requirements.txt
-          python3 build.py
+          for lambda in lambdas/*/; do
+            if [ -f "$lambda/requirements.txt" ]; then
+              pip install -r "$lambda/requirements.txt" -t "$lambda"
+            fi
+          done
 
-      - name: Calculate Package Hash
-        id: hash
+      - name: Run Python Lambda tests
         run: |
-          cd backend/lambda
-          echo "hash=$(sha256sum dist/lambda-function.zip | cut -d' ' -f1)" >> $GITHUB_OUTPUT
+          pip install pytest pytest-cov
+          for lambda in lambdas/*/; do
+            if [ -d "$lambda/tests" ]; then
+              pytest "$lambda/tests" -v --cov=. --cov-report=term
+            fi
+          done
 
-      - name: Upload Lambda Package
+      - name: Package Python Lambdas
+        run: |
+          mkdir -p deployment/packages
+          for lambda in lambdas/*/; do
+            lambda_name=$(basename "$lambda")
+            cd "$lambda"
+            rm -rf tests __pycache__ *.pyc .pytest_cache .coverage
+            zip -r "../../deployment/packages/${lambda_name}.zip" . -x "*.git*" "*__pycache__*" "*.pyc" "*.pytest_cache*" "*.coverage*"
+            cd ../..
+          done
+
+      - name: Upload Lambda packages
         uses: actions/upload-artifact@v4
         with:
-          name: lambda-package
-          path: backend/lambda/dist/lambda-function.zip
+          name: lambda-packages
+          path: deployment/packages/*.zip
           retention-days: 7
 
-  deploy:
-    name: 🚀 Deploy Lambda
+      - name: Set version
+        id: set-version
+        run: |
+          echo "lambda_version=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+  terraform-plan:
+    name: Terraform Plan (PR only)
     runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: ${{ inputs.environment }}
+    needs: test-and-package
+    if: github.event_name == 'pull_request'
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download Lambda Package
+      - name: Download Lambda packages
         uses: actions/download-artifact@v4
         with:
-          name: lambda-package
-          path: backend/lambda/dist/
+          name: lambda-packages
+          path: deployment/packages/
 
-      - name: Configure AWS Credentials
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION_BANGKOK }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Deploy Lambda Function
+      - name: Terraform Init
+        working-directory: deployment/terraform/travel-contact
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        working-directory: deployment/terraform/travel-contact
+        run: terraform plan -no-color
+        env:
+          TF_VAR_lambda_version: ${{ needs.test-and-package.outputs.lambda_version }}
+          TF_VAR_environment: staging
+        continue-on-error: true
+
+      - name: Install GitHub CLI
         run: |
-          FUNCTION_NAME="${{ env.PROJECT_NAME }}-contact-form"
-          echo "📦 Updating Lambda: $FUNCTION_NAME"
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh
 
-          # Update function code
-          aws lambda update-function-code \
-            --function-name $FUNCTION_NAME \
-            --zip-file fileb://backend/lambda/dist/lambda-function.zip
-
-          # Wait for update to complete
-          aws lambda wait function-updated \
-            --function-name $FUNCTION_NAME
-
-          # Get function info
-          aws lambda get-function \
-            --function-name $FUNCTION_NAME \
-            --query 'Configuration.[FunctionName,Runtime,LastModified]' \
-            --output table
-
-      - name: Update Lambda Environment Variables
+      - name: Generate and post Terraform Plan comment
+        env:
+          PLAN_OUTPUT: ${{ steps.plan.outputs.stdout }}
+          PLAN_ERROR: ${{ steps.plan.outputs.stderr }}
         run: |
-          FUNCTION_NAME="${{ env.PROJECT_NAME }}-contact-form"
+          python3 .github/scripts/terraform_comment.py plan /tmp/comment.txt
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/comment.txt
 
-          aws lambda update-function-configuration \
-            --function-name $FUNCTION_NAME \
-            --environment "Variables={ \
-              SES_SOURCE_EMAIL=${{ secrets.SES_SOURCE_EMAIL }}, \
-              SES_DESTINATION_EMAIL=${{ secrets.SES_DESTINATION_EMAIL }}, \
-              SES_REGION=${{ env.AWS_REGION_SINGAPORE }}, \
-              AWS_REGION=${{ env.AWS_REGION_BANGKOK }}, \
-              ENVIRONMENT=${{ inputs.environment }} \
-            }"
+  terraform-deploy:
+    name: Terraform Deploy
+    runs-on: ubuntu-latest
+    needs: test-and-package
+    if: |
+      (github.event_name == 'release' && github.event.action == 'published') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.deploy == 'true')
+    environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'production' }}
+    permissions:
+      id-token: write
+      contents: read
 
-      - name: Create Deployment Summary
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Lambda packages
+        uses: actions/download-artifact@v4
+        with:
+          name: lambda-packages
+          path: deployment/packages/
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform Init
+        working-directory: deployment/terraform/travel-contact
+        run: terraform init
+
+      - name: Terraform Plan
+        working-directory: deployment/terraform/travel-contact
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_lambda_version: ${{ needs.test-and-package.outputs.lambda_version }}
+          TF_VAR_environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'production' }}
+
+      - name: Terraform Apply
+        working-directory: deployment/terraform/travel-contact
+        run: terraform apply tfplan
+        env:
+          TF_VAR_lambda_version: ${{ needs.test-and-package.outputs.lambda_version }}
+          TF_VAR_environment: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'production' }}
+
+      - name: Get Terraform Outputs
+        id: terraform_outputs
+        working-directory: deployment/terraform/travel-contact
         run: |
-          cat << EOF >> $GITHUB_STEP_SUMMARY
-          ## ✅ Lambda Deployment Complete
+          echo "lambda_names=$(terraform output -json lambda_function_names)" >> $GITHUB_OUTPUT
+          echo "lambda_arns=$(terraform output -json lambda_function_arns)" >> $GITHUB_OUTPUT
 
-          ### 📋 Details
-          | Property | Value |
-          |----------|-------|
-          | Environment | ${{ inputs.environment }} |
-          | Deployed At | $(date -u +'%Y-%m-%d %H:%M:%S UTC') |
-          | Triggered By | ${{ github.actor }} |
-          | Commit | ${{ github.sha }} |
-          | Package Hash | ${{ needs.build.outputs.package_hash }} |
-
-          ### 🌐 Regions
-          - Lambda: ${{ env.AWS_REGION_BANGKOK }}
-          - SES: ${{ env.AWS_REGION_SINGAPORE }}
-          EOF
-
-      - name: Smoke Test
+      - name: Install GitHub CLI
+        if: github.event_name == 'pull_request'
         run: |
-          echo "🔍 Running smoke test..."
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh
 
-          # Get API URL from Terraform output or construct it
-          API_URL="https://${{ secrets.API_ID }}.execute-api.${{ env.AWS_REGION_BANGKOK }}.amazonaws.com/${{ inputs.environment }}/contact"
-
-          # Test the endpoint
-          RESPONSE=$(curl -s -X POST $API_URL \
-            -H "Content-Type: application/json" \
-            -d '{
-              "name": "Smoke Test",
-              "email": "smoke-test@example.com",
-              "subject": "Smoke Test from GitHub Actions",
-              "message": "This is a smoke test to verify the Lambda deployment."
-            }')
-
-          echo "Response: $RESPONSE"
-
-          if echo "$RESPONSE" | grep -q '"success":true'; then
-            echo "✅ Smoke test passed!"
-          else
-            echo "❌ Smoke test failed!"
-            exit 1
-          fi
+      - name: Post deployment success comment
+        if: success() && github.event_name == 'pull_request'
+        env:
+          LAMBDA_NAMES: ${{ steps.terraform_outputs.outputs.lambda_names }}
+          LAMBDA_ARNS: ${{ steps.terraform_outputs.outputs.lambda_arns }}
+          ENVIRONMENT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment || 'production' }}
+          LAMBDA_VERSION: ${{ needs.test-and-package.outputs.lambda_version }}
+        run: |
+          python3 .github/scripts/terraform_comment.py deploy /tmp/deploy_comment.txt
+          gh pr comment ${{ github.event.pull_request.number }} --body-file /tmp/deploy_comment.txt

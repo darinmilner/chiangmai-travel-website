@@ -1,6 +1,6 @@
 # SES Module (Singapore region)
 module "ses" {
-  source = "./modules/ses"
+  source = "./ses"
   providers = {
     aws = aws.singapore
   }
@@ -20,7 +20,7 @@ module "ses" {
 
 # Lambda Module (Bangkok region)
 module "lambda" {
-  source = "./modules/lambda"
+  source = "./lambda"
   providers = {
     aws = aws.bangkok
   }
@@ -43,7 +43,7 @@ module "lambda" {
 
 # API Gateway Module (Bangkok region)
 module "api_gateway" {
-  source = "./modules/api_gateway"
+  source = "./api-gateway"
   providers = {
     aws = aws.bangkok
   }

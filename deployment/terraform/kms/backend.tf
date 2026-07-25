@@ -1,8 +1,7 @@
-# backend.tf
 terraform {
   backend "s3" {
     bucket = "chiangmaivilla-backendfiles-apsoutheast7-beta"
-    key    = "statefiles/terraform.tfstate"
+    key    = "statefiles/kms/terraform.tfstate"
     region = "ap-southeast-7"
   }
 
@@ -12,8 +11,4 @@ terraform {
       version = "~> 6.0"
     }
   }
-}
-
-provider "aws" {
-  region = var.region
 }
