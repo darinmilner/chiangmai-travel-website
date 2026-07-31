@@ -41,6 +41,7 @@ func HealthCheck(c *gin.Context) {
 
 func HomePage(c *gin.Context) {
 	HomepageData.ActivePage = "home"
+	HomepageData.PageContent = "index-content"
 	c.HTML(http.StatusOK, "index.html", HomepageData)
 }
 

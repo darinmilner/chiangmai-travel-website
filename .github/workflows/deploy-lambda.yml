@@ -8,9 +8,9 @@ on:
         type: choice
         options:
           - dev
-          - staging
+          - beta
           - production
-        default: staging
+        default: beta
         required: true
       deploy:
         description: 'Deploy to AWS'

@@ -53,42 +53,89 @@
             Take a tour of our private villa
         </p>
 
-        <!-- Carousel Container -->
-        <div id="villa-gallery" data-images='{{ .ImagesJSON }}'>
-            <div class="carousel-container max-w-4xl mx-auto">
-                <div class="carousel-wrapper relative rounded-xl overflow-hidden shadow-lg" style="height:500px;">
-                    <!-- Slides Wrapper - this slides horizontally -->
-                    <div class="carousel-slides-wrapper" style="display:flex;transition:transform 0.8s ease-in-out;height:100%;">
-                        <!-- Slides will be inserted by JavaScript -->
-                    </div>
+        <!-- Carousel -->
+        <div class="max-w-4xl mx-auto" x-data="{
+            currentSlide: 0,
+            timer: null,
+            slides: {{ .ImagesJSON }},
+            init() {
+                this.startTimer();
+            },
+            startTimer() {
+                if (this.timer) clearInterval(this.timer);
+                this.timer = setInterval(() => {
+                    this.next();
+                }, 5000);
+            },
+            stopTimer() {
+                clearInterval(this.timer);
+            },
+            next() {
+                this.currentSlide = (this.currentSlide + 1) % this.slides.length;
+            },
+            prev() {
+                this.currentSlide = (this.currentSlide - 1 + this.slides.length) % this.slides.length;
+            },
+            goTo(index) {
+                this.currentSlide = index;
+                this.stopTimer();
+                this.startTimer();
+            }
+        }"
+        @mouseenter="stopTimer()"
+        @mouseleave="startTimer()">
 
-                    <!-- Left Arrow -->
-                    <button class="carousel-prev absolute left-4 top-1/2 -translate-y-1/2 z-30
-                                   w-12 h-12 rounded-full bg-white/80 hover:bg-white
-                                   shadow-lg flex items-center justify-center transition-all duration-200">
-                        <i class="fas fa-chevron-left text-gray-700 text-xl"></i>
-                    </button>
+<div class="max-w-4xl mx-auto" x-data="...">
 
-                    <!-- Right Arrow -->
-                    <button class="carousel-next absolute right-4 top-1/2 -translate-y-1/2 z-30
-                                   w-12 h-12 rounded-full bg-white/80 hover:bg-white
-                                   shadow-lg flex items-center justify-center transition-all duration-200">
-                        <i class="fas fa-chevron-right text-gray-700 text-xl"></i>
-                    </button>
+    <!-- Main Carousel -->
+    <div class="relative rounded-xl overflow-hidden shadow-lg"
+         style="height:500px;">
 
-                    <!-- Counter -->
-                    <div id="carousel-counter" class="absolute top-4 left-4 z-30
-                                bg-black/60 text-white px-3 py-1 rounded-full text-sm">
-                        1 / 1
-                    </div>
-                </div>
+        <!-- Slides -->
+        <template x-for="(slide,index) in slides" :key="index">
+            <div
+                x-show="currentSlide === index"
+                x-transition.opacity
+                class="absolute inset-0">
 
-                <!-- Dots Navigation -->
-                <div class="carousel-dots flex justify-center mt-4 gap-2"></div>
+                <img
+                    :src="slide"
+                    class="w-full h-full object-cover"
+                    alt="">
             </div>
+        </template>
+
+        <!-- LEFT ARROW -->
+        <button
+            @click="prev()"
+            class="absolute left-4 top-1/2 -translate-y-1/2 z-30
+                   w-12 h-12 rounded-full
+                   bg-white/80 hover:bg-white
+                   shadow-lg flex items-center justify-center">
+
+            <i class="fas fa-chevron-left"></i>
+        </button>
+
+        <!-- RIGHT ARROW -->
+        <button
+            @click="next()"
+            class="absolute right-4 top-1/2 -translate-y-1/2 z-30
+                   w-12 h-12 rounded-full
+                   bg-white/80 hover:bg-white
+                   shadow-lg flex items-center justify-center">
+
+            <i class="fas fa-chevron-right"></i>
+        </button>
+
+        <!-- Counter -->
+        <div class="absolute top-4 left-4 z-30
+                    bg-black/60 text-white
+                    px-3 py-1 rounded-full">
+            <span x-text="currentSlide+1"></span> /
+            <span x-text="slides.length"></span>
         </div>
     </div>
-</section>
+</div>
 
 <!-- Pricing Section -->
 <section class="section section-cream">
@@ -226,20 +273,93 @@
     </div>
 </section>
 
-<!-- Gallery with Lightbox -->
-<section class="section section-warm">
+<section class="section section-warm"
+         x-data="{
+             lightbox:false,
+             current:0,
+             slides: {{ .ImagesJSON }}
+         }">
+
     <div class="container-custom">
+
         <h2 class="text-3xl md:text-4xl font-bold text-resort-green text-center mb-3">
             Villa Photo Gallery
         </h2>
+
         <p class="text-center text-charcoal mb-10">
             Click any photo to enlarge.
         </p>
 
-        <div class="gallery-grid-container">
-            <div class="gallery-grid" id="gallery-grid"></div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+
+            <template x-for="(image,index) in slides" :key="index">
+
+                <div
+                    class="gallery-item"
+                    @click="
+                        current=index;
+                        lightbox=true;
+                    ">
+
+                    <img
+                        :src="image"
+                        alt="Villa"
+                        class="gallery-image">
+
+                </div>
+
+            </template>
+
         </div>
+
     </div>
+
+    <!-- Lightbox -->
+
+    <div
+        x-show="lightbox"
+        x-cloak
+        x-transition
+        class="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-8">
+
+        <!-- Close -->
+
+        <button
+            @click="lightbox=false"
+            class="absolute top-6 right-6 text-white text-5xl hover:text-amber">
+
+            &times;
+
+        </button>
+
+        <!-- Previous -->
+
+        <button
+            @click="current=(current-1+slides.length)%slides.length"
+            class="absolute left-6 text-white text-5xl hover:text-amber">
+
+            ❮
+
+        </button>
+
+        <!-- Image -->
+
+        <img
+            :src="slides[current]"
+            class="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl">
+
+        <!-- Next -->
+
+        <button
+            @click="current=(current+1)%slides.length"
+            class="absolute right-6 text-white text-5xl hover:text-amber">
+
+            ❯
+
+        </button>
+
+    </div>
+
 </section>
 
 <!-- Amenities Section -->
@@ -368,7 +488,4 @@
         </p>
     </div>
 </section>
-
-<!-- Include the JavaScript file -->
-<script src="/static/js/villa.js"></script>
 {{ end }}

@@ -4,11 +4,8 @@ import (
 	"html/template"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"api/internal/handlers"
-
-	"github.com/gin-contrib/multitemplate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -49,84 +46,43 @@ func SetupRouter() *gin.Engine {
 			return
 		}
 
-		// If your homepage data doesn't already include this,
-		// uncomment the next line after adding ActivePage.
-		// data.ActivePage = "home"
+		data.Title = "Chiang Mai Travel"
+		data.ActivePage = "home"
 
-		c.HTML(http.StatusOK, "index.html", data)
+		c.HTML(http.StatusOK, "index", data)
 	})
 
-	r.GET("/villa", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "villa.html", gin.H{
-			"Title":      "The Villa",
-			"ActivePage": "villa",
-		})
-	})
+	r.GET("/villa", handlers.VillaPage)
 
 	r.GET("/hostel", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "hostel.html", gin.H{
-			"Title":      "The Hostel",
+		c.HTML(http.StatusOK, "hostel", gin.H{
+			"Title":      "Hostel",
 			"ActivePage": "hostel",
 		})
 	})
 
 	r.GET("/meatshop", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "meatshop.html", gin.H{
-			"Title":      "The Meat Shop",
+		c.HTML(http.StatusOK, "meatshop", gin.H{
+			"Title":      "Meat Shop",
 			"ActivePage": "meatshop",
 		})
 	})
 
 	r.GET("/blog", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "blog.html", gin.H{
+		c.HTML(http.StatusOK, "blog", gin.H{
 			"Title":      "Blog",
 			"ActivePage": "blog",
 		})
 	})
 
 	r.GET("/contact", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "contact.html", gin.H{
-			"Title":      "Contact Us",
+		c.HTML(http.StatusOK, "contact", gin.H{
+			"Title":      "Contact",
 			"ActivePage": "contact",
 		})
 	})
 
-	// Contact form API
 	r.POST("/api/contact", handlers.ContactForm)
 
 	return r
-}
-
-func createRenderer(funcMap template.FuncMap) multitemplate.Renderer {
-	renderer := multitemplate.New()
-
-	layout := "templates/layouts/base.html"
-
-	partials, err := filepath.Glob("templates/partials/*.html")
-	if err != nil {
-		panic(err)
-	}
-
-	pages, err := filepath.Glob("templates/pages/*.html")
-	if err != nil {
-		panic(err)
-	}
-
-	for _, page := range pages {
-
-		files := []string{
-			layout,
-		}
-
-		files = append(files, partials...)
-		files = append(files, page)
-
-		renderer.AddFromFilesFuncs(
-			filepath.Base(page),
-			funcMap,
-			files...,
-		)
-	}
-
-	return renderer
 }

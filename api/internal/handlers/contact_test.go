@@ -8,6 +8,8 @@ import (
 	"os"
 	"testing"
 
+	"api/internal/models"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,7 +31,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.False(t, resp.Success)
@@ -41,7 +43,7 @@ func TestContactForm(t *testing.T) {
 		router.POST("/api/contact", ContactForm)
 
 		// Missing name field
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Email:   "test@example.com",
 			Subject: "Test Subject",
 			Message: "Test message",
@@ -55,7 +57,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.False(t, resp.Success)
@@ -66,7 +68,7 @@ func TestContactForm(t *testing.T) {
 		router := gin.Default()
 		router.POST("/api/contact", ContactForm)
 
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Name:    "Test User",
 			Subject: "Test Subject",
 			Message: "Test message",
@@ -80,7 +82,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.False(t, resp.Success)
@@ -91,7 +93,7 @@ func TestContactForm(t *testing.T) {
 		router := gin.Default()
 		router.POST("/api/contact", ContactForm)
 
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Name:    "Test User",
 			Email:   "test@example.com",
 			Message: "Test message",
@@ -105,7 +107,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.False(t, resp.Success)
@@ -116,7 +118,7 @@ func TestContactForm(t *testing.T) {
 		router := gin.Default()
 		router.POST("/api/contact", ContactForm)
 
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Name:    "Test User",
 			Email:   "test@example.com",
 			Subject: "Test Subject",
@@ -130,7 +132,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.False(t, resp.Success)
@@ -145,7 +147,7 @@ func TestContactForm(t *testing.T) {
 		router := gin.Default()
 		router.POST("/api/contact", ContactForm)
 
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Name:    "Test User",
 			Email:   "test@example.com",
 			Phone:   "+66 8X XXX XXXX",
@@ -161,7 +163,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.True(t, resp.Success)
@@ -173,7 +175,7 @@ func TestContactForm(t *testing.T) {
 		router.POST("/api/contact", ContactForm)
 
 		// Honeypot field should trigger silent success
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Name:    "Bot",
 			Email:   "bot@example.com",
 			Subject: "Spam",
@@ -189,7 +191,7 @@ func TestContactForm(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.True(t, resp.Success)
@@ -202,7 +204,7 @@ func TestSendToLambda(t *testing.T) {
 		os.Setenv("CONTACT_API_URL", "")
 		defer os.Setenv("CONTACT_API_URL", "")
 
-		req := ContactRequest{
+		req := models.ContactRequest{
 			Name:    "Test User",
 			Email:   "test@example.com",
 			Phone:   "+66 8X XXX XXXX",
@@ -210,7 +212,7 @@ func TestSendToLambda(t *testing.T) {
 			Message: "Test message",
 		}
 
-		err := sendToLambda(req)
+		err := sendToLambda(req, "")
 		assert.NoError(t, err)
 	})
 
@@ -230,7 +232,7 @@ func TestSendToLambda(t *testing.T) {
 		os.Setenv("CONTACT_API_URL", mockServer.URL)
 		defer os.Setenv("CONTACT_API_URL", "")
 
-		req := ContactRequest{
+		req := models.ContactRequest{
 			Name:    "Test User",
 			Email:   "test@example.com",
 			Phone:   "+66 8X XXX XXXX",
@@ -238,7 +240,7 @@ func TestSendToLambda(t *testing.T) {
 			Message: "Test message",
 		}
 
-		err := sendToLambda(req)
+		err := sendToLambda(req, mockServer.URL)
 		assert.NoError(t, err)
 	})
 
@@ -253,14 +255,14 @@ func TestSendToLambda(t *testing.T) {
 		os.Setenv("CONTACT_API_URL", mockServer.URL)
 		defer os.Setenv("CONTACT_API_URL", "")
 
-		req := ContactRequest{
+		req := models.ContactRequest{
 			Name:    "Test User",
 			Email:   "test@example.com",
 			Subject: "Test Subject",
 			Message: "Test message",
 		}
 
-		err := sendToLambda(req)
+		err := sendToLambda(req, mockServer.URL)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "lambda returned status: 500")
 	})
@@ -281,7 +283,7 @@ func TestContactFormIntegration(t *testing.T) {
 		router := gin.Default()
 		router.POST("/api/contact", ContactForm)
 
-		reqBody := ContactRequest{
+		reqBody := models.ContactRequest{
 			Name:    "Integration Test User",
 			Email:   "integration@example.com",
 			Phone:   "+66 8X XXX XXXX",
@@ -297,7 +299,7 @@ func TestContactFormIntegration(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, w.Code)
 
-		var resp ContactResponse
+		var resp models.ContactResponse
 		err := json.Unmarshal(w.Body.Bytes(), &resp)
 		require.NoError(t, err)
 		assert.True(t, resp.Success)

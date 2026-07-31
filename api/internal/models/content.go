@@ -16,18 +16,6 @@ type ContactResponse struct {
 	Message string `json:"message"`
 }
 
-// HomePageData is the complete homepage data structure
-type HomePageData struct {
-	Title        string        `json:"title"`
-	Description  string        `json:"description"`
-	ActivePage   string        `json:"active_page"`
-	Hero         Hero          `json:"hero"`
-	Features     []Feature     `json:"features"`
-	Reasons      []Reason      `json:"reasons"`
-	Testimonials []Testimonial `json:"testimonials"`
-	CTA          CTA           `json:"cta"`
-}
-
 // Button represents a call-to-action button
 type Button struct {
 	Text  string `json:"text"`
@@ -77,4 +65,17 @@ type CTA struct {
 	Title   string   `json:"title"`
 	Text    string   `json:"text"`
 	Buttons []Button `json:"buttons"`
+}
+
+// HomePageData is the complete homepage data structure
+type HomePageData struct {
+	Title        string        `json:"title"`
+	Description  string        `json:"description"`
+	ActivePage   string        `json:"active_page"`
+	PageContent  string        `json:"page_content"` // Template name to render
+	Hero         Hero          `json:"hero"`
+	Features     []Feature     `json:"features"`
+	Reasons      []Reason      `json:"reasons"`
+	Testimonials []Testimonial `json:"testimonials"`
+	CTA          CTA           `json:"cta"`
 }
