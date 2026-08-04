@@ -55,92 +55,27 @@ resource "aws_secretsmanager_secret_version" "secret_values" {
   }
 }
 
-# ============================================
-# IAM Policy for Reading Secrets
-# ============================================
+# In your secrets manager module
+resource "aws_secretsmanager_secret" "lambda_config" {
+  name        = "${local.app_name}-lambda-config"
+  description = "Configuration for villa image processor lambda"
+}
 
-resource "aws_iam_policy" "secrets_reader" {
-  count = var.create_iam_policy ? 1 : 0
-
-  name        = "${var.environment}-secrets-reader-policy"
-  description = "Policy to read secrets from AWS Secrets Manager"
-  path        = var.iam_policy_path
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret",
-          "secretsmanager:ListSecretVersionIds",
-          "secretsmanager:GetResourcePolicy",
-          "secretsmanager:GetSecretRotationPolicy"
-        ]
-        Resource = [
-          for secret in aws_secretsmanager_secret.secrets : secret.arn
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetRandomPassword"
-        ]
-        Resource = ["*"]
-      }
-    ]
+resource "aws_secretsmanager_secret_version" "lambda_config" {
+  secret_id = aws_secretsmanager_secret.lambda_config.id
+  secret_string = jsonencode({
+    CLOUDFRONT_URL    = module.image_cdn.cloudfront_url
+    CLOUDFRONT_DOMAIN = module.image_cdn.cloudfront_domain
+    S3_BUCKET         = aws_s3_bucket.images.id
+    REGION            = data.aws_region.current.name
+    # Other config
+    MAX_IMAGE_SIZE     = 10485760 # 10MB
+    ALLOWED_EXTENSIONS = "jpg,jpeg,png,webp,gif"
   })
-
-  tags = var.tags
 }
 
 # ============================================
-# IAM Role for Secret Access
-# ============================================
-
-resource "aws_iam_role" "secrets_reader_role" {
-  count = var.create_iam_role ? 1 : 0
-
-  name = "${var.environment}-secrets-reader-role"
-  path = var.iam_role_path
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = var.allowed_services
-        }
-      }
-    ]
-  })
-
-  tags = var.tags
-}
-
-# Attach the secrets reader policy to the role
-resource "aws_iam_role_policy_attachment" "secrets_reader_attachment" {
-  count = var.create_iam_role && var.create_iam_policy ? 1 : 0
-
-  role       = aws_iam_role.secrets_reader_role[0].name
-  policy_arn = aws_iam_policy.secrets_reader[0].arn
-}
-
-# Create instance profile for EC2
-resource "aws_iam_instance_profile" "secrets_reader_profile" {
-  count = var.create_iam_role && var.create_instance_profile ? 1 : 0
-
-  name = "${var.environment}-secrets-reader-profile"
-  role = aws_iam_role.secrets_reader_role[0].name
-
-  tags = var.tags
-}
-
-# ============================================
-# Secret Rotation (Optional)
+# Secret Rotation
 # ============================================
 
 resource "aws_secretsmanager_secret_rotation" "rotation" {
@@ -157,35 +92,6 @@ resource "aws_secretsmanager_secret_rotation" "rotation" {
     automatically_after_days = lookup(each.value, "rotation_days", 0)
     schedule_expression      = lookup(each.value, "schedule_expression", null)
   }
-}
-
-# ============================================
-# CloudWatch Monitoring
-# ============================================
-
-resource "aws_cloudwatch_metric_alarm" "secret_access_alarm" {
-  count = var.enable_monitoring ? length(aws_secretsmanager_secret.secrets) : 0
-
-  alarm_name          = "${var.environment}-secret-access-${values(aws_secretsmanager_secret.secrets)[count.index].name}"
-  comparison_operator = var.alarm_comparison_operator
-  evaluation_periods  = var.alarm_evaluation_periods
-  metric_name         = "GetSecretValue"
-  namespace           = "AWS/SecretsManager"
-  period              = var.alarm_period
-  statistic           = "Sum"
-  threshold           = var.alarm_threshold
-  alarm_description   = "Secret access alarm for ${values(aws_secretsmanager_secret.secrets)[count.index].name}"
-  treat_missing_data  = "notBreaching"
-
-  dimensions = {
-    SecretName = values(aws_secretsmanager_secret.secrets)[count.index].name
-  }
-
-  alarm_actions             = var.alarm_actions
-  ok_actions                = var.ok_actions
-  insufficient_data_actions = var.insufficient_data_actions
-
-  tags = var.tags
 }
 
 # ============================================

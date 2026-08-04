@@ -79,3 +79,53 @@ type HomePageData struct {
 	Testimonials []Testimonial `json:"testimonials"`
 	CTA          CTA           `json:"cta"`
 }
+
+// ImageInfo holds information about an image including its paths
+type ImageInfo struct {
+	Full   string `json:"full"`
+	Thumb  string `json:"thumb"`
+	Medium string `json:"medium"`
+	Alt    string `json:"alt"`
+	Width  int    `json:"width"`
+	Height int    `json:"height"`
+}
+
+// VillaPageData represents the data for the villa page
+type VillaPageData struct {
+	Title      string      `json:"title"`
+	ActivePage string      `json:"activePage"`
+	Images     []ImageInfo `json:"images"`
+	ImagesJSON string      `json:"imagesJSON"`
+}
+
+// ImageServiceConfig holds configuration for image services
+type ImageServiceConfig struct {
+	// S3 configuration
+	S3Bucket      string
+	S3Region      string
+	S3Prefix      string
+	CloudFrontURL string
+
+	// Local configuration
+	LocalImageDir string
+	UseLocal      bool
+
+	// Cache settings
+	CacheTTL    time.Duration
+	EnableCache bool
+}
+
+// ImageCache holds cached image information
+type ImageCache struct {
+	Images    []ImageInfo
+	UpdatedAt time.Time
+	TTL       time.Duration
+}
+
+// IsExpired checks if the cache is expired
+func (c *ImageCache) IsExpired() bool {
+	if c.TTL == 0 {
+		return false
+	}
+	return time.Since(c.UpdatedAt) > c.TTL
+}

@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"api/internal/config"
 	"api/internal/router"
 	"api/internal/secrets"
 )
@@ -21,6 +22,14 @@ func main() {
 	}
 
 	log.Printf("📧 Contact form will send to: %s", config.Contact.RecipientEmail)
+
+	// Load configuration
+	appConfig := config.LoadConfig()
+
+	// Initialize image service
+	if err := handlers.InitImageService(appConfig); err != nil {
+		log.Fatalf("Failed to initialize image service: %v", err)
+	}
 
 	r := router.SetupRouter()
 
