@@ -7,13 +7,26 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Add fake layer to path BEFORE importing any src modules
-FAKE_LAYER = os.path.join(os.path.dirname(__file__), "fake_layer")
-sys.path.insert(0, FAKE_LAYER)
+# Get the absolute path to the tests directory
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # lambda directory
+SRC_PATH = os.path.join(PROJECT_ROOT, "src")
 
-# Add src to path
-SRC_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src")
+# Add paths BEFORE any imports
+sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, SRC_PATH)
+sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
+
+# Now we can import from src
+try:
+    from lambda_function import lambda_handler
+    from processor import SESProcessor
+    from templates import EmailTemplates
+except ImportError as e:
+    print(f"Could not import from src: {e}")
+    if os.path.exists(SRC_PATH):
+        print(f"Files in {SRC_PATH}: {os.listdir(SRC_PATH)}")
+    raise
 
 
 @pytest.fixture(autouse=True)
@@ -57,33 +70,6 @@ def contact_request():
         'data': {
             'name': 'John Doe',
             'message': 'I want to book a villa'
-        }
-    }
-
-
-@pytest.fixture
-def password_reset_request():
-    """Sample password reset request"""
-    return {
-        'type': 'password_reset',
-        'to': ['test@example.com'],
-        'data': {
-            'name': 'John Doe',
-            'reset_link': 'https://example.com/reset/123'
-        }
-    }
-
-
-@pytest.fixture
-def newsletter_request():
-    """Sample newsletter request"""
-    return {
-        'type': 'newsletter',
-        'to': ['test@example.com'],
-        'data': {
-            'title': 'Weekly Villa Update',
-            'content': '<p>Check out our new villas!</p>',
-            'unsubscribe_link': 'https://example.com/unsubscribe'
         }
     }
 

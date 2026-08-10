@@ -1,64 +1,56 @@
 """
-Image Processor Lambda - Handler
+SES Processor Lambda - Handler
 """
 import json
 import os
 from typing import Dict, Any
 
 from python.logger import get_logger
-from processor import ImageProcessor
+from processor import SESProcessor
 
 logger = get_logger(__name__)
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     """
-    Main Lambda handler for image processing
+    Main Lambda handler for SES email processing
 
     Environment variables from Terraform:
-    - S3_BUCKET: S3 bucket name
-    - S3_PREFIX: S3 prefix for images
-    - CLOUDFRONT_URL: CloudFront distribution URL
-    - THUMBNAIL_SIZE: Thumbnail dimensions (width,height)
-    - MEDIUM_SIZE: Medium image dimensions (width,height)
-    - CAROUSEL_SIZE: Carousel image dimensions (width,height)
-    - QUALITY: JPEG quality (1-100)
+    - SES_REGION: SES region
+    - SES_FROM_EMAIL: From email address
     - LOG_LEVEL: Logging level
     - ENVIRONMENT: Environment name
     """
-    logger.info(f"Received event with {len(event.get('Records', []))} records")
+    logger.info(f"Received event: {json.dumps(event)}")
 
     try:
-        # Initialize processor with environment variables
-        processor = ImageProcessor()
+        processor = SESProcessor()
         results = []
 
-        for record in event.get('Records', []):
-            bucket = record['s3']['bucket']['name']
-            key = record['s3']['object']['key']
+        # Handle SQS events (if from SQS)
+        if 'Records' in event:
+            for record in event['Records']:
+                body = json.loads(record.get('body', '{}'))
+                result = processor.process_email_request(body)
+                results.append(result)
 
-            # Skip already processed images
-            if any(x in key for x in ['_thumb', '_medium', '_carousel']):
-                logger.info(f"Skipping already processed: {key}")
-                continue
+            return {
+                'statusCode': 200,
+                'body': json.dumps({
+                    'message': 'Emails processed',
+                    'environment': os.environ.get('ENVIRONMENT', 'development'),
+                    'results': results
+                })
+            }
 
-            # Process the image
-            result = processor.process_image(bucket, key)
-            results.append(result)
+        # Direct invocation
+        else:
+            result = processor.process_email_request(event)
 
-        success_count = sum(1 for r in results if r.get('success'))
-        failed_count = len(results) - success_count
-
-        return {
-            'statusCode': 200,
-            'body': json.dumps({
-                'message': 'Processing complete',
-                'environment': os.environ.get('ENVIRONMENT', 'development'),
-                'success_count': success_count,
-                'failed_count': failed_count,
-                'results': results
-            })
-        }
+            return {
+                'statusCode': 200 if result.get('success') else 400,
+                'body': json.dumps(result)
+            }
 
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")

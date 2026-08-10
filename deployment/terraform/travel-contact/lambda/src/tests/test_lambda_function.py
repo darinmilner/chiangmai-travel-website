@@ -1,124 +1,82 @@
 """
-Test configuration with fake layer for SES processor
+Tests for SES lambda handler using fake layer
 """
-import os
-import sys
-from unittest.mock import MagicMock, patch
+import json
+from unittest.mock import patch
 
-import pytest
-
-# Add fake layer to path BEFORE importing any src modules
-FAKE_LAYER = os.path.join(os.path.dirname(__file__), "fake_layer")
-sys.path.insert(0, FAKE_LAYER)
-
-# Add src to path
-SRC_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "src")
-sys.path.insert(0, SRC_PATH)
+from lambda_function import lambda_handler
 
 
-@pytest.fixture(autouse=True)
-def mock_env_vars():
-    """Mock environment variables for tests"""
-    with patch.dict(os.environ, {
-        'AWS_REGION': 'ap-southeast-1',
-        'AWS_ACCOUNT_ID': '123456789012',
-        'SES_REGION': 'ap-southeast-1',
-        'SES_FROM_EMAIL': 'test@example.com',
-        'LOG_LEVEL': 'DEBUG',
-        'ENVIRONMENT': 'test'
-    }):
-        yield
+class TestLambdaHandler:
+    """Test lambda handler"""
 
+    def test_lambda_handler_direct_invocation(self, booking_request):
+        """Test direct invocation"""
+        result = lambda_handler(booking_request, None)
 
-@pytest.fixture
-def booking_request():
-    """Sample booking confirmation request"""
-    return {
-        'type': 'booking_confirmation',
-        'to': ['test@example.com'],
-        'data': {
-            'booking_id': 'B123',
-            'villa_name': 'Test Villa',
-            'guest_name': 'John Doe',
-            'check_in': '2024-01-01',
-            'check_out': '2024-01-05',
-            'guests': 2,
-            'total_price': 500
-        }
-    }
+        assert result['statusCode'] == 200
+        body = json.loads(result['body'])
+        assert body['success'] is True
+        assert body['message_id'] == 'test-message-id-123'
 
+    def test_lambda_handler_sqs_event(self, sqs_event):
+        """Test SQS event processing"""
+        result = lambda_handler(sqs_event, None)
 
-@pytest.fixture
-def contact_request():
-    """Sample contact response request"""
-    return {
-        'type': 'contact_response',
-        'to': ['test@example.com'],
-        'data': {
-            'name': 'John Doe',
-            'message': 'I want to book a villa'
-        }
-    }
+        assert result['statusCode'] == 200
+        body = json.loads(result['body'])
+        assert body['message'] == 'Emails processed'
+        assert len(body['results']) == 1
+        assert body['results'][0]['success'] is True
 
+    def test_lambda_handler_sqs_multiple(self, sqs_event_multiple):
+        """Test SQS event with multiple records"""
+        result = lambda_handler(sqs_event_multiple, None)
 
-@pytest.fixture
-def password_reset_request():
-    """Sample password reset request"""
-    return {
-        'type': 'password_reset',
-        'to': ['test@example.com'],
-        'data': {
-            'name': 'John Doe',
-            'reset_link': 'https://example.com/reset/123'
-        }
-    }
+        assert result['statusCode'] == 200
+        body = json.loads(result['body'])
+        assert body['message'] == 'Emails processed'
+        assert len(body['results']) == 2
+        assert body['results'][0]['success'] is True
+        assert body['results'][1]['success'] is True
 
-
-@pytest.fixture
-def newsletter_request():
-    """Sample newsletter request"""
-    return {
-        'type': 'newsletter',
-        'to': ['test@example.com'],
-        'data': {
-            'title': 'Weekly Villa Update',
-            'content': '<p>Check out our new villas!</p>',
-            'unsubscribe_link': 'https://example.com/unsubscribe'
-        }
-    }
-
-
-@pytest.fixture
-def generic_request():
-    """Sample generic email request"""
-    return {
-        'to': ['test@example.com'],
-        'subject': 'Test Subject',
-        'html_body': '<h1>Test Email</h1>',
-        'text_body': 'Test email body'
-    }
-
-
-@pytest.fixture
-def sqs_event(booking_request):
-    """Sample SQS event"""
-    import json
-    return {
-        'Records': [
-            {
-                'body': json.dumps(booking_request)
+    def test_lambda_handler_error(self, booking_request):
+        """Test lambda handler error"""
+        # We need to patch the SES client to fail
+        with patch('processor.SESClient') as MockSESClient:
+            mock_ses = MockSESClient.return_value
+            mock_ses.send_email.return_value = {
+                'success': False,
+                'error': 'SES error'
             }
-        ]
-    }
 
+            result = lambda_handler(booking_request, None)
 
-@pytest.fixture
-def sqs_event_multiple(booking_request, contact_request):
-    """Sample SQS event with multiple records"""
-    import json
-    return {
-        'Records': [
-            {'body': json.dumps(booking_request)},
-            {'body': json.dumps(contact_request)}
-        ]
-    }
+            assert result['statusCode'] == 400
+            body = json.loads(result['body'])
+            assert body['success'] is False
+            assert 'SES error' in body['error']
+
+    def test_lambda_handler_missing_to(self):
+        """Test lambda handler with missing 'to' field"""
+        event = {
+            'type': 'booking_confirmation',
+            'data': {'villa_name': 'Test Villa'}
+        }
+
+        result = lambda_handler(event, None)
+
+        assert result['statusCode'] == 400
+        body = json.loads(result['body'])
+        assert body['success'] is False
+        assert 'error' in body
+
+    def test_lambda_handler_empty_sqs_records(self):
+        """Test lambda handler with empty SQS records"""
+        event = {'Records': []}
+
+        result = lambda_handler(event, None)
+
+        assert result['statusCode'] == 200
+        body = json.loads(result['body'])
+        assert len(body['results']) == 0

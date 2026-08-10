@@ -1,0 +1,3 @@
+"""
+SES processor lambda source
+"""

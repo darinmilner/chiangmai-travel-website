@@ -1,11 +1,11 @@
 """
-Email templates
+Email templates for contact and booking
 """
 from typing import Dict, Any
 
 
 class EmailTemplates:
-    """Email templates for different use cases"""
+    """Email templates for contact and booking use cases"""
 
     def booking_confirmation(self, data: Dict[str, Any]) -> str:
         """Booking confirmation HTML template"""
@@ -37,6 +37,7 @@ class EmailTemplates:
                         <p><strong>Check-in:</strong> {data.get('check_in', 'N/A')}</p>
                         <p><strong>Check-out:</strong> {data.get('check_out', 'N/A')}</p>
                         <p><strong>Guests:</strong> {data.get('guests', 0)}</p>
+                        <p><strong>Total Price:</strong> ${data.get('total_price', 0)}</p>
                     </div>
 
                     <p>If you have any questions, please don't hesitate to contact us.</p>
@@ -64,6 +65,7 @@ class EmailTemplates:
         Check-in: {data.get('check_in', 'N/A')}
         Check-out: {data.get('check_out', 'N/A')}
         Guests: {data.get('guests', 0)}
+        Total Price: ${data.get('total_price', 0)}
 
         We look forward to welcoming you!
         """

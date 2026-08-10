@@ -1,103 +1,108 @@
 """
-Tests for email templates
+Tests for SES processor using fake layer
 """
-import pytest
-
-from templates import EmailTemplates
+from processor import SESProcessor
 
 
-class TestEmailTemplates:
-    """Test email templates"""
+class TestSESProcessor:
+    """Test SES processor logic"""
 
-    def test_booking_confirmation(self):
-        """Test booking confirmation template"""
-        templates = EmailTemplates()
-        data = {
-            'booking_id': 'B123',
-            'villa_name': 'Test Villa',
-            'guest_name': 'John Doe',
-            'check_in': '2024-01-01',
-            'check_out': '2024-01-05',
-            'guests': 2,
-            'total_price': 500
+    def test_init(self):
+        """Test processor initialization"""
+        processor = SESProcessor()
+
+        assert processor.from_email == 'test@example.com'
+        assert processor.environment == 'test'
+        assert processor.ses is not None
+        assert processor.templates is not None
+
+    def test_process_booking_confirmation(self, booking_request):
+        """Test booking confirmation email"""
+        processor = SESProcessor()
+        result = processor.process_email_request(booking_request)
+
+        assert result['success'] is True
+        assert result['message_id'] == 'test-message-id-123'
+        assert result['recipients'] == 1
+
+        # Verify email was sent with correct content
+        sent_emails = processor.ses.get_sent_emails()
+        assert len(sent_emails) == 1
+        email = sent_emails[0]
+        assert email['to'] == ['test@example.com']
+        assert 'Booking Confirmed' in email['subject']
+        assert 'John Doe' in email['html_body']
+        assert 'B123' in email['html_body']
+
+    def test_process_contact_response(self, contact_request):
+        """Test contact response email"""
+        processor = SESProcessor()
+        result = processor.process_email_request(contact_request)
+
+        assert result['success'] is True
+
+        sent_emails = processor.ses.get_sent_emails()
+        assert len(sent_emails) == 1
+        email = sent_emails[0]
+        assert email['subject'] == 'Thank you for contacting us'
+        assert 'John Doe' in email['html_body']
+        assert 'I want to book a villa' in email['html_body']
+
+    def test_process_generic_email(self, generic_request):
+        """Test generic email"""
+        processor = SESProcessor()
+        result = processor.process_email_request(generic_request)
+
+        assert result['success'] is True
+
+        sent_emails = processor.ses.get_sent_emails()
+        assert len(sent_emails) == 1
+        email = sent_emails[0]
+        assert email['subject'] == 'Test Subject'
+        assert '<h1>Test Email</h1>' in email['html_body']
+
+    def test_process_email_no_recipients(self):
+        """Test email with no recipients"""
+        processor = SESProcessor()
+        request = {
+            'type': 'generic',
+            'to': []
         }
 
-        html = templates.booking_confirmation(data)
-        text = templates.booking_confirmation_text(data)
+        result = processor.process_email_request(request)
 
-        assert 'Booking Confirmed' in html
-        assert 'John Doe' in html
-        assert 'B123' in html
-        assert 'Test Villa' in html
-        assert '2024-01-01' in html
-        assert '$500' in html
+        assert result['success'] is False
+        assert 'No recipients specified' in result['error']
 
-        assert 'Booking Confirmed' in text
-        assert 'John Doe' in text
-        assert 'B123' in text
+    def test_process_email_error(self):
+        """Test email processing error"""
+        processor = SESProcessor()
+        processor.ses.set_fail_mode(True, 'SES error')
 
-    def test_booking_confirmation_missing_data(self):
-        """Test booking confirmation with missing data"""
-        templates = EmailTemplates()
-        html = templates.booking_confirmation({})
-        text = templates.booking_confirmation_text({})
-
-        assert 'Guest' in html  # Default
-        assert 'N/A' in html  # Default for missing fields
-        assert 'Guest' in text
-
-    def test_contact_response(self):
-        """Test contact response template"""
-        templates = EmailTemplates()
-        data = {
-            'name': 'Jane Doe',
-            'message': 'Hello, I have a question'
+        request = {
+            'type': 'generic',
+            'to': ['test@example.com'],
+            'subject': 'Test',
+            'html_body': '<h1>Test</h1>'
         }
 
-        html = templates.contact_response(data)
-        text = templates.contact_response_text(data)
+        result = processor.process_email_request(request)
 
-        assert 'Thank You for Contacting Us' in html
-        assert 'Jane Doe' in html
-        assert 'Hello, I have a question' in html
+        assert result['success'] is False
+        assert 'SES error' in result['error']
 
-        assert 'Thank You for Contacting Us' in text
-        assert 'Jane Doe' in text
-        assert 'Hello, I have a question' in text
-
-    def test_password_reset(self):
-        """Test password reset template"""
-        templates = EmailTemplates()
-        data = {
-            'name': 'John Doe',
-            'reset_link': 'https://example.com/reset/123'
+    def test_unknown_email_type(self):
+        """Test unknown email type"""
+        processor = SESProcessor()
+        request = {
+            'type': 'unknown_type',
+            'to': ['test@example.com'],
+            'subject': 'Test',
+            'html_body': '<h1>Test</h1>'
         }
 
-        html = templates.password_reset(data)
-        text = templates.password_reset_text(data)
+        result = processor.process_email_request(request)
 
-        assert 'Password Reset' in html
-        assert 'John Doe' in html
-        assert 'https://example.com/reset/123' in html
-
-        assert 'Password Reset' in text
-        assert 'https://example.com/reset/123' in text
-
-    def test_newsletter(self):
-        """Test newsletter template"""
-        templates = EmailTemplates()
-        data = {
-            'title': 'Weekly Update',
-            'content': '<p>New villas available!</p>',
-            'unsubscribe_link': 'https://example.com/unsubscribe'
-        }
-
-        html = templates.newsletter(data)
-        text = templates.newsletter_text(data)
-
-        assert 'Weekly Update' in html
-        assert 'New villas available!' in html
-        assert 'https://example.com/unsubscribe' in html
-
-        assert 'Weekly Update' in text
-        assert 'New villas available!' in text
+        assert result['success'] is True
+        sent_emails = processor.ses.get_sent_emails()
+        assert len(sent_emails) == 1
