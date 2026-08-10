@@ -1,45 +1,76 @@
 """
-Test configuration for image processor lambda
+Test configuration with fake layer
 """
-import pytest
+import os
+import sys
 from unittest.mock import MagicMock, patch
-from io import BytesIO
+
+import pytest
+
+# Get the absolute path to the tests directory
+TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # src directory
+
+# Add paths BEFORE any imports
+sys.path.insert(0, PROJECT_ROOT)
+sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
+
+# Now we can import from src
+try:
+    from lambda_function import lambda_handler
+    from processor import ImageProcessor
+except ImportError as e:
+    print(f"Warning: Could not import from src: {e}")
+    print(f"Project root: {PROJECT_ROOT}")
+    print(f"sys.path: {sys.path[:3]}")
+    raise
 
 
-@pytest.fixture
-def mock_s3_client():
-    """Mock S3 client"""
-    with patch('shared.clients.s3.S3Client') as mock:
-        client = MagicMock()
-        client.download_file.return_value = BytesIO(b'mock image data')
-        client.upload_file.return_value = 'uploaded-key'
-        mock.return_value = client
-        yield client
+@pytest.fixture(autouse=True)
+def mock_env_vars():
+    """Mock environment variables for tests"""
+    with patch.dict(os.environ, {
+        'AWS_REGION': 'ap-southeast-1',
+        'AWS_ACCOUNT_ID': '123456789012',
+        'S3_BUCKET': 'test-bucket',
+        'S3_PREFIX': 'villa/',
+        'CLOUDFRONT_URL': 'https://test.cloudfront.net',
+        'THUMBNAIL_SIZE': '300,200',
+        'MEDIUM_SIZE': '800,600',
+        'CAROUSEL_SIZE': '1200,800',
+        'QUALITY': '85',
+        'LOG_LEVEL': 'DEBUG',
+        'ENVIRONMENT': 'test',
+        'MAX_IMAGE_SIZE_MB': '10'
+    }):
+        yield
 
 
 @pytest.fixture
 def mock_pil_image():
-    """Mock PIL Image"""
+    """Mock PIL Image for tests"""
     with patch('PIL.Image.open') as mock_open:
         mock_img = MagicMock()
         mock_img.width = 1920
         mock_img.height = 1080
         mock_img.mode = 'RGB'
-        mock_img.copy.return_value = mock_img
 
-        # Mock resize
-        mock_resized = MagicMock()
-        mock_resized.width = 800
-        mock_resized.height = 600
-        mock_resized.mode = 'RGB'
-        mock_img.resize.return_value = mock_resized
+        # Mock copy for resize
+        mock_img_copy = MagicMock()
+        mock_img_copy.width = 800
+        mock_img_copy.height = 600
+        mock_img_copy.mode = 'RGB'
+        mock_img.copy.return_value = mock_img_copy
 
         # Mock thumbnail
         mock_img.thumbnail = MagicMock()
-        mock_img_copy = MagicMock()
-        mock_img_copy.width = 300
-        mock_img_copy.height = 200
-        mock_img.copy.return_value = mock_img_copy
+
+        # Mock resize with width only
+        mock_img_resized = MagicMock()
+        mock_img_resized.width = 800
+        mock_img_resized.height = 450
+        mock_img_resized.mode = 'RGB'
+        mock_img.resize.return_value = mock_img_resized
 
         mock_open.return_value = mock_img
         yield mock_img
@@ -75,6 +106,21 @@ def s3_event_multiple():
                 's3': {
                     'bucket': {'name': 'test-bucket'},
                     'object': {'key': 'villa/image2.jpg'}
+                }
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def s3_event_thumb():
+    """Sample S3 event with already processed image"""
+    return {
+        'Records': [
+            {
+                's3': {
+                    'bucket': {'name': 'test-bucket'},
+                    'object': {'key': 'villa/test-image_thumb.jpg'}
                 }
             }
         ]

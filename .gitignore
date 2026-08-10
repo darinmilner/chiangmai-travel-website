@@ -98,3 +98,5 @@ desktop.ini
 venv
 __pychache__
 creds.txt
+
+examples/

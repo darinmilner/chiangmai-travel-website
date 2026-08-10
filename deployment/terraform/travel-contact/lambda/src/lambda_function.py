@@ -1,107 +1,70 @@
 """
-SES Lambda - Sends emails
+Image Processor Lambda - Handler
 """
 import json
-from typing import Dict, Any, List, Optional
+import os
+from typing import Dict, Any
 
-# Import from shared layer
-from shared.logger import get_logger
-from shared.clients.ses import SESClient
+from python.logger import get_logger
+from processor import ImageProcessor
 
 logger = get_logger(__name__)
 
 
-class SESProcessor:
-    """SES processing logic - Lambda specific"""
-
-    def __init__(self):
-        self.ses = SESClient()
-
-    def send_booking_confirmation(
-        self,
-        to: List[str],
-        booking_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Send booking confirmation"""
-        html = self._render_booking_confirmation(booking_data)
-
-        return self.ses.send_email(
-            to=to,
-            subject=f"Booking Confirmed - {booking_data.get('villa_name', 'Villa')}",
-            html_body=html,
-            text_body=f"Booking confirmed for {booking_data.get('villa_name', 'Villa')}"
-        )
-
-    def send_contact_response(
-        self,
-        to: List[str],
-        data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Send contact form response"""
-        html = self._render_contact_response(data)
-
-        return self.ses.send_email(
-            to=to,
-            subject="Thank you for contacting us",
-            html_body=html,
-            text_body=f"Thank you {data.get('name', '')}"
-        )
-
-    def _render_booking_confirmation(self, data: Dict[str, Any]) -> str:
-        """Render booking confirmation HTML - Lambda specific"""
-        return f"""
-        <h2>Booking Confirmed!</h2>
-        <p>Dear {data.get('guest_name', 'Guest')},</p>
-        <p>Your booking has been confirmed.</p>
-        <ul>
-            <li><strong>Booking ID:</strong> {data.get('booking_id', 'N/A')}</li>
-            <li><strong>Villa:</strong> {data.get('villa_name', 'Villa')}</li>
-            <li><strong>Check-in:</strong> {data.get('check_in', 'N/A')}</li>
-            <li><strong>Check-out:</strong> {data.get('check_out', 'N/A')}</li>
-        </ul>
-        <p>Thank you for choosing us!</p>
-        """
-
-    def _render_contact_response(self, data: Dict[str, Any]) -> str:
-        """Render contact response HTML - Lambda specific"""
-        return f"""
-        <h2>Thank You!</h2>
-        <p>Dear {data.get('name', 'Guest')},</p>
-        <p>We have received your message and will respond within 24 hours.</p>
-        """
-
-
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """Main Lambda handler"""
-    logger.info(f"Event: {json.dumps(event)}")
+    """
+    Main Lambda handler for image processing
 
-    processor = SESProcessor()
+    Environment variables from Terraform:
+    - S3_BUCKET: S3 bucket name
+    - S3_PREFIX: S3 prefix for images
+    - CLOUDFRONT_URL: CloudFront distribution URL
+    - THUMBNAIL_SIZE: Thumbnail dimensions (width,height)
+    - MEDIUM_SIZE: Medium image dimensions (width,height)
+    - CAROUSEL_SIZE: Carousel image dimensions (width,height)
+    - QUALITY: JPEG quality (1-100)
+    - LOG_LEVEL: Logging level
+    - ENVIRONMENT: Environment name
+    """
+    logger.info(f"Received event with {len(event.get('Records', []))} records")
 
-    # Handle direct invocation
-    if 'to' in event:
-        result = processor.send_booking_confirmation(
-            to=event.get('to', []),
-            booking_data=event.get('booking_data', {})
-        )
+    try:
+        # Initialize processor with environment variables
+        processor = ImageProcessor()
+        results = []
+
+        for record in event.get('Records', []):
+            bucket = record['s3']['bucket']['name']
+            key = record['s3']['object']['key']
+
+            # Skip already processed images
+            if any(x in key for x in ['_thumb', '_medium', '_carousel']):
+                logger.info(f"Skipping already processed: {key}")
+                continue
+
+            # Process the image
+            result = processor.process_image(bucket, key)
+            results.append(result)
+
+        success_count = sum(1 for r in results if r.get('success'))
+        failed_count = len(results) - success_count
+
         return {
-            'statusCode': 200 if result.get('success') else 400,
-            'body': json.dumps(result)
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Processing complete',
+                'environment': os.environ.get('ENVIRONMENT', 'development'),
+                'success_count': success_count,
+                'failed_count': failed_count,
+                'results': results
+            })
         }
 
-    # Handle SQS events
-    results = []
-    for record in event.get('Records', []):
-        body = json.loads(record.get('body', '{}'))
-        result = processor.send_booking_confirmation(
-            to=body.get('to', []),
-            booking_data=body.get('booking_data', {})
-        )
-        results.append(result)
-
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'message': 'Emails processed',
-            'results': results
-        })
-    }
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': str(e)
+            })
+        }

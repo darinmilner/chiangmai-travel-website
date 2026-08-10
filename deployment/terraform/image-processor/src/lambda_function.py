@@ -1,147 +1,70 @@
 """
-Image Processor Lambda - Processes images uploaded to S3
+Image Processor Lambda - Handler
 """
-import os
 import json
-from io import BytesIO
-from PIL import Image
-from typing import Dict, Any, List
+import os
+from typing import Dict, Any
 
-# Import from shared layer
-from shared.config import config
-from shared.logger import get_logger
-from shared.clients.s3 import S3Client
+from python.logger import get_logger
+from processor import ImageProcessor
 
 logger = get_logger(__name__)
 
 
-class ImageProcessor:
-    """Image processing logic - Lambda specific"""
-
-    def __init__(self):
-        self.s3 = S3Client()
-        self.thumbnail_size = (300, 200)
-        self.medium_size = (800, 600)
-        self.carousel_size = (1200, 800)
-        self.quality = 85
-
-    def process(self, bucket: str, key: str) -> Dict[str, Any]:
-        """Process a single image"""
-        try:
-            logger.info(f"Processing: {key}")
-
-            # Download image
-            image_data = self.s3.download_file(key)
-            img = Image.open(image_data)
-
-            # Generate variants
-            variants = self._generate_variants(img, key)
-
-            return {
-                'success': True,
-                'key': key,
-                'variants': variants
-            }
-
-        except Exception as e:
-            logger.error(f"Failed to process {key}: {str(e)}")
-            return {'success': False, 'key': key, 'error': str(e)}
-
-    def _generate_variants(self, img: Image.Image, key: str) -> List[Dict]:
-        """Generate image variants"""
-        variants = []
-
-        # Define sizes
-        sizes = [
-            ('thumb', self.thumbnail_size),
-            ('medium', self.medium_size),
-            ('carousel', self.carousel_size),
-        ]
-
-        for name, dims in sizes:
-            # Resize
-            resized = self._resize_image(img, dims)
-
-            # Convert to RGB if needed
-            if resized.mode in ('RGBA', 'LA', 'P'):
-                resized = self._convert_to_rgb(resized)
-
-            # Generate JPEG
-            variant_key = self._generate_key(key, name)
-            buffer = BytesIO()
-            resized.save(buffer, format='JPEG', quality=self.quality, optimize=True)
-            buffer.seek(0)
-
-            # Upload
-            self.s3.upload_file(
-                buffer,
-                variant_key,
-                content_type='image/jpeg',
-                metadata={
-                    'variant': name,
-                    'processed_by': 'lambda-image-processor'
-                }
-            )
-
-            variants.append({
-                'key': variant_key,
-                'size': name,
-                'width': resized.width,
-                'height': resized.height
-            })
-
-        return variants
-
-    def _resize_image(self, img: Image.Image, size: tuple) -> Image.Image:
-        """Resize maintaining aspect ratio"""
-        if size[1] == 0:
-            ratio = size[0] / img.width
-            height = int(img.height * ratio)
-            return img.resize((size[0], height), Image.Resampling.LANCZOS)
-        else:
-            img_copy = img.copy()
-            img_copy.thumbnail(size, Image.Resampling.LANCZOS)
-            return img_copy
-
-    def _convert_to_rgb(self, img: Image.Image) -> Image.Image:
-        """Convert to RGB"""
-        if img.mode == 'RGBA':
-            background = Image.new('RGB', img.size, (255, 255, 255))
-            background.paste(img, mask=img.split()[-1])
-            return background
-        return img.convert('RGB')
-
-    def _generate_key(self, original: str, variant: str) -> str:
-        """Generate variant key"""
-        base = os.path.splitext(original)[0]
-        return f"{base}_{variant}.jpg"
-
-
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """Main Lambda handler"""
-    logger.info(f"Event records: {len(event.get('Records', []))}")
+    """
+    Main Lambda handler for image processing
 
-    processor = ImageProcessor()
-    results = []
+    Environment variables from Terraform:
+    - S3_BUCKET: S3 bucket name
+    - S3_PREFIX: S3 prefix for images
+    - CLOUDFRONT_URL: CloudFront distribution URL
+    - THUMBNAIL_SIZE: Thumbnail dimensions (width,height)
+    - MEDIUM_SIZE: Medium image dimensions (width,height)
+    - CAROUSEL_SIZE: Carousel image dimensions (width,height)
+    - QUALITY: JPEG quality (1-100)
+    - LOG_LEVEL: Logging level
+    - ENVIRONMENT: Environment name
+    """
+    logger.info(f"Received event with {len(event.get('Records', []))} records")
 
-    for record in event.get('Records', []):
-        key = record['s3']['object']['key']
+    try:
+        # Initialize processor with environment variables
+        processor = ImageProcessor()
+        results = []
 
-        # Skip already processed
-        if any(x in key for x in ['_thumb', '_medium', '_carousel']):
-            logger.info(f"Skipping: {key}")
-            continue
+        for record in event.get('Records', []):
+            bucket = record['s3']['bucket']['name']
+            key = record['s3']['object']['key']
 
-        result = processor.process(
-            record['s3']['bucket']['name'],
-            key
-        )
-        results.append(result)
+            # Skip already processed images
+            if any(x in key for x in ['_thumb', '_medium', '_carousel']):
+                logger.info(f"Skipping already processed: {key}")
+                continue
 
-    return {
-        'statusCode': 200,
-        'body': json.dumps({
-            'message': 'Processing complete',
-            'results': results
-        })
-    }
+            # Process the image
+            result = processor.process_image(bucket, key)
+            results.append(result)
+
+        success_count = sum(1 for r in results if r.get('success'))
+        failed_count = len(results) - success_count
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Processing complete',
+                'environment': os.environ.get('ENVIRONMENT', 'development'),
+                'success_count': success_count,
+                'failed_count': failed_count,
+                'results': results
+            })
+        }
+
+    except Exception as e:
+        logger.error(f"Unexpected error: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({
+                'error': str(e)
+            })
+        }

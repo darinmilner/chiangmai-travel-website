@@ -38,7 +38,7 @@ module "lambda" {
   rate_limit_per_minute = var.rate_limit_per_minute
   log_retention_days    = var.log_retention_days
 
-  tags = var.tags
+  s3_bucket = data.aws_s3_bucket.notifications_bucket.bucket
 }
 
 # API Gateway Module (Bangkok region)

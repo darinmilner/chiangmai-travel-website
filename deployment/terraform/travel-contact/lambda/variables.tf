@@ -54,8 +54,24 @@ variable "log_retention_days" {
   default     = 14
 }
 
-variable "tags" {
-  description = "Tags to apply to resources"
-  type        = map(string)
-  default     = {}
+variable "log_level" {
+  description = "Logging Level"
+  default     = "Debug"
+}
+
+variable "create_s3_notification" {
+  description = "Create S3 Notification"
+  type        = bool
+  default     = false
+}
+
+variable "s3_bucket" {
+  description = "S3 Bucket for notifications"
+  type        = string
+}
+
+variable "s3_notification_prefix" {
+  description = "S3 Notification prefix"
+  type        = string
+  default     = "notifications"
 }
