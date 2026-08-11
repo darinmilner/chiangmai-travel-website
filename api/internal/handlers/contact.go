@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"api/internal/config"
 	"api/internal/models"
-	"api/internal/secrets"
 
 	"github.com/gin-gonic/gin"
 )
@@ -57,7 +57,7 @@ func ContactForm(c *gin.Context) {
 	}
 
 	// Send to Lambda via API Gateway
-	if err := sendToLambda(req, config.APIURL); err != nil {
+	if err := sendToLambda(req, config.Contact.APIURL); err != nil {
 		log.Printf("❌ Error sending to Lambda: %v", err)
 		c.JSON(http.StatusInternalServerError, models.ContactResponse{
 			Success: false,
@@ -73,30 +73,22 @@ func ContactForm(c *gin.Context) {
 }
 
 // getContactConfig loads contact configuration
-func getContactConfig() (*secrets.ContactConfig, error) {
-	// Try to get from secrets manager first
-	sm, err := secrets.NewSecretManager()
-	if err == nil {
-		config, err := sm.GetContactConfig()
-		if err == nil {
-			return config, nil
-		}
+func getContactConfig() (*config.AppConfig, error) {
+	// Load from environment
+	appConfig := config.LoadFullConfig()
+	if appConfig == nil {
+		return nil, fmt.Errorf("failed to load config")
 	}
 
-	// Fallback to environment variables
-	appConfig, err := secrets.LoadConfigFromEnv()
-	if err != nil {
-		return nil, err
-	}
+	log.Printf("📧 Contact config loaded: recipient=%s", appConfig.Contact.RecipientEmail)
 
-	// Return the ContactConfig from AppConfig
-	return &appConfig.Contact, nil
+	return appConfig, nil
 }
 
 // sendToLambda sends the contact data to AWS Lambda via API Gateway
 func sendToLambda(req models.ContactRequest, apiURL string) error {
 	// If no API URL is provided, log the message (development mode)
-	if apiURL == "" || apiURL == "https://your-api-gateway-url.com/contact" {
+	if apiURL == "" {
 		log.Printf("📧 Contact message (dev mode):")
 		log.Printf("   Name: %s", req.Name)
 		log.Printf("   Email: %s", req.Email)

@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"api/internal/models"
-	"api/internal/services"
+
 	"github.com/gin-gonic/gin"
 )
 

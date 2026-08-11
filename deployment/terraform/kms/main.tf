@@ -1,11 +1,3 @@
-locals {
-  common_tags = {
-    Environment = var.environment
-    CreatedBy   = "Terraform"
-    AppName     = var.app_name
-  }
-}
-
 # --- Create KMS Keys Dynamically ---
 resource "aws_kms_key" "kms_key" {
   for_each = var.create_keys ? var.kms_keys : {}
@@ -23,6 +15,6 @@ resource "aws_kms_key" "kms_key" {
 resource "aws_kms_alias" "kms_alias" {
   for_each = var.create_keys ? var.kms_keys : {}
 
-  name          = "alias/${var.app_name}-${each.key}-key"
+  name          = "alias/${local.app_name_lower}-${each.key}-key"
   target_key_id = aws_kms_key.kms_key[each.key].key_id
 }

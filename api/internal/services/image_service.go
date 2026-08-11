@@ -2,15 +2,9 @@ package services
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"os"
-	"path/filepath"
-	"strings"
 	"time"
 
-	"github.com/your-app/internal/models"
+	"api/internal/models"
 )
 
 // ImageService defines the interface for image fetching

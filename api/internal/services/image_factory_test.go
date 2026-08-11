@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/your-app/internal/models"
+	"api/internal/models"
 )
 
 func TestImageServiceFactory_CreateService(t *testing.T) {

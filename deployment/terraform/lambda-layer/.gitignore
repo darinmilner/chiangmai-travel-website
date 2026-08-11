@@ -1,0 +1,7 @@
+# deployment/terraform/lambda-layer/.gitignore
+dist/
+temp_layer/
+*.zip
+__pycache__/
+*.pyc
+.pytest_cache/

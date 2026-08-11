@@ -1,10 +1,10 @@
 package services
 
 import (
-	"context"
 	"testing"
+	"time"
 
-	"github.com/your-app/internal/models"
+	"api/internal/models"
 )
 
 // TestImageServiceInterface ensures implementations satisfy the interface

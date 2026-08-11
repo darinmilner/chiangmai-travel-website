@@ -1,12 +1,11 @@
 package services
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
 
-	"github.com/your-app/internal/models"
+	"api/internal/models"
 )
 
 // ImageServiceFactory creates the appropriate image service

@@ -23,6 +23,9 @@ resource "aws_lambda_function" "contact_form" {
   }
 
   source_code_hash = filebase64sha256(var.lambda_zip_path)
+  layers = [
+    data.aws_lambda_layer_version.shared.arn
+  ]
 
   tags = local.tags
 }

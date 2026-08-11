@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/your-app/internal/models"
+	"api/internal/models"
 )
 
 func TestLocalImageService_GetImages(t *testing.T) {

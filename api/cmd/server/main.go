@@ -10,24 +10,19 @@ import (
 	"time"
 
 	"api/internal/config"
+	"api/internal/handlers"
 	"api/internal/router"
-	"api/internal/secrets"
 )
 
 func main() {
-	// Load configuration from environment (local development)
-	config, err := secrets.LoadConfigFromEnv()
-	if err != nil {
-		log.Printf("⚠️ Warning: Could not load config: %v", err)
-	}
-
-	log.Printf("📧 Contact form will send to: %s", config.Contact.RecipientEmail)
-
 	// Load configuration
-	appConfig := config.LoadConfig()
+	appConfig := config.LoadFullConfig()
+	log.Printf("📧 Contact form will send to: %s", appConfig.Contact.RecipientEmail)
+	log.Printf("📸 Image service: bucket=%s, local=%v", appConfig.AWS.Bucket, appConfig.Image.UseLocal)
 
 	// Initialize image service
-	if err := handlers.InitImageService(appConfig); err != nil {
+	imageConfig := appConfig.GetImageServiceConfig()
+	if err := handlers.InitImageService(imageConfig); err != nil {
 		log.Fatalf("Failed to initialize image service: %v", err)
 	}
 

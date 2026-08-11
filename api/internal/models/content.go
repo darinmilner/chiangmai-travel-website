@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // ContactRequest represents the contact form submission
 type ContactRequest struct {
 	Name    string `json:"name"`

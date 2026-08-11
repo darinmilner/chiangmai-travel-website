@@ -1,13 +1,11 @@
 package services
 
 import (
-	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
 
-	"github.com/your-app/internal/models"
+	"api/internal/models"
 )
 
 // TestConfig holds test configuration
