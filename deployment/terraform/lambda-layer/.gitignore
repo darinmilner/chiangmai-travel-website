@@ -1,4 +1,3 @@
-# deployment/terraform/lambda-layer/.gitignore
 dist/
 temp_layer/
 *.zip

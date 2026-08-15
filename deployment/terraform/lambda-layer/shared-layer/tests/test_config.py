@@ -12,7 +12,7 @@ class TestConfig:
         importlib.reload(config)
 
         config_obj = load_config()
-        assert config_obj.aws_region == 'ap-southeast-1'
+        assert config_obj.aws_region == 'ap-southeast-7'
         assert config_obj.aws_account_id == '123456789012'
         assert config_obj.s3_bucket == 'test-bucket'
         assert config_obj.ses_from_email == 'test@example.com'
@@ -24,7 +24,7 @@ class TestConfig:
         importlib.reload(config)
 
         config_obj = load_config()
-        assert config_obj.aws_region == 'ap-southeast-1'
+        assert config_obj.aws_region == 'ap-southeast-7'
         assert config_obj.s3_bucket == ''
         assert config_obj.ses_from_email == ''
 

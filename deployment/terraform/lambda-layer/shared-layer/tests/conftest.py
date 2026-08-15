@@ -11,7 +11,7 @@ import pytest
 def mock_env_vars():
     """Mock environment variables for all tests"""
     with patch.dict(os.environ, {
-        'AWS_REGION': 'ap-southeast-1',
+        'AWS_REGION': 'ap-southeast-7',
         'SES_REGION': 'ap-southeast-1',
         'AWS_ACCOUNT_ID': '123456789012',
         'S3_BUCKET': 'test-bucket',

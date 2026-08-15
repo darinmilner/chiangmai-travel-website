@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 @dataclass
 class Config:
     """Global configuration"""
-    aws_region: str = field(default_factory=lambda: os.environ.get('AWS_REGION', 'ap-southeast-1'))
+    aws_region: str = field(default_factory=lambda: os.environ.get('AWS_REGION', 'ap-southeast-7'))
     aws_account_id: str = field(default_factory=lambda: os.environ.get('AWS_ACCOUNT_ID', ''))
     s3_bucket: str = field(default_factory=lambda: os.environ.get('S3_BUCKET', ''))
     s3_prefix: str = field(default_factory=lambda: os.environ.get('S3_PREFIX', 'villa/'))
