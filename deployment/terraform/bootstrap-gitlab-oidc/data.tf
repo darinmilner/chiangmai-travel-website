@@ -1,9 +1,6 @@
 # Get current AWS account details
 data "aws_caller_identity" "current" {}
 
-# Get current AWS region
-data "aws_region" "current" {}
-
 data "aws_iam_policy_document" "terraform_deployment" {
   statement {
     effect = "Allow"
@@ -48,8 +45,6 @@ data "aws_iam_policy_document" "terraform_deployment" {
 }
 
 data "tls_certificate" "gitlab" {
-  count = var.create_oidc_provider ? 1 : 0
-
   url = var.gitlab_audience
 }
 

@@ -19,7 +19,7 @@ npx tailwindcss -i ./static/css/tailwind.css -o ./static/css/styles.css --watch
 # Run the Go application
 go run cmd/server/main.go
 📁 Updated Project Structure
-text
+```text
 api/
 ├── cmd/
 │   └── server/
@@ -47,3 +47,4 @@ api/
 ├── go.sum
 ├── tailwind.config.js
 └── README.md
+```

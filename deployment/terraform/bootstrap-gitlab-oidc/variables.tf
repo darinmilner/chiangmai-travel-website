@@ -30,12 +30,6 @@ variable "environment" {
   }
 }
 
-variable "create_oidc_provider" {
-  description = "Whether to create the OIDC provider (set to false if it already exists)"
-  type        = bool
-  default     = true
-}
-
 variable "max_session_duration" {
   description = "Maximum session duration for the role in seconds"
   type        = number

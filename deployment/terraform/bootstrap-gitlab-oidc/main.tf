@@ -1,10 +1,8 @@
 # Create the OIDC provider if requested
 resource "aws_iam_openid_connect_provider" "gitlab" {
-  count = var.create_oidc_provider ? 1 : 0
-
   url             = var.gitlab_audience
   client_id_list  = [var.gitlab_audience]
-  thumbprint_list = [data.tls_certificate.gitlab[0].certificates[0].sha1_fingerprint]
+  thumbprint_list = [data.tls_certificate.gitlab.certificates[0].sha1_fingerprint]
 
   tags = local.common_tags
 
