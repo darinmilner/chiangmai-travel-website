@@ -1,0 +1,22 @@
+# .gitlab/templates/aws.yml
+.aws-base:
+  extends: .base-job
+  before_script:
+    - !reference [.base-job, before_script]
+    - apt-get update && apt-get install -y awscli
+    - |
+      # OIDC authentication
+      if [ -n "${CI_JOB_JWT_V2}" ] && [ -n "${AWS_ROLE_ARN}" ]; then
+        echo "Setting up OIDC authentication..."
+        echo ${CI_JOB_JWT_V2} > /tmp/web_identity_token
+        export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+        export AWS_ROLE_ARN=${AWS_ROLE_ARN}
+        export AWS_SESSION_TOKEN=""
+        export AWS_ACCESS_KEY_ID=""
+        export AWS_SECRET_ACCESS_KEY=""
+
+        # Verify authentication
+        aws sts get-caller-identity
+      else
+        echo "⚠️ OIDC not configured - skipping AWS auth"
+      fi

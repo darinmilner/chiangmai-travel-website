@@ -1,0 +1,87 @@
+# config/environments.yml
+# Environment configuration with proper naming
+
+# Environment definitions
+environments:
+  # Development - For active development and testing
+  dev:
+    description: "Development environment"
+    short_name: dev
+    full_name: development
+    aws_region: ap-southeast-7
+    log_level: DEBUG
+    terraform_backend:
+      bucket_format: "dev-terraform-state"
+      key_format: "dev/terraform.tfstate"
+      region: ap-southeast-7
+    tags:
+      Environment: dev
+      EnvironmentType: development
+      CostCenter: "12345"
+      Team: DevOps
+
+  # Staging - Pre-production testing (mirrors production)
+  staging:
+    description: "Staging environment"
+    short_name: staging
+    full_name: staging
+    aws_region: ap-southeast-7
+    log_level: INFO
+    terraform_backend:
+      bucket_format: "staging-terraform-state"
+      key_format: "staging/terraform.tfstate"
+      region: ap-southeast-7
+    tags:
+      Environment: staging
+      EnvironmentType: pre-production
+      CostCenter: "12345"
+      Team: DevOps
+
+  # Production - Live production environment
+  prod:
+    description: "Production environment"
+    short_name: prod
+    full_name: production
+    aws_region: ap-southeast-7
+    log_level: WARNING
+    terraform_backend:
+      bucket_format: "prod-terraform-state"
+      key_format: "prod/terraform.tfstate"
+      region: ap-southeast-7
+    tags:
+      Environment: prod
+      EnvironmentType: production
+      CostCenter: "12345"
+      Team: DevOps
+
+# Alternative: If you prefer alpha/beta
+# alpha:
+#   description: "Alpha - Early development"
+#   short_name: alpha
+#   full_name: alpha
+#   ...
+# beta:
+#   description: "Beta - Pre-release testing"
+#   short_name: beta
+#   full_name: beta
+#   ...
+
+# Region configuration
+regions:
+  ap-southeast-7:
+    name: "Asia Pacific (Bangkok)"
+    short_name: bangkok
+    availability_zones: 3
+
+  us-east-1:
+    name: "US East (N. Virginia)"
+    short_name: us-east
+    availability_zones: 3
+
+# Defaults
+defaults:
+  environment: dev
+  aws_region: ap-southeast-7
+  tags:
+    CreatedBy: Terraform
+    ManagedBy: Terraform

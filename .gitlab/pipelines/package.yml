@@ -1,0 +1,19 @@
+# .gitlab/pipelines/package.yml
+include:
+  - local: '.gitlab/templates/base.yml'
+
+package:all:
+  stage: package
+  extends: .python-base
+  script:
+    - mkdir -p ${ARTIFACTS_DIR}
+    - python ${SCRIPTS_DIR}/package.py --config ${COMPONENTS_CONFIG} --artifacts ${ARTIFACTS_DIR}
+  artifacts:
+    paths:
+      - ${ARTIFACTS_DIR}/*.zip
+    expire_in: 7 days
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_PIPELINE_SOURCE == "web" && $DEPLOY_PACKAGE == "true"
+    - if: $CI_PIPELINE_SOURCE == "trigger" && $DEPLOY_PACKAGE == "true"
+    - when: never

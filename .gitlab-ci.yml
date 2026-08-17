@@ -1,0 +1,50 @@
+# .gitlab-ci.yml
+image: python:3.13-slim
+
+stages:
+  - lint
+  - test
+  - package
+  - deploy
+
+# ============================================================================
+# Common configurations
+# ============================================================================
+
+.rules-common:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - when: never
+
+.rules-deploy:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+      when: manual
+      allow_failure: false
+    - if: $DEPLOY_INFRASTRUCTURE == "true"
+      when: manual
+    - if: $DEPLOY_LAYER == "true"
+      when: manual
+    - if: $DEPLOY_SES == "true"
+      when: manual
+    - if: $DEPLOY_IMAGE == "true"
+      when: manual
+    - when: never
+
+# ============================================================================
+# Includes
+# ============================================================================
+
+include:
+  - local: '.gitlab/pipelines/lint.yml'
+  - local: '.gitlab/pipelines/test.yml'
+  - local: '.gitlab/pipelines/package.yml'
+  - local: '.gitlab/pipelines/deploy.yml'
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - .cache/pip/

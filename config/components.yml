@@ -1,0 +1,43 @@
+# config/components.yml
+# Central configuration for all components
+components:
+  layer:
+    name: lambda-layer
+    path: deployment/terraform/lambda-layer
+    type: layer
+    package_script: package.py
+    output: layer.zip
+    terraform_resource: aws_lambda_layer_version.common
+
+  ses:
+    name: travel-contact
+    path: deployment/terraform/lambdas/src
+    type: lambda
+    handler: handler.lambda_handler
+    runtime: python3.13
+    timeout: 30
+    memory: 256
+    terraform_resource: aws_lambda_function.ses
+    environment_variables:
+      LOG_LEVEL: INFO
+
+  image-processor:
+    name: image-processor
+    path: deployment/terraform/image-processor
+    type: lambda
+    handler: handler.lambda_handler
+    runtime: python3.13
+    timeout: 60
+    memory: 512
+    terraform_resource: aws_lambda_function.image_processor
+    environment_variables:
+      LOG_LEVEL: INFO
+      MAX_IMAGE_SIZE: 5242880
+
+# Terraform configuration
+terraform:
+  path: deployment/terraform
+  backend:
+    bucket_format: "{environment}-terraform-state"
+    key_format: "{folder}/terraform.tfstate"
+    region: ap-southeast-7

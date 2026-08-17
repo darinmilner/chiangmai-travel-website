@@ -1,0 +1,21 @@
+# .gitlab/pipelines/test.yml
+include:
+  - local: '.gitlab/templates/base.yml'
+
+test:all:
+  stage: test
+  extends: .python-base
+  script:
+    - python ${SCRIPTS_DIR}/test.py --config ${COMPONENTS_CONFIG} --artifacts ${ARTIFACTS_DIR}
+  artifacts:
+    paths:
+      - ${ARTIFACTS_DIR}/test-reports/
+    reports:
+      junit: ${ARTIFACTS_DIR}/test-reports/**/junit.xml
+    expire_in: 7 days
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "master"
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "trigger"
+    - when: never
