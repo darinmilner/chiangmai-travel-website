@@ -104,7 +104,7 @@ resource "aws_cloudfront_distribution" "images" {
   # WAF association
   web_acl_id = var.web_acl_id
 
-  tags = var.tags
+  tags = local.common_tags
 }
 
 # CloudFront Cache Policy

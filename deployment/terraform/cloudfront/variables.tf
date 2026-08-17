@@ -1,8 +1,19 @@
 variable "name_prefix" {
   description = "Prefix for resource names"
   type        = string
-  default     = "villa"
+  default     = "chiangmai-villa"
 }
+
+variable "environment" {
+  description = "Deployment Environment"
+  default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "beta", "prod"], var.environment)
+    error_message = "Environment must be one of: dev, staging, beta or prod"
+  }
+}
+
 
 variable "bucket_domain_name" {
   description = "S3 bucket domain name (bucket_regional_domain_name)"
@@ -102,12 +113,12 @@ variable "log_prefix" {
   default     = "cloudfront/"
 }
 
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default = {
-    Environment = "production"
-    Service     = "villa-images"
-    ManagedBy   = "terraform"
-  }
-}
+# variable "tags" {
+#   description = "Resource tags"
+#   type        = map(string)
+#   default = {
+#     Environment = "production"
+#     Service     = "villa-images"
+#     ManagedBy   = "terraform"
+#   }
+# }
