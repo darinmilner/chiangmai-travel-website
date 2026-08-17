@@ -1,42 +1,75 @@
 locals {
-  account_id     = var.account_id != null ? var.account_id : data.aws_caller_identity.current.account_id
+  # ------------------------------------------------------------
+  # Application
+  # ------------------------------------------------------------
+
   app_name       = "ChiangMaiVilla"
   app_name_lower = lower(local.app_name)
-  # Standard tags that will be applied to all resources
+
+  # ------------------------------------------------------------
+  # AWS account
+  # ------------------------------------------------------------
+
+  account_id = data.aws_caller_identity.current.account_id
+
+  # ------------------------------------------------------------
+  # Naming
+  # ------------------------------------------------------------
+
+  role_name = "${local.app_name_lower}-gitlab-oidc-deploy-${var.environment}"
+
+  # ------------------------------------------------------------
+  # GitLab OIDC
+  # ------------------------------------------------------------
+
+  oidc_provider_url = replace(
+    var.gitlab_audience,
+    "https://",
+    ""
+  )
+
+  oidc_provider_arn = (
+    "arn:aws:iam::${local.account_id}:oidc-provider/${local.oidc_provider_url}"
+  )
+
+  # ------------------------------------------------------------
+  # Tags
+  # ------------------------------------------------------------
+
   common_tags = {
     Environment = var.environment
     ManagedBy   = "Terraform"
-    Project     = "GitLab-OIDC-${local.app_name}"
-    CreatedAt   = timestamp()
+    Project     = local.app_name
   }
 
-  # Role name with environment prefix
-  role_name = "${var.environment}-${var.role_name}"
+  # ------------------------------------------------------------
+  # GitLab OIDC trust policy
+  # ------------------------------------------------------------
 
-  # OIDC provider ARN
-  oidc_provider_arn = "arn:aws:iam::${local.account_id}:oidc-provider/${replace(var.gitlab_audience, "https://", "")}"
-
-  # OIDC provider URL without protocol
-  oidc_provider_url = replace(var.gitlab_audience, "https://", "")
-
-  # Trust policy for GitLab OIDC
   trust_policy = {
     Version = "2012-10-17"
+
     Statement = [
       {
         Effect = "Allow"
+
         Principal = {
           Federated = var.create_oidc_provider ? aws_iam_openid_connect_provider.gitlab[0].arn : local.oidc_provider_arn
         }
+
         Action = "sts:AssumeRoleWithWebIdentity"
+
         Condition = {
           StringEquals = {
             "${local.oidc_provider_url}:project_id" = var.project_id
           }
-          # Optional: Add additional conditions for extra security
-          # StringLike = {
-          #   "${local.oidc_provider_url}:ref_type" = "branch"
-          # }
+
+          StringLike = {
+            "${local.oidc_provider_url}:sub" = [
+              "project_path:*:ref_type:branch:ref:main",
+              "project_path:*:ref_type:branch:ref:master"
+            ]
+          }
         }
       }
     ]
