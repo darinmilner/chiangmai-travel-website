@@ -1,7 +1,5 @@
 # .gitlab/templates/base.yml
 .base-job:
-  tags:
-    - docker
   before_script:
     - apt-get update && apt-get install -y curl bash jq
     - pip install --upgrade pip
