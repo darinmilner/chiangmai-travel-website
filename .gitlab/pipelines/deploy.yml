@@ -1,55 +1,56 @@
-# .gitlab/pipelines/deploy.yml
 include:
   - local: '.gitlab/templates/base.yml'
   - local: '.gitlab/templates/aws.yml'
 
+.deploy-rules:
+  rules:
+    # Run only when pipeline is started manually via Web UI
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($DEPLOY_TARGET == $COMPONENT_NAME || $DEPLOY_TARGET == "all")'
+      when: on_success
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    # Block automatic runs from git push
+    - when: never
+
 deploy:infrastructure:
   stage: deploy
-  extends: .aws-base
+  extends: [.aws-base, .deploy-rules]
+  variables:
+    COMPONENT_NAME: "all"
   needs: ["package:all"]
   script:
     - apt-get update && apt-get install -y terraform
     - python ${SCRIPTS_DIR}/deploy.py --command all --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
   environment:
     name: ${CI_COMMIT_REF_NAME}
-    url: https://console.aws.amazon.com/lambda/home?region=ap-southeast-7
-  rules:
-    - if: $CI_COMMIT_BRANCH == "master"
-      when: manual
-      allow_failure: false
-    - if: $DEPLOY_INFRASTRUCTURE == "true"
-      when: manual
-    - when: never
+    url: https://console.aws.amazon.com/lambda/home?region=${AWS_REGION}
 
 deploy:layer:
   stage: deploy
-  extends: .aws-base
+  extends: [.aws-base, .deploy-rules]
+  variables:
+    COMPONENT_NAME: "layer"
   needs: ["package:all"]
   script:
     - apt-get update && apt-get install -y terraform
     - python ${SCRIPTS_DIR}/deploy.py --command component --component layer --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-  rules:
-    - if: $DEPLOY_LAYER == "true"
-      when: manual
 
 deploy:ses:
   stage: deploy
-  extends: .aws-base
+  extends: [.aws-base, .deploy-rules]
+  variables:
+    COMPONENT_NAME: "ses"
   needs: ["package:all"]
   script:
     - apt-get update && apt-get install -y terraform
     - python ${SCRIPTS_DIR}/deploy.py --command component --component ses --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-  rules:
-    - if: $DEPLOY_SES == "true"
-      when: manual
 
 deploy:image-processor:
   stage: deploy
-  extends: .aws-base
+  extends: [.aws-base, .deploy-rules]
+  variables:
+    COMPONENT_NAME: "image-processor"
   needs: ["package:all"]
   script:
     - apt-get update && apt-get install -y terraform
     - python ${SCRIPTS_DIR}/deploy.py --command component --component image-processor --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-  rules:
-    - if: $DEPLOY_IMAGE == "true"
-      when: manual

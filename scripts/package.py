@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Packaging orchestration script
-Reads component config and packages each component
+Reads component paths from config
 """
 import sys
 import subprocess
@@ -96,22 +96,12 @@ class PackageOrchestrator:
 
         return success
 
-    def package_component(self, component_name: str) -> bool:
-        """Package a specific component"""
-        comp = self.components.get(component_name)
-        if not comp:
-            logger.error(f"Component not found: {component_name}")
-            return False
-
-        return self._package_component(component_name, comp)
-
 
 def main():
     """CLI entry point"""
     parser = argparse.ArgumentParser(description="Package Lambda components")
     parser.add_argument('--config', required=True, help='Path to components.yml')
     parser.add_argument('--artifacts', required=True, help='Artifacts directory')
-    parser.add_argument('--component', help='Specific component to package (default: all)')
 
     args = parser.parse_args()
 
@@ -120,11 +110,7 @@ def main():
         artifacts_dir=Path(args.artifacts)
     )
 
-    if args.component:
-        success = orchestrator.package_component(args.component)
-    else:
-        success = orchestrator.package_all()
-
+    success = orchestrator.package_all()
     sys.exit(0 if success else 1)
 
 

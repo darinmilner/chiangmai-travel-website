@@ -13,7 +13,12 @@ package:all:
       - ${ARTIFACTS_DIR}/*.zip
     expire_in: 7 days
   rules:
-    - if: $CI_COMMIT_BRANCH == "master"
-    - if: $CI_PIPELINE_SOURCE == "web" && $DEPLOY_PACKAGE == "true"
-    - if: $CI_PIPELINE_SOURCE == "trigger" && $DEPLOY_PACKAGE == "true"
+    # Run automatically when triggered via Web UI or manual target selection
+    - if: '$CI_PIPELINE_SOURCE == "web" && ($TARGET_STAGE == "package" || $TARGET_STAGE == "all" || $DEPLOY_TARGET != "manual")'
+      when: on_success
+    # Fallback to manual trigger if pipeline source is Web without pre-selected targets
+    - if: '$CI_PIPELINE_SOURCE == "web"'
+      when: manual
+    - if: '$CI_PIPELINE_SOURCE == "trigger"'
+      when: on_success
     - when: never

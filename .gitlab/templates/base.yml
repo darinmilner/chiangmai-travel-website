@@ -1,4 +1,6 @@
 # .gitlab/templates/base.yml
+
+# Universal base for Linux-level tooling
 .base-job:
   before_script:
     - apt-get update && apt-get install -y curl bash jq
@@ -9,54 +11,13 @@
       - runner_system_failure
       - stuck_or_timeout_failure
 
+# Python environment extension
 .python-base:
   extends: .base-job
-  variables:
-    AWS_REGION: ap-southeast-7
-    ARTIFACTS_DIR: ${CI_PROJECT_DIR}/artifacts
-    SCRIPTS_DIR: ${CI_PROJECT_DIR}/scripts
-    CONFIG_DIR: ${CI_PROJECT_DIR}/config
-    COMPONENTS_CONFIG: ${CONFIG_DIR}/components.yml
+  image: python:${PYTHON_VERSION}-slim
   before_script:
-    - apt-get update && apt-get install -y curl bash jq
-    - pip install --upgrade pip
-    - |
-      if [ -f "requirements.txt" ]; then
-        pip install -r requirements.txt
-      fi
+    - !reference [.base-job, before_script]
     - pip install pyyaml
-  cache:
-    key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - .cache/pip/
-
-.aws-base:
-  extends: .base-job
-  variables:
-    AWS_REGION: ap-southeast-7
-    ARTIFACTS_DIR: ${CI_PROJECT_DIR}/artifacts
-    SCRIPTS_DIR: ${CI_PROJECT_DIR}/scripts
-    CONFIG_DIR: ${CI_PROJECT_DIR}/config
-    COMPONENTS_CONFIG: ${CONFIG_DIR}/components.yml
-  before_script:
-    - apt-get update && apt-get install -y curl bash jq awscli
-    - pip install --upgrade pip
-    - |
-      # OIDC authentication
-      if [ -n "${CI_JOB_JWT_V2}" ] && [ -n "${AWS_ROLE_ARN}" ]; then
-        echo "Setting up OIDC authentication..."
-        echo ${CI_JOB_JWT_V2} > /tmp/web_identity_token
-        export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
-        export AWS_ROLE_ARN=${AWS_ROLE_ARN}
-        export AWS_SESSION_TOKEN=""
-        export AWS_ACCESS_KEY_ID=""
-        export AWS_SECRET_ACCESS_KEY=""
-
-        # Verify authentication
-        aws sts get-caller-identity
-      else
-        echo "⚠️ OIDC not configured - skipping AWS auth"
-      fi
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:

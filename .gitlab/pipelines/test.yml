@@ -14,8 +14,8 @@ test:all:
       junit: ${ARTIFACTS_DIR}/test-reports/**/junit.xml
     expire_in: 7 days
   rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - if: $CI_COMMIT_BRANCH == "master"
     - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
     - if: $CI_PIPELINE_SOURCE == "trigger"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - when: never

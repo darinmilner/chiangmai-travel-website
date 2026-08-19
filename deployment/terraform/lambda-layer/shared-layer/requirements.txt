@@ -1,3 +1,5 @@
 pytest
+pytest-cov
 boto3
 flake8
+aws-lambda-powertools

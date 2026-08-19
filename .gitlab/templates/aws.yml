@@ -1,22 +1,28 @@
 # .gitlab/templates/aws.yml
-.aws-base:
-  extends: .base-job
-  before_script:
-    - !reference [.base-job, before_script]
-    - apt-get update && apt-get install -y awscli
-    - |
-      # OIDC authentication
-      if [ -n "${CI_JOB_JWT_V2}" ] && [ -n "${AWS_ROLE_ARN}" ]; then
-        echo "Setting up OIDC authentication..."
-        echo ${CI_JOB_JWT_V2} > /tmp/web_identity_token
-        export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
-        export AWS_ROLE_ARN=${AWS_ROLE_ARN}
-        export AWS_SESSION_TOKEN=""
-        export AWS_ACCESS_KEY_ID=""
-        export AWS_SECRET_ACCESS_KEY=""
+include:
+  - local: '.gitlab/templates/base.yml'
 
-        # Verify authentication
+# AWS extension with OIDC authentication
+.aws-base:
+  extends: .python-base
+  id_tokens:
+    AWS_OIDC_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - !reference [.python-base, before_script]
+    - apt-get install -y awscli
+    - |
+      if [ -n "${AWS_ROLE_ARN}" ] && [ -n "${AWS_OIDC_TOKEN}" ]; then
+        echo "Setting up AWS OIDC authentication for region: ${AWS_REGION}..."
+        echo "${AWS_OIDC_TOKEN}" > /tmp/web_identity_token
+        export AWS_WEB_IDENTITY_TOKEN_FILE=/tmp/web_identity_token
+        export AWS_ROLE_ARN="${AWS_ROLE_ARN}"
+        export AWS_DEFAULT_REGION="${AWS_REGION}"
+
+        # Ensure static keys don't interfere with OIDC credentials
+        unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
+
         aws sts get-caller-identity
       else
-        echo "⚠️ OIDC not configured - skipping AWS auth"
+        echo "⚠️ AWS_ROLE_ARN or AWS_OIDC_TOKEN missing - skipping AWS auth"
       fi

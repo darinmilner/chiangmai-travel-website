@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Testing orchestration script
-Reads component config and runs pytest on each component
+Reads component paths from config and installs dependencies
 """
 import sys
 import subprocess
@@ -33,6 +33,31 @@ class TestOrchestrator:
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
         self.test_reports_dir = self.artifacts_dir / 'test-reports'
         self.test_reports_dir.mkdir(exist_ok=True)
+
+        # Install dependencies
+        self._install_dependencies()
+        self._check_pytest()
+
+    def _install_dependencies(self):
+        """Install dependencies from all component requirements.txt files"""
+        logger.info("📦 Installing dependencies from component requirements.txt files...")
+
+        for name, comp in self.components.items():
+            req_file = comp.get('requirements')
+            if req_file and Path(req_file).exists():
+                logger.info(f"📦 Installing from {req_file}")
+                subprocess.run(
+                    ['pip', 'install', '-r', req_file],
+                    capture_output=False
+                )
+
+    def _check_pytest(self):
+        """Check if pytest is installed"""
+        try:
+            subprocess.run(['pytest', '--version'], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            logger.error("❌ pytest not found. Please ensure it's in your requirements.txt")
+            sys.exit(1)
 
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file"""
@@ -77,11 +102,10 @@ class TestOrchestrator:
         junit_path = self.test_reports_dir / f'junit-{name}.xml'
         cmd.extend(['--junitxml', str(junit_path)])
 
-        # Run pytest
         result = subprocess.run(
             cmd,
             cwd=str(path),
-            capture_output=False,  # Show output in real-time
+            capture_output=False,
             text=True
         )
 
@@ -102,22 +126,12 @@ class TestOrchestrator:
 
         return success
 
-    def test_component(self, component_name: str) -> bool:
-        """Test a specific component"""
-        comp = self.components.get(component_name)
-        if not comp:
-            logger.error(f"Component not found: {component_name}")
-            return False
-
-        return self._test_component(component_name, comp)
-
 
 def main():
     """CLI entry point"""
     parser = argparse.ArgumentParser(description="Test Lambda components")
     parser.add_argument('--config', required=True, help='Path to components.yml')
     parser.add_argument('--artifacts', required=True, help='Artifacts directory')
-    parser.add_argument('--component', help='Specific component to test (default: all)')
 
     args = parser.parse_args()
 
@@ -126,11 +140,7 @@ def main():
         artifacts_dir=Path(args.artifacts)
     )
 
-    if args.component:
-        success = orchestrator.test_component(args.component)
-    else:
-        success = orchestrator.test_all()
-
+    success = orchestrator.test_all()
     sys.exit(0 if success else 1)
 
 
