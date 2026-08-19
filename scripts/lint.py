@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 Linting orchestration script
-Reads component paths from config and installs dependencies
+Reads component paths from config and runs flake8 using local .flake8 configs.
 """
 import sys
 import subprocess
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import yaml
 
@@ -21,39 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 class LintOrchestrator:
-    """Orchestrates linting for all components"""
+    """Orchestrates flake8 static code analysis for components using local .flake8 configs"""
 
     def __init__(self, config_path: Path):
         self.config_path = config_path
         self.config = self._load_config()
         self.components = self.config.get('components', {})
-
-        # Install dependencies and check flake8
-        self._install_dependencies()
-        self._check_flake8()
-
-    def _install_dependencies(self):
-        """Install dependencies from all component requirements.txt files"""
-        logger.info("📦 Installing dependencies from component requirements.txt files...")
-
-        for name, comp in self.components.items():
-            req_file = comp.get('requirements')
-            if req_file and Path(req_file).exists():
-                logger.info(f"📦 Installing from {req_file}")
-                result = subprocess.run(
-                    ['pip', 'install', '-r', req_file],
-                    capture_output=False
-                )
-                if result.returncode != 0:
-                    logger.warning(f"⚠️ Failed to install from {req_file}")
-
-    def _check_flake8(self):
-        """Check if flake8 is installed"""
-        try:
-            subprocess.run(['flake8', '--version'], capture_output=True, check=True)
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            logger.error("❌ flake8 not found. Please ensure it's in your requirements.txt")
-            sys.exit(1)
 
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from YAML file"""
@@ -62,45 +35,81 @@ class LintOrchestrator:
             return {'components': {}}
 
         with open(self.config_path) as f:
-            return yaml.safe_load(f)
+            return yaml.safe_load(f) or {'components': {}}
+
+    def check_flake8(self) -> bool:
+        """Verify flake8 executable is available"""
+        try:
+            subprocess.run(['flake8', '--version'], capture_output=True, check=True)
+            return True
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            logger.error("❌ flake8 not found. Please ensure 'flake8' is installed in the environment.")
+            return False
+
+    def _find_flake8_config(self, component_path: Path) -> Optional[Path]:
+        """
+        Search for .flake8 file starting at the component path
+        and walking up to the repository root directory.
+        """
+        current = component_path.resolve()
+        root = Path.cwd().resolve()
+
+        while True:
+            config_file = current / '.flake8'
+            if config_file.exists():
+                return config_file
+            if current == root or current.parent == current:
+                break
+            current = current.parent
+
+        return None
 
     def _lint_component(self, name: str, comp: Dict[str, Any]) -> bool:
-        """Run flake8 on a single component"""
-        path = Path(comp.get('path', ''))
+        """Run flake8 on a single component path using its local .flake8 config"""
+        path_str = comp.get('path')
+        if not path_str:
+            logger.warning(f"⚠️ Component '{name}' has no path defined. Skipping.")
+            return True
 
+        path = Path(path_str)
         if not path.exists():
-            logger.warning(f"Component {name} path not found: {path}")
+            logger.warning(f"⚠️ Component '{name}' path not found: {path}")
             return False
 
-        logger.info(f"📝 Linting {name} ({path})...")
+        logger.info(f"📝 Linting component '{name}' at {path}...")
 
-        # Build flake8 command
+        # Base flake8 command
         cmd = ['flake8', str(path), '--statistics', '--count']
 
-        # Use component-specific .flake8 config if exists
-        flake8_config = path / '.flake8'
-        if flake8_config.exists():
-            cmd.extend(['--config', str(flake8_config)])
+        # Discover and attach local .flake8 config file
+        config_file = self._find_flake8_config(path)
+        if config_file:
+            logger.info(f"   Using configuration: {config_file}")
+            cmd.extend(['--config', str(config_file)])
         else:
-            cmd.extend(['--max-line-length', '120'])
+            logger.info("   No .flake8 file found; using default flake8 rules.")
 
-        result = subprocess.run(
-            cmd,
-            capture_output=False,
-            text=True
-        )
+        result = subprocess.run(cmd, capture_output=False, text=True)
 
         if result.returncode == 0:
-            logger.info(f"✅ Linting passed for {name}")
+            logger.info(f"✅ Linting passed for {name}\n")
             return True
         else:
-            logger.error(f"❌ Linting failed for {name}")
+            logger.error(f"❌ Linting failed for {name}\n")
             return False
 
-    def lint_all(self) -> bool:
-        """Lint all components"""
-        success = True
+    def lint(self, component_name: Optional[str] = 'all') -> bool:
+        """Lint specific component or all components"""
+        if not self.check_flake8():
+            return False
 
+        if component_name and component_name != 'all':
+            if component_name not in self.components:
+                logger.error(f"❌ Component '{component_name}' not found in {self.config_path}")
+                return False
+            return self._lint_component(component_name, self.components[component_name])
+
+        success = True
         for name, comp in self.components.items():
             if not self._lint_component(name, comp):
                 success = False
@@ -112,11 +121,12 @@ def main():
     """CLI entry point"""
     parser = argparse.ArgumentParser(description="Lint Lambda components")
     parser.add_argument('--config', required=True, help='Path to components.yml')
+    parser.add_argument('--component', default='all', help='Target component to lint (default: all)')
 
     args = parser.parse_args()
 
     orchestrator = LintOrchestrator(Path(args.config))
-    success = orchestrator.lint_all()
+    success = orchestrator.lint(args.component)
 
     sys.exit(0 if success else 1)
 

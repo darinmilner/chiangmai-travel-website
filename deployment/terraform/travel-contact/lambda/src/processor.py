@@ -2,7 +2,7 @@
 SES processing logic
 """
 import os
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 from python.clients.ses import SESClient
 from python.logger import get_logger

@@ -27,7 +27,7 @@ components:
   # SES Lambda
   ses:
     name: travel-contact
-    path: deployment/terraform/travel-contact/lambdas/src
+    path: deployment/terraform/travel-contact/lambda/src
     type: lambda
     handler: lambda_function.lambda_handler
     runtime: python3.13

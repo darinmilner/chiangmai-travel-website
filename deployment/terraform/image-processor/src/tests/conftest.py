@@ -15,17 +15,6 @@ PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # src directory
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
 
-# Now we can import from src
-try:
-    from lambda_function import lambda_handler
-    from processor import ImageProcessor
-except ImportError as e:
-    print(f"Warning: Could not import from src: {e}")
-    print(f"Project root: {PROJECT_ROOT}")
-    print(f"sys.path: {sys.path[:3]}")
-    raise
-
-
 @pytest.fixture(autouse=True)
 def mock_env_vars():
     """Mock environment variables for tests"""
