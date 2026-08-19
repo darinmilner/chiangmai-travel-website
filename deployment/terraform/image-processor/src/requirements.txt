@@ -7,13 +7,8 @@ packaging==26.3
 pillow==12.3.0
 pluggy==1.6.0
 Pygments==2.20.0
-pytest==9.1.1
-pytest-cov==7.1.0
-pytest-mock==3.15.1
-pytest-timeout==2.4.0
 python-dateutil==2.9.0.post0
 s3transfer==0.19.2
 six==1.17.0
 urllib3==2.7.0
-flake8
 python-dotenv

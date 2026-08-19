@@ -1,10 +1,11 @@
-# .gitlab/pipelines/lint.yml
 include:
   - local: '.gitlab/templates/base.yml'
 
 lint:all:
   stage: lint
   extends: .python-base
+  before_script:
+    - pip install flake8 pyyaml
   script:
     - python ${SCRIPTS_DIR}/lint.py --config ${COMPONENTS_CONFIG}
   rules:
