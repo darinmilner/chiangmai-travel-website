@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 6.0"
-    }
-  }
-}
-
 # CloudFront Origin Access Identity
 resource "aws_cloudfront_origin_access_identity" "oai" {
   comment = "OAI for ${var.name_prefix} images"

@@ -15,11 +15,12 @@ PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # src directory
 sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
 
+
 @pytest.fixture(autouse=True)
 def mock_env_vars():
     """Mock environment variables for tests"""
     with patch.dict(os.environ, {
-        'AWS_REGION': 'ap-southeast-1',
+        'AWS_REGION': 'ap-southeast-7',
         'AWS_ACCOUNT_ID': '123456789012',
         'S3_BUCKET': 'test-bucket',
         'S3_PREFIX': 'villa/',

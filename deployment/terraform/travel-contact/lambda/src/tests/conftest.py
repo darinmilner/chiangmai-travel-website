@@ -17,18 +17,6 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, SRC_PATH)
 sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
 
-# Now we can import from src
-try:
-    from lambda_function import lambda_handler
-    from processor import SESProcessor
-    from templates import EmailTemplates
-except ImportError as e:
-    print(f"Could not import from src: {e}")
-    if os.path.exists(SRC_PATH):
-        print(f"Files in {SRC_PATH}: {os.listdir(SRC_PATH)}")
-    raise
-
-
 @pytest.fixture(autouse=True)
 def mock_env_vars():
     """Mock environment variables for tests"""
