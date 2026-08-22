@@ -17,6 +17,7 @@ sys.path.insert(0, PROJECT_ROOT)
 sys.path.insert(0, SRC_PATH)
 sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
 
+
 @pytest.fixture(autouse=True)
 def mock_env_vars():
     """Mock environment variables for tests"""
