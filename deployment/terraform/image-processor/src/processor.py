@@ -4,11 +4,10 @@ Image processing logic
 import os
 from io import BytesIO
 from typing import Dict, Any, List, Tuple
-
 from PIL import Image
-
 from python.clients.s3 import S3Client
 from python.logger import get_logger
+
 
 logger = get_logger(__name__)
 

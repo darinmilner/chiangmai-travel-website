@@ -78,16 +78,19 @@ class LintOrchestrator:
 
         logger.info(f"📝 Linting component '{name}' at {path}...")
 
-        # Base flake8 command
-        cmd = ['flake8', str(path), '--statistics', '--count']
+        # Force standard output format: filename:line:col: code text
+        cmd = [
+            'flake8',
+            str(path),
+            '--filename=*.py',
+            '--format=%(path)s:%(row)d:%(col)d: %(code)s %(text)s'
+        ]
 
         # Discover and attach local .flake8 config file
         config_file = self._find_flake8_config(path)
         if config_file:
             logger.info(f"   Using configuration: {config_file}")
             cmd.extend(['--config', str(config_file)])
-        else:
-            logger.info("   No .flake8 file found; using default flake8 rules.")
 
         result = subprocess.run(cmd, capture_output=False, text=True)
 

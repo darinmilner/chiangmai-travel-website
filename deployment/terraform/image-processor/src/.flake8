@@ -1,28 +1,12 @@
-# lambdas/image-processor/.flake8
 [flake8]
 max-line-length = 120
-extend-ignore = E203, W503
-max-complexity = 10
+filename = *.py
 exclude =
     .git,
     __pycache__,
-    .venv,
-    .eggs,
-    *.egg,
-    .pytest_cache,
     build,
     dist,
-    .mypy_cache,
-    .coverage,
-    htmlcov
-per-file-ignores =
-    __init__.py: F401
-    tests/*: S101, B008, B011
-    image_processor.py: B008
-statistics = True
-count = True
-format = html
-htmldir = flake8-report
-docstring-convention = google
-import-order-style = google
-application-import-names = src, tests
+    .venv,
+    .cache,
+    htmlcov,
+    *.html

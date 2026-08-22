@@ -8,6 +8,7 @@ from python.clients.ses import SESClient
 from python.logger import get_logger
 from templates import EmailTemplates
 
+
 logger = get_logger(__name__)
 
 
