@@ -1,6 +1,6 @@
 # CloudFront Origin Access Identity
 resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for ${var.name_prefix} images"
+  comment = "OAI for ${local.app_name} images"
 }
 
 # CloudFront distribution
@@ -12,7 +12,7 @@ resource "aws_cloudfront_distribution" "images" {
   price_class         = var.price_class
 
   origin {
-    domain_name = var.bucket_domain_name
+    domain_name = aws_s3_bucket.static_bucket.bucket_regional_domain_name
     origin_id   = "S3Origin"
 
     s3_origin_config {
@@ -80,9 +80,13 @@ resource "aws_cloudfront_distribution" "images" {
   }
 
   viewer_certificate {
+    # If ARN is null, use default certificate
+    cloudfront_default_certificate = var.certificate_arn == null ? true : false
+
+    # If ARN is provided, use ACM certificate
     acm_certificate_arn      = var.certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+    ssl_support_method       = var.certificate_arn != null ? "sni-only" : null
+    minimum_protocol_version = var.certificate_arn != null ? "TLSv1.2_2021" : "TLSv1"
   }
 
   custom_error_response {
@@ -92,15 +96,12 @@ resource "aws_cloudfront_distribution" "images" {
     response_page_path    = "/index.html"
   }
 
-  # WAF association
-  web_acl_id = var.web_acl_id
-
   tags = local.common_tags
 }
 
 # CloudFront Cache Policy
 resource "aws_cloudfront_cache_policy" "images" {
-  name        = "${var.name_prefix}-image-cache"
+  name        = "${local.lower_app_name}-image-cache"
   comment     = "Cache policy for villa images"
   default_ttl = var.default_ttl
   max_ttl     = var.max_ttl
@@ -124,10 +125,9 @@ resource "aws_cloudfront_cache_policy" "images" {
   }
 }
 
-# CloudFront Response Headers Policy
 resource "aws_cloudfront_response_headers_policy" "security" {
-  name    = "${var.name_prefix}-security-headers"
-  comment = "Security headers for images"
+  name    = "${local.lower_app_name}-security-headers"
+  comment = "Security and CORS headers for images"
 
   security_headers_config {
     content_type_options {
@@ -159,8 +159,11 @@ resource "aws_cloudfront_response_headers_policy" "security" {
   }
 
   cors_config {
+    # REQUIRED: Must be set to false when using wildcard origins ("*")
+    access_control_allow_credentials = false
+
     access_control_allow_origins {
-      items = ["*"]
+      items = ["*"] # Replace with ["https://yourdomain.com"] for stricter security
     }
     access_control_allow_headers {
       items = ["*"]

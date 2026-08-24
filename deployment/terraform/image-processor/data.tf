@@ -1,10 +1,24 @@
-# Data source for Secrets Manager
-data "aws_secretsmanager_secret" "lambda_config" {
-  count = var.secret_arn != "" ? 1 : 0
-  arn   = var.secret_arn
+data "terraform_remote_state" "cloudfront" {
+  backend = "s3"
+
+  config = {
+    bucket = var.bucket_id                  # Same bucket
+    key    = "cloudfront/terraform.tfstate" # Exact folder path to CloudFront state
+    region = var.region
+  }
 }
 
-data "aws_secretsmanager_secret_version" "lambda_config" {
-  count     = var.secret_arn != "" ? 1 : 0
-  secret_id = data.aws_secretsmanager_secret.lambda_config[0].id
+# Archive the Lambda code
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_dir  = "${path.module}/src"
+  output_path = "${path.module}/src/function.zip"
+
+  excludes = [
+    "tests/",
+    "*.pyc",
+    "__pycache__/",
+    ".pytest_cache/",
+    "*.egg-info/"
+  ]
 }

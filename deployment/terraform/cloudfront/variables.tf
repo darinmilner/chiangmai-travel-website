@@ -1,9 +1,3 @@
-variable "name_prefix" {
-  description = "Prefix for resource names"
-  type        = string
-  default     = "chiangmai-villa"
-}
-
 variable "environment" {
   description = "Deployment Environment"
   default     = "dev"
@@ -14,21 +8,16 @@ variable "environment" {
   }
 }
 
-
-variable "bucket_domain_name" {
-  description = "S3 bucket domain name (bucket_regional_domain_name)"
-  type        = string
-}
-
-variable "bucket_id" {
+variable "bucket_name" {
   description = "S3 bucket ID"
   type        = string
+  default     = "chiangmai-villa-static-files"
 }
 
 variable "s3_prefix" {
   description = "S3 prefix/folder for images"
   type        = string
-  default     = "villa"
+  default     = "villa/"
 }
 
 variable "custom_domains" {
@@ -40,7 +29,7 @@ variable "custom_domains" {
 variable "certificate_arn" {
   description = "ACM certificate ARN for CloudFront (required for custom domains)"
   type        = string
-  default     = ""
+  default     = null
 }
 
 variable "price_class" {
@@ -89,12 +78,6 @@ variable "max_ttl" {
   default     = 31536000
 }
 
-variable "web_acl_id" {
-  description = "WAF Web ACL ID (optional)"
-  type        = string
-  default     = ""
-}
-
 variable "enable_logging" {
   description = "Enable CloudFront access logging"
   type        = bool
@@ -113,12 +96,8 @@ variable "log_prefix" {
   default     = "cloudfront/"
 }
 
-# variable "tags" {
-#   description = "Resource tags"
-#   type        = map(string)
-#   default = {
-#     Environment = "production"
-#     Service     = "villa-images"
-#     ManagedBy   = "terraform"
-#   }
-# }
+variable "region" {
+  description = "Deployment region"
+  type        = string
+  default     = "ap-southeast-7"
+}

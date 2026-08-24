@@ -11,7 +11,17 @@ resource "aws_lambda_function" "image_processor" {
   publish          = true
 
   environment {
-    variables = local.environment_variables
+    variables = {
+      S3_BUCKET      = var.bucket_id
+      S3_PREFIX      = var.s3_prefix
+      CLOUDFRONT_URL = "https://${data.terraform_remote_state.cloudfront.outputs.cloudfront_domain_name}"
+      THUMBNAIL_SIZE = var.thumbnail_size
+      MEDIUM_SIZE    = var.medium_size
+      CAROUSEL_SIZE  = var.carousel_size
+      QUALITY        = tostring(var.image_quality)
+      LOG_LEVEL      = var.log_level
+      ENVIRONMENT    = var.environment
+    }
   }
 
   vpc_config {
@@ -25,21 +35,6 @@ resource "aws_lambda_function" "image_processor" {
   ]
 
   tags = local.tags
-}
-
-# Archive the Lambda code
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/lambda"
-  output_path = "${path.module}/lambda/function.zip"
-
-  excludes = [
-    "tests/",
-    "*.pyc",
-    "__pycache__/",
-    ".pytest_cache/",
-    "*.egg-info/"
-  ]
 }
 
 # CloudWatch Logs

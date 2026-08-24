@@ -1,6 +1,7 @@
 variable "bucket_id" {
   description = "ID of the S3 bucket"
   type        = string
+  default     = "chiangmaivilla-backendfiles-apsoutheast7-beta"
 }
 
 variable "bucket_arn" {
@@ -58,6 +59,20 @@ variable "image_quality" {
     error_message = "Image quality must be between 1 and 100."
   }
 }
+variable "thumbnail_size" {
+  type    = string
+  default = "150,150"
+}
+
+variable "medium_size" {
+  type    = string
+  default = "600,600"
+}
+
+variable "carousel_size" {
+  type    = string
+  default = "1200,800"
+}
 
 variable "thumbnail_size" {
   description = "Thumbnail size [width, height]"
@@ -69,12 +84,6 @@ variable "medium_size" {
   description = "Medium image size [width, height]"
   type        = list(number)
   default     = [800, 600]
-}
-
-variable "carousel_size" {
-  description = "Carousel image size [width, height]"
-  type        = list(number)
-  default     = [1200, 800]
 }
 
 variable "log_level" {
