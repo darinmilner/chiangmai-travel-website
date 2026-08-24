@@ -35,6 +35,16 @@ deploy:layer:
     - apt-get update && apt-get install -y terraform
     - python ${SCRIPTS_DIR}/deploy.py --command component --component layer --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
 
+deploy:cloudfront:
+  stage: deploy
+  extends: [.aws-base, .deploy-rules]
+  variables:
+    COMPONENT_NAME: "cloudfront"
+  needs: ["package:all"]
+  script:
+    - apt-get update && apt-get install -y terraform
+    - python ${SCRIPTS_DIR}/deploy.py --command component --component cloudfront --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
+
 deploy:ses:
   stage: deploy
   extends: [.aws-base, .deploy-rules]
@@ -50,7 +60,24 @@ deploy:image-processor:
   extends: [.aws-base, .deploy-rules]
   variables:
     COMPONENT_NAME: "image-processor"
-  needs: ["package:all"]
+  # Ensures CloudFront is deployed before Image Processor runs
+  needs:
+    - job: "package:all"
+    - job: "deploy:cloudfront"
+      optional: true
   script:
     - apt-get update && apt-get install -y terraform
     - python ${SCRIPTS_DIR}/deploy.py --command component --component image-processor --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
+
+# Add a manual destroy job to your pipeline
+destroy:component:
+  stage: deploy
+  extends: [.aws-base]
+  rules:
+    # Requires manual triggering and explicit DEPLOY_TARGET definition
+    - if: '$CI_PIPELINE_SOURCE == "web" && $DESTROY_CONFIRM == "true"'
+      when: manual
+    - when: never
+  script:
+    - apt-get update && apt-get install -y terraform
+    - python ${SCRIPTS_DIR}/deploy.py --command destroy --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}

@@ -5,12 +5,11 @@ Used by deploy.py for Terraform operations
 """
 
 import os
-import sys
 import json
 import subprocess
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -125,3 +124,14 @@ class TerraformWrapper:
             self.plan_file.unlink(missing_ok=True)
 
         return success
+
+    def destroy(self) -> bool:
+        """Destroy Terraform infrastructure"""
+        logger.warning(f"🔥 Destroying Terraform infrastructure for {self.environment}")
+
+        cmd = ["destroy"]
+        if self.environment != "prod":
+            cmd.append("-auto-approve")
+
+        return self._run_command(cmd)
+

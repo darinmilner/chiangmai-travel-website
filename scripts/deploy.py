@@ -4,13 +4,12 @@ Deployment orchestration script
 Uses Terraform to deploy Lambda components
 """
 
-import os
 import sys
 import subprocess
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 
 import yaml
 
@@ -69,20 +68,10 @@ class DeployOrchestrator:
         """Deploy all infrastructure via Terraform"""
         logger.info("🚀 Deploying ALL infrastructure via Terraform")
 
-        # Initialize Terraform
-        if not self.terraform.init():
+        if not self.terraform.init() or not self.terraform.validate():
             return False
 
-        # Validate
-        if not self.terraform.validate():
-            return False
-
-        # Plan
-        if not self.terraform.plan():
-            return False
-
-        # Apply
-        if not self.terraform.apply():
+        if not self.terraform.plan() or not self.terraform.apply():
             return False
 
         logger.info("✅ All infrastructure deployed successfully")
@@ -96,70 +85,82 @@ class DeployOrchestrator:
 
         logger.info(f"📤 Deploying {component_name} (resource: {resource})")
 
-        # Initialize Terraform
-        if not self.terraform.init():
+        if not self.terraform.init() or not self.terraform.validate():
             return False
 
-        # Validate
-        if not self.terraform.validate():
-            return False
+        tf_dir = self.tf_dir
 
         # Plan with target
-        tf_dir = self.tf_dir
         plan_cmd = ['terraform', 'plan', '-target', resource, '-out=plan.tfplan']
-
-        result = subprocess.run(
-            plan_cmd,
-            cwd=str(tf_dir),
-            capture_output=False
-        )
-
-        if result.returncode != 0:
+        if subprocess.run(plan_cmd, cwd=str(tf_dir), capture_output=False).returncode != 0:
             logger.error(f"Plan failed for {component_name}")
             return False
 
         # Apply with target
         apply_cmd = ['terraform', 'apply', '-target', resource, '-auto-approve', 'plan.tfplan']
-
-        result = subprocess.run(
-            apply_cmd,
-            cwd=str(tf_dir),
-            capture_output=False
-        )
-
-        if result.returncode == 0:
+        if subprocess.run(apply_cmd, cwd=str(tf_dir), capture_output=False).returncode == 0:
             logger.info(f"✅ {component_name} deployed successfully")
             return True
-        else:
-            logger.error(f"❌ {component_name} deployment failed")
+
+        logger.error(f"❌ {component_name} deployment failed")
+        return False
+
+    def destroy_component(self, component_name: str) -> bool:
+        """Destroy a specific component via Terraform"""
+        resource = self._get_component_resource(component_name)
+        if not resource:
             return False
+
+        logger.warning(f"⚠️ Initiating DESTROY for '{component_name}' (resource: {resource})")
+
+        if not self.terraform.init():
+            return False
+
+        tf_dir = self.tf_dir
+        destroy_cmd = ['terraform', 'destroy', '-target', resource, '-auto-approve']
+
+        if subprocess.run(destroy_cmd, cwd=str(tf_dir), capture_output=False).returncode == 0:
+            logger.info(f"✅ {component_name} destroyed successfully")
+            return True
+
+        logger.error(f"❌ {component_name} destruction failed")
+        return False
 
 
 def main():
-    """CLI entry point"""
-    parser = argparse.ArgumentParser(description="Deploy Lambda components via Terraform")
-    parser.add_argument('--command', choices=['all', 'component'], required=True)
-    parser.add_argument('--component', help='Component to deploy (required if command=component)')
-    parser.add_argument('--config', required=True, help='Path to components.yml')
-    parser.add_argument('--environment', required=True, help='Environment name')
+    parser = argparse.ArgumentParser(description="Deployer CLI")
+    parser.add_argument("--command", choices=["all", "component", "destroy"], required=True)
+    parser.add_argument("--component", help="Component name (e.g., image-processor)")
+    parser.add_argument("--config", required=True, help="Path to components config file")
+    parser.add_argument("--environment", default="dev", help="Deployment environment")
 
     args = parser.parse_args()
 
-    orchestrator = DeployOrchestrator(
+    # Instantiate DeployOrchestrator with Path object
+    deployer = DeployOrchestrator(
         config_path=Path(args.config),
         environment=args.environment
     )
 
-    success = False
-    if args.command == 'all':
-        success = orchestrator.deploy_all()
-    elif args.command == 'component':
-        if not args.component:
-            logger.error("Component name is required for component deployment")
+    if args.command == "all":
+        if not deployer.deploy_all():
             sys.exit(1)
-        success = orchestrator.deploy_component(args.component)
 
-    sys.exit(0 if success else 1)
+    elif args.command == "component":
+        if not args.component:
+            logger.error("❌ Component name is required for --command component")
+            sys.exit(1)
+
+        if not deployer.deploy_component(args.component):
+            sys.exit(1)
+
+    elif args.command == "destroy":
+        if not args.component or args.component == "all":
+            logger.error("❌ You must specify a specific --component to destroy (e.g., --component image-processor).")
+            sys.exit(1)
+
+        if not deployer.destroy_component(args.component):
+            sys.exit(1)
 
 
 if __name__ == "__main__":
