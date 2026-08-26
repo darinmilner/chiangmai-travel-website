@@ -1,68 +1,21 @@
 # config/components.yml
 global:
   python_version: "3.13"
-  aws_region: ap-southeast-7
-  terraform_dir: deployment/terraform
-  lambda_layer_dir: deployment/terraform/lambda-layer
-  shared_layer_dir: deployment/terraform/lambda-layer/shared-layer
-  lambdas_dir: deployment/terraform/lambdas
-  artifacts_dir: artifacts
-  scripts_dir: scripts
-  config_dir: config
+  aws_region: "ap-southeast-7"
 
-# Component definitions
 components:
-  # Shared Lambda Layer
   layer:
-    name: shared-layer
-    path: deployment/terraform/lambda-layer/shared-layer
     type: layer
-    package_script: package.py
-    output: layer.zip
-    terraform_resource: aws_lambda_layer_version.shared_layer
-    requirements: deployment/terraform/lambda-layer/shared-layer/requirements.txt
-    python_version: 3.13
-    description: "Shared Lambda layer for all functions"
+    path: deployment/terraform/lambda-layer/shared-layer
 
-  # SES Lambda
   ses:
-    name: travel-contact
+    type: lambda
     path: deployment/terraform/travel-contact/lambda/src
-    type: lambda
-    handler: lambda_function.lambda_handler
-    runtime: python3.13
-    timeout: 30
-    memory: 256
-    terraform_resource: aws_lambda_function.contact_form
-    requirements: deployment/terraform/lambdas/src/requirements.txt
-    python_version: 3.13
-    description: "SES email contact form handling Lambda"
-    environment_variables:
-      LOG_LEVEL: INFO
-      ENVIRONMENT: ${environment}
 
-  # Image Processor Lambda
   image-processor:
-    name: image-processor
-    path: deployment/terraform/image-processor/src
     type: lambda
-    handler: lambda_function.lambda_handler
-    runtime: python3.13
-    timeout: 60
-    memory: 512
-    terraform_resource: aws_lambda_function.image_processor
-    requirements: deployment/terraform/image-processor/src/requirements.txt
-    python_version: 3.13
-    description: "Image processing Lambda"
-    environment_variables:
-      LOG_LEVEL: INFO
-      ENVIRONMENT: ${environment}
-      MAX_IMAGE_SIZE: 5242880
+    path: deployment/terraform/image-processor/src
 
-# Terraform configuration
-terraform:
-  path: terraform
-  backend:
-    bucket_format: "chiangmaivilla-backendfiles-apsoutheast7-beta"
-    key_format: "{environment}/terraform.tfstate"
-    region: ap-southeast-7
+  cloudfront:
+    type: infra
+    path: deployment/terraform/cloudfront

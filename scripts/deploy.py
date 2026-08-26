@@ -78,53 +78,49 @@ class DeployOrchestrator:
         return True
 
     def deploy_component(self, component_name: str) -> bool:
-        """Deploy a specific component via Terraform"""
-        resource = self._get_component_resource(component_name)
-        if not resource:
+        """Deploy an entire Terraform module directory for a component"""
+        comp = self.components.get(component_name)
+        if not comp or 'path' not in comp:
+            logger.error(f"Component or path not found: {component_name}")
             return False
 
-        logger.info(f"📤 Deploying {component_name} (resource: {resource})")
+        module_dir = Path(__file__).parent.parent / comp['path']
+        logger.info(f"📤 Deploying component '{component_name}' at {module_dir}")
 
-        if not self.terraform.init() or not self.terraform.validate():
+        # Initialize Terraform Wrapper scoped to the component's directory
+        tf = TerraformWrapper(environment=self.environment, tf_dir=module_dir)
+
+        if not tf.init() or not tf.validate():
             return False
 
-        tf_dir = self.tf_dir
-
-        # Plan with target
-        plan_cmd = ['terraform', 'plan', '-target', resource, '-out=plan.tfplan']
-        if subprocess.run(plan_cmd, cwd=str(tf_dir), capture_output=False).returncode != 0:
-            logger.error(f"Plan failed for {component_name}")
+        if not tf.plan() or not tf.apply():
+            logger.error(f"❌ Deployment failed for {component_name}")
             return False
 
-        # Apply with target
-        apply_cmd = ['terraform', 'apply', '-target', resource, '-auto-approve', 'plan.tfplan']
-        if subprocess.run(apply_cmd, cwd=str(tf_dir), capture_output=False).returncode == 0:
-            logger.info(f"✅ {component_name} deployed successfully")
-            return True
-
-        logger.error(f"❌ {component_name} deployment failed")
-        return False
+        logger.info(f"✅ Component {component_name} deployed successfully")
+        return True
 
     def destroy_component(self, component_name: str) -> bool:
-        """Destroy a specific component via Terraform"""
-        resource = self._get_component_resource(component_name)
-        if not resource:
+        """Destroy an entire Terraform module directory for a component"""
+        comp = self.components.get(component_name)
+        if not comp or 'path' not in comp:
+            logger.error(f"Component or path not found: {component_name}")
             return False
 
-        logger.warning(f"⚠️ Initiating DESTROY for '{component_name}' (resource: {resource})")
+        module_dir = Path(__file__).parent.parent / comp['path']
+        logger.warning(f"⚠️ Destroying component '{component_name}' at {module_dir}")
 
-        if not self.terraform.init():
+        tf = TerraformWrapper(environment=self.environment, tf_dir=module_dir)
+
+        if not tf.init():
             return False
 
-        tf_dir = self.tf_dir
-        destroy_cmd = ['terraform', 'destroy', '-target', resource, '-auto-approve']
+        if not tf.destroy():
+            logger.error(f"❌ Destruction failed for {component_name}")
+            return False
 
-        if subprocess.run(destroy_cmd, cwd=str(tf_dir), capture_output=False).returncode == 0:
-            logger.info(f"✅ {component_name} destroyed successfully")
-            return True
-
-        logger.error(f"❌ {component_name} destruction failed")
-        return False
+        logger.info(f"✅ Component {component_name} destroyed successfully")
+        return True
 
 
 def main():

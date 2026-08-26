@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
 Packaging orchestration script
-Reads component paths from config
+Reads component paths from config and packages Python artifacts
 """
 import sys
 import subprocess
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import yaml
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class PackageOrchestrator:
-    """Orchestrates packaging for all components"""
+    """Orchestrates packaging for components"""
 
     def __init__(self, config_path: Path, artifacts_dir: Path):
         self.config_path = config_path
@@ -42,10 +42,20 @@ class PackageOrchestrator:
         with open(self.config_path) as f:
             return yaml.safe_load(f)
 
-    def _package_component(self, name: str, comp: Dict[str, Any]) -> bool:
-        """Package a single component"""
+    def package_component(self, name: str) -> bool:
+        """Package a single component by name"""
+        comp = self.components.get(name)
+        if not comp:
+            logger.error(f"Component not found in config: {name}")
+            return False
+
         path = Path(comp.get('path', ''))
         comp_type = comp.get('type', '')
+
+        # Skip pure infrastructure components
+        if comp_type == 'infra':
+            logger.info(f"⏭️ Skipping {name} (infrastructure-only component)")
+            return True
 
         if not path.exists():
             logger.error(f"Component {name} path not found: {path}")
@@ -58,7 +68,7 @@ class PackageOrchestrator:
         elif comp_type == 'lambda':
             return self._package_lambda(name, path)
         else:
-            logger.error(f"Unknown component type: {comp_type}")
+            logger.error(f"Unknown component type '{comp_type}' for {name}")
             return False
 
     def _package_layer(self, name: str, path: Path) -> bool:
@@ -87,11 +97,11 @@ class PackageOrchestrator:
         return result.returncode == 0
 
     def package_all(self) -> bool:
-        """Package all components"""
+        """Package all components defined in config"""
         success = True
 
-        for name, comp in self.components.items():
-            if not self._package_component(name, comp):
+        for name in self.components.keys():
+            if not self.package_component(name):
                 success = False
 
         return success
@@ -102,6 +112,7 @@ def main():
     parser = argparse.ArgumentParser(description="Package Lambda components")
     parser.add_argument('--config', required=True, help='Path to components.yml')
     parser.add_argument('--artifacts', required=True, help='Artifacts directory')
+    parser.add_argument('--component', help='Optional single component name to package')
 
     args = parser.parse_args()
 
@@ -110,7 +121,11 @@ def main():
         artifacts_dir=Path(args.artifacts)
     )
 
-    success = orchestrator.package_all()
+    if args.component:
+        success = orchestrator.package_component(args.component)
+    else:
+        success = orchestrator.package_all()
+
     sys.exit(0 if success else 1)
 
 
