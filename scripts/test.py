@@ -3,6 +3,7 @@
 Test orchestration script
 Runs pytest for Lambda components with existing test directories
 """
+import os
 import sys
 import subprocess
 import argparse
@@ -38,7 +39,7 @@ class TestOrchestrator:
     def _test_component(self, name: str, comp: Dict[str, Any]) -> bool:
         comp_type = comp.get('type', '')
 
-        # 1. Skip pure infrastructure components (e.g. CloudFront)
+        # Skip pure infrastructure components
         if comp_type == 'infra':
             logger.info(f"⏭️ Skipping {name} (infrastructure-only component)")
             return True
@@ -46,22 +47,36 @@ class TestOrchestrator:
         path = Path(comp.get('path', ''))
         test_dir = path / "tests"
 
-        # 2. Check if the test directory actually exists
         if not test_dir.exists():
             logger.info(f"⏭️ No 'tests/' directory found for {name} ({test_dir}), skipping...")
             return True
 
+        # Install component requirements if present
+        req_file = path / "requirements.txt"
+        if req_file.exists():
+            logger.info(f"📦 Installing dependencies for {name} from {req_file}...")
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-q", "-r", str(req_file)],
+                check=False
+            )
+
         logger.info(f"🧪 Testing {name} ({test_dir})...")
 
         xml_report = self.reports_dir / f"junit-{name}.xml"
+
+        # Inject component directory into PYTHONPATH for imports
+        env = os.environ.copy()
+        current_pythonpath = env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = f"{path.resolve()}:{current_pythonpath}"
+
         cmd = [
             "pytest",
             str(test_dir),
             f"--junitxml={xml_report}"
         ]
 
-        result = subprocess.run(cmd, capture_output=False)
-        if result.returncode not in (0, 5):  # 5 = no tests collected
+        result = subprocess.run(cmd, env=env, capture_output=False)
+        if result.returncode not in (0, 5):  # 0 = passed, 5 = no tests collected
             logger.error(f"❌ Tests failed for {name}")
             return False
 
