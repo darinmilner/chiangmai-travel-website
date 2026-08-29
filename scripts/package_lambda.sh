@@ -7,32 +7,47 @@ LAMBDA_PATH="${2:-lambdas/${1}}"
 ARTIFACTS_DIR="${3:-artifacts}"
 COMMIT_SHA="${CI_COMMIT_SHORT_SHA:-local}"
 
-echo "📦 Packaging Lambda: ${LAMBDA_NAME}"
+if [ -z "${LAMBDA_NAME}" ]; then
+    echo "❌ Error: Lambda name required as first argument."
+    exit 1
+fi
+
+# 1. Convert ARTIFACTS_DIR to an absolute path BEFORE changing directories
+mkdir -p "${ARTIFACTS_DIR}"
+ABS_ARTIFACTS_DIR="$(cd "${ARTIFACTS_DIR}" && pwd)"
+
+echo "📦 Packaging Lambda: ${LAMBDA_NAME} from ${LAMBDA_PATH}"
 
 cd "${LAMBDA_PATH}"
 
-# Create package directory
+# Ensure package directory is clean
+rm -rf package
 mkdir -p package
 
-# Install dependencies
+# Ensure cleanup on exit or error
+trap 'rm -rf package' EXIT
+
+# 2. Install dependencies if requirements.txt exists
 if [ -f "requirements.txt" ]; then
-    echo "Installing dependencies..."
-    pip install -r requirements.txt -t package/
+    echo "📦 Installing dependencies from requirements.txt..."
+    pip install -r requirements.txt -t package/ --quiet
 fi
 
-# Copy source code
+# 3. Copy source files (handles both nested src/ and flat directory layouts)
 if [ -d "src" ]; then
-    echo "Copying source code..."
+    echo "📄 Copying source files from src/..."
     cp -r src/* package/
+else
+    echo "📄 Copying root Python files and modules..."
+    # Copy all files/folders except 'package' and hidden files
+    find . -maxdepth 1 ! -name '.' ! -name '..' ! -name 'package' ! -name 'requirements.txt' ! -name 'tests' ! -name '*.pyc' -exec cp -r {} package/ \;
 fi
 
-# Create zip
-mkdir -p "${ARTIFACTS_DIR}"
+# 4. Create zip archive
 cd package
-zip -r9 "${ARTIFACTS_DIR}/${LAMBDA_NAME}-${COMMIT_SHA}.zip" .
-cd ..
+zip -q -r9 "${ABS_ARTIFACTS_DIR}/${LAMBDA_NAME}.zip" .
+cp "${ABS_ARTIFACTS_DIR}/${LAMBDA_NAME}.zip" "${ABS_ARTIFACTS_DIR}/${LAMBDA_NAME}-${COMMIT_SHA}.zip"
 
-echo "✅ Lambda packaged: ${ARTIFACTS_DIR}/${LAMBDA_NAME}-${COMMIT_SHA}.zip"
-
-# Cleanup
-rm -rf package
+echo "✅ Lambda successfully packaged:"
+echo "   - ${ABS_ARTIFACTS_DIR}/${LAMBDA_NAME}.zip"
+echo "   - ${ABS_ARTIFACTS_DIR}/${LAMBDA_NAME}-${COMMIT_SHA}.zip"

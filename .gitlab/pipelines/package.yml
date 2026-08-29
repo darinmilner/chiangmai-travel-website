@@ -1,24 +1,19 @@
 # .gitlab/pipelines/package.yml
-include:
-  - local: '.gitlab/templates/base.yml'
 
 package:all:
   stage: package
   extends: .python-base
+  before_script:
+    - apt-get update && apt-get install -y zip
+    - pip install pyyaml
   script:
     - mkdir -p ${ARTIFACTS_DIR}
     - python ${SCRIPTS_DIR}/package.py --config ${COMPONENTS_CONFIG} --artifacts ${ARTIFACTS_DIR}
   artifacts:
+    when: on_success
     paths:
-      - ${ARTIFACTS_DIR}/*.zip
-    expire_in: 7 days
+      - artifacts/*.zip
+    expire_in: 1 day
   rules:
-    # Run automatically when triggered via Web UI or manual target selection
-    - if: '$CI_PIPELINE_SOURCE == "web" && ($TARGET_STAGE == "package" || $TARGET_STAGE == "all" || $DEPLOY_TARGET != "manual")'
+    - if: $CI_PIPELINE_SOURCE == "web"
       when: on_success
-    # Fallback to manual trigger if pipeline source is Web without pre-selected targets
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: manual
-    - if: '$CI_PIPELINE_SOURCE == "trigger"'
-      when: on_success
-    - when: never
