@@ -3,9 +3,7 @@
 Deployment orchestration script
 Uses Terraform to deploy Lambda components
 """
-
 import sys
-import subprocess
 import argparse
 import logging
 from pathlib import Path
@@ -34,10 +32,10 @@ class DeployOrchestrator:
         self.environment = environment
         self.config = self._load_config()
         self.components = self.config.get('components', {})
-        self.terraform_config = self.config.get('terraform', {})
+        self.terraform_config = self.config.get('deploy/terraform', {})
 
         # Get terraform path from config
-        tf_path = self.terraform_config.get('path', 'terraform')
+        tf_path = self.terraform_config.get('path', 'deploy/terraform')
         self.tf_dir = Path(__file__).parent.parent / tf_path
 
         # Initialize Terraform wrapper
