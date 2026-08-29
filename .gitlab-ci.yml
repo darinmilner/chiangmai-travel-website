@@ -37,6 +37,7 @@ variables:
   CONFIG_DIR: "${CI_PROJECT_DIR}/config"
   COMPONENTS_CONFIG: "${CONFIG_DIR}/components.yml"
   PYTHON_VERSION: "3.13"
+  TERRAFORM_VERSION: "1.16.0" # Centralized version pinning
 
 include:
   - local: '.gitlab/pipelines/lint.yml'

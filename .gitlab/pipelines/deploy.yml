@@ -4,9 +4,10 @@
   image: python:3.13-slim
   before_script:
     - apt-get update && apt-get install -y curl unzip awscli
-    # Install official Terraform binary
-    - curl -fsSL https://releases.hashicorp.com/terraform/1.16.1/terraform_1.16.1_linux_amd64.zip -o terraform.zip
-    - unzip terraform.zip -d /usr/local/bin/ && rm terraform.zip
+    - |
+      curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o terraform.zip
+      unzip terraform.zip -d /usr/local/bin/
+      rm terraform.zip
     - pip install pyyaml boto3
 
 deploy:execute:
@@ -15,7 +16,6 @@ deploy:execute:
   script:
     - bash ${SCRIPTS_DIR}/deploy.sh
   rules:
-    # Change 'always' to 'on_success' so it respects previous stage status
     - if: '$CI_PIPELINE_SOURCE == "web"'
       when: on_success
     - if: '$CI_PIPELINE_SOURCE == "push"'
