@@ -1,83 +1,18 @@
-include:
-  - local: '.gitlab/templates/base.yml'
-  - local: '.gitlab/templates/aws.yml'
+# .gitlab/pipelines/deploy.yml
 
-.deploy-rules:
+.deploy_base:
+  image: python:3.13-slim
+  before_script:
+    - apt-get update && apt-get install -y terraform awscli curl
+    - pip install pyyaml boto3
+
+deploy:execute:
+  stage: deploy
+  extends: .deploy_base
+  script:
+    - bash ${SCRIPTS_DIR}/deploy.sh
   rules:
-    # Run only when pipeline is started manually via Web UI
-    - if: '$CI_PIPELINE_SOURCE == "web" && ($DEPLOY_TARGET == $COMPONENT_NAME || $DEPLOY_TARGET == "all")'
-      when: on_success
     - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: manual
-    # Block automatic runs from git push
-    - when: never
-
-deploy:infrastructure:
-  stage: deploy
-  extends: [.aws-base, .deploy-rules]
-  variables:
-    COMPONENT_NAME: "all"
-  needs: ["package:all"]
-  script:
-    - apt-get update && apt-get install -y terraform
-    - python ${SCRIPTS_DIR}/deploy.py --command all --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-  environment:
-    name: ${CI_COMMIT_REF_NAME}
-    url: https://console.aws.amazon.com/lambda/home?region=${AWS_REGION}
-
-deploy:layer:
-  stage: deploy
-  extends: [.aws-base, .deploy-rules]
-  variables:
-    COMPONENT_NAME: "layer"
-  needs: ["package:all"]
-  script:
-    - apt-get update && apt-get install -y terraform
-    - python ${SCRIPTS_DIR}/deploy.py --command component --component layer --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-
-deploy:cloudfront:
-  stage: deploy
-  extends: [.aws-base, .deploy-rules]
-  variables:
-    COMPONENT_NAME: "cloudfront"
-  needs: ["package:all"]
-  script:
-    - apt-get update && apt-get install -y terraform
-    - python ${SCRIPTS_DIR}/deploy.py --command component --component cloudfront --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-
-deploy:ses:
-  stage: deploy
-  extends: [.aws-base, .deploy-rules]
-  variables:
-    COMPONENT_NAME: "ses"
-  needs: ["package:all"]
-  script:
-    - apt-get update && apt-get install -y terraform
-    - python ${SCRIPTS_DIR}/deploy.py --command component --component ses --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-
-deploy:image-processor:
-  stage: deploy
-  extends: [.aws-base, .deploy-rules]
-  variables:
-    COMPONENT_NAME: "image-processor"
-  # Ensures CloudFront is deployed before Image Processor runs
-  needs:
-    - job: "package:all"
-    - job: "deploy:cloudfront"
-      optional: true
-  script:
-    - apt-get update && apt-get install -y terraform
-    - python ${SCRIPTS_DIR}/deploy.py --command component --component image-processor --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
-
-# Add a manual destroy job to your pipeline
-destroy:component:
-  stage: deploy
-  extends: [.aws-base]
-  rules:
-    # Requires manual triggering and explicit DEPLOY_TARGET definition
-    - if: '$CI_PIPELINE_SOURCE == "web" && $DESTROY_CONFIRM == "true"'
-      when: manual
-    - when: never
-  script:
-    - apt-get update && apt-get install -y terraform
-    - python ${SCRIPTS_DIR}/deploy.py --command destroy --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG} --environment ${CI_COMMIT_REF_NAME}
+      when: always
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: on_success

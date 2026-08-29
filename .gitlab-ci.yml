@@ -14,15 +14,23 @@ stages:
   - deploy
 
 variables:
+  PIPELINE_ACTION:
+    value: "deploy"
+    options:
+      - "deploy"
+      - "destroy"
+    description: "Action to perform: deploy or destroy component(s)"
+
   DEPLOY_TARGET:
-    value: "manual"
+    value: "all"
     options:
       - "all"
       - "layer"
       - "ses"
       - "image-processor"
-      - "manual"
-    description: "Select component to deploy"
+      - "cloudfront"
+    description: "Select component to target"
+
   AWS_REGION: "ap-southeast-7"
   ARTIFACTS_DIR: "${CI_PROJECT_DIR}/artifacts"
   SCRIPTS_DIR: "${CI_PROJECT_DIR}/scripts"
