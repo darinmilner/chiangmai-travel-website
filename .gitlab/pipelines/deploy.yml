@@ -3,7 +3,10 @@
 .deploy_base:
   image: python:3.13-slim
   before_script:
-    - apt-get update && apt-get install -y terraform awscli curl
+    - apt-get update && apt-get install -y curl unzip awscli
+    # Install official Terraform binary
+    - curl -fsSL https://releases.hashicorp.com/terraform/1.16.1/terraform_1.16.1_linux_amd64.zip -o terraform.zip
+    - unzip terraform.zip -d /usr/local/bin/ && rm terraform.zip
     - pip install pyyaml boto3
 
 deploy:execute:
