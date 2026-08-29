@@ -12,7 +12,8 @@ deploy:execute:
   script:
     - bash ${SCRIPTS_DIR}/deploy.sh
   rules:
+    # Change 'always' to 'on_success' so it respects previous stage status
     - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: always
+      when: on_success
     - if: '$CI_PIPELINE_SOURCE == "push"'
       when: on_success

@@ -76,6 +76,7 @@ class PackageOrchestrator:
         script_path = self.scripts_dir / 'package_layer.sh'
 
         result = subprocess.run([
+            "bash",  # Force execution via bash interpreter
             str(script_path),
             str(path),
             str(self.artifacts_dir)
@@ -88,7 +89,7 @@ class PackageOrchestrator:
         script_path = self.scripts_dir / 'package_lambda.sh'
 
         result = subprocess.run([
-            str(script_path),
+            "bash",  # Force execution via bash interpreter
             name,
             str(path),
             str(self.artifacts_dir)

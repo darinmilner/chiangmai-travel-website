@@ -5,19 +5,16 @@ test:all:
   stage: test
   extends: .python-base
   before_script:
-    - pip install pytest pytest-cov pytest-mock pyyaml
-    - find . -name "requirements.txt" -exec pip install -r {} \;
+    - pip install pyyaml pytest pytest-cov pytest-mock
   script:
     - python ${SCRIPTS_DIR}/test.py --config ${COMPONENTS_CONFIG} --artifacts ${ARTIFACTS_DIR}
   artifacts:
+    when: always
     paths:
-      - ${ARTIFACTS_DIR}/test-reports/
+      - artifacts/test-reports/
     reports:
-      junit: ${ARTIFACTS_DIR}/test-reports/**/junit.xml
+      junit: artifacts/test-reports/junit-*.xml
     expire_in: 7 days
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
-      when: manual
-    - if: $CI_PIPELINE_SOURCE == "trigger"
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-    - when: never
+      when: on_success
