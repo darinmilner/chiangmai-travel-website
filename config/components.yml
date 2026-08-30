@@ -6,16 +6,18 @@ global:
 components:
   layer:
     type: layer
-    path: deployment/terraform/lambda-layer/shared-layer
-
-  ses:
-    type: lambda
-    path: deployment/terraform/travel-contact/lambda/src
+    path: deployment/terraform/lambda-layer # Directory containing main.tf, variables.tf, etc.
+    source_path: deployment/terraform/lambda-layer/shared-layer # Python code to package
+    terraform_resource: aws_lambda_layer_version.shared_layer
 
   image-processor:
     type: lambda
-    path: deployment/terraform/image-processor/src
+    path: deployment/terraform/image-processor
+    source_path: deployment/terraform/image-processor/src
+    terraform_resource: aws_lambda_function.image_processor
 
-  cloudfront:
-    type: infra
-    path: deployment/terraform/cloudfront
+  ses:
+    type: lambda
+    path: deployment/terraform/travel-contact
+    source_path: deployment/terraform/travel-contact/lambda/src
+    terraform_resource: aws_lambda_function.ses_notifier
