@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-Packaging orchestration script
-Reads component paths from config and packages Python artifacts
+Packaging orchestrator script
+Packages Lambda layers and Lambda functions into deployment artifacts.
 """
 import sys
-import subprocess
+import shutil
 import argparse
 import logging
+import subprocess
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import yaml
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -21,100 +21,137 @@ logger = logging.getLogger(__name__)
 
 
 class PackageOrchestrator:
-    """Orchestrates packaging for components"""
 
     def __init__(self, config_path: Path, artifacts_dir: Path):
-        self.config_path = config_path
-        self.artifacts_dir = artifacts_dir
+        self.config_path = config_path.resolve()
+        self.project_root = self.config_path.parent.parent
+        self.artifacts_dir = artifacts_dir.resolve()
+        self.scripts_dir = Path(__file__).parent.resolve()
+
         self.config = self._load_config()
         self.components = self.config.get('components', {})
-        self.scripts_dir = Path(__file__).parent
 
-        # Create artifacts directory
         self.artifacts_dir.mkdir(parents=True, exist_ok=True)
 
     def _load_config(self) -> Dict[str, Any]:
-        """Load configuration from YAML file"""
         if not self.config_path.exists():
             logger.error(f"Config file not found: {self.config_path}")
             return {'components': {}}
 
         with open(self.config_path) as f:
-            return yaml.safe_load(f)
+            return yaml.safe_load(f) or {'components': {}}
 
-    def package_component(self, name: str) -> bool:
-        """Package a single component by name"""
-        comp = self.components.get(name)
-        if not comp:
-            logger.error(f"Component not found in config: {name}")
-            return False
-
-        path = Path(comp.get('path', ''))
-        comp_type = comp.get('type', '')
-
-        # Skip pure infrastructure components
-        if comp_type == 'infra':
-            logger.info(f"⏭️ Skipping {name} (infrastructure-only component)")
-            return True
-
-        if not path.exists():
-            logger.error(f"Component {name} path not found: {path}")
-            return False
-
-        logger.info(f"📦 Packaging {name} ({path})...")
-
-        if comp_type == 'layer':
-            return self._package_layer(name, path)
-        elif comp_type == 'lambda':
-            return self._package_lambda(name, path)
-        else:
-            logger.error(f"Unknown component type '{comp_type}' for {name}")
-            return False
-
-    def _package_layer(self, name: str, path: Path) -> bool:
-        """Package a Lambda layer"""
+    def _package_layer(self, name: str, comp: Dict[str, Any]) -> bool:
+        """Package Lambda Layer via package_layer.sh and normalize output artifact path"""
+        source_dir = comp.get('source_path') or comp.get('path', '')
+        source_path = (self.project_root / source_dir).resolve()
         script_path = self.scripts_dir / 'package_layer.sh'
+
+        if not script_path.exists():
+            logger.error(f"❌ Script not found: {script_path}")
+            return False
+
+        logger.info(f"📦 Packaging layer '{name}' from {source_dir}...")
 
         result = subprocess.run([
             "bash",
             str(script_path),
-            str(path),
+            str(source_path),
             str(self.artifacts_dir)
         ], capture_output=False)
 
-        return result.returncode == 0
+        if result.returncode != 0:
+            logger.error(f"❌ package_layer.sh failed for {name}")
+            return False
 
-    def _package_lambda(self, name: str, path: Path) -> bool:
-        """Package a Lambda function"""
-        script_path = self.scripts_dir / 'package_lambda.sh'
+        target_zip = self.artifacts_dir / f"{name}.zip"
 
-        result = subprocess.run([
-            "bash",
-            str(script_path),  # Added missing script path here
-            name,
-            str(path),
-            str(self.artifacts_dir)
-        ], capture_output=False)
+        # If artifacts/layer.zip already exists, packaging succeeded
+        if target_zip.exists():
+            logger.info(f"✅ Created artifact: {target_zip}")
+            return True
 
-        return result.returncode == 0
+        # Copy generated zip from dist/ or artifacts/ (e.g. dist/villa-shared-layer-*.zip) to artifacts/layer.zip
+        search_dirs = [self.project_root / 'dist', self.artifacts_dir]
+        found_zip = None
 
-    def package_all(self) -> bool:
-        """Package all components defined in config"""
+        for d in search_dirs:
+            if d.exists():
+                zips = list(d.glob("*.zip"))
+                if zips:
+                    # Sort by modification time to get the newest zip file
+                    zips.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+                    found_zip = zips[0]
+                    break
+
+        if found_zip and found_zip.exists():
+            shutil.copy2(found_zip, target_zip)
+            logger.info(f"✅ Copied {found_zip.name} -> {target_zip}")
+            return True
+
+        logger.error(f"❌ {name}.zip not found and could not be resolved.")
+        return False
+
+    def _package_lambda(self, name: str, comp: Dict[str, Any]) -> bool:
+        """Package standard Lambda component"""
+        source_dir = comp.get('source_path') or comp.get('path', '')
+        source_path = (self.project_root / source_dir).resolve()
+
+        if not source_path.exists():
+            logger.error(f"❌ Source path for '{name}' does not exist: {source_path}")
+            return False
+
+        target_zip = self.artifacts_dir / f"{name}.zip"
+        logger.info(f"📦 Packaging Lambda '{name}' from {source_dir} -> {target_zip}")
+
+        # Create zip archive of source directory
+        shutil.make_archive(
+            base_name=str(target_zip.with_suffix('')),
+            format='zip',
+            root_dir=str(source_path)
+        )
+
+        if target_zip.exists():
+            logger.info(f"✅ Lambda '{name}' successfully packaged: {target_zip}")
+            return True
+
+        logger.error(f"❌ Failed to create zip for {name}")
+        return False
+
+    def package(self, target_component: str = 'all') -> bool:
+        """Package target component or all components"""
+        if target_component != 'all':
+            comp = self.components.get(target_component)
+            if not comp:
+                logger.error(f"❌ Component '{target_component}' not found in configuration.")
+                return False
+
+            comp_type = comp.get('type', 'lambda')
+            if comp_type == 'layer':
+                return self._package_layer(target_component, comp)
+            return self._package_lambda(target_component, comp)
+
+        logger.info("🚀 Packaging all components...")
         success = True
+        for name, comp in self.components.items():
+            logger.info(f"📦 Packaging {name} ({comp.get('path')})...")
+            comp_type = comp.get('type', 'lambda')
 
-        for name in self.components.keys():
-            if not self.package_component(name):
-                success = False
+            if comp_type == 'layer':
+                if not self._package_layer(name, comp):
+                    success = False
+            else:
+                if not self._package_lambda(name, comp):
+                    success = False
 
         return success
 
 
 def main():
-    """CLI entry point"""
-    parser = argparse.ArgumentParser(description="Package Lambda components")
+    parser = argparse.ArgumentParser(description="Package components for deployment")
     parser.add_argument('--config', required=True, help='Path to components.yml')
-    parser.add_argument('--artifacts', required=True, help='Artifacts directory')
-    parser.add_argument('--component', help='Optional single component name to package')
+    parser.add_argument('--artifacts', required=True, help='Directory to store artifact output zip files')
+    parser.add_argument('--component', default='all', help='Component to package (default: all)')
 
     args = parser.parse_args()
 
@@ -123,11 +160,7 @@ def main():
         artifacts_dir=Path(args.artifacts)
     )
 
-    if args.component:
-        success = orchestrator.package_component(args.component)
-    else:
-        success = orchestrator.package_all()
-
+    success = orchestrator.package(args.component)
     sys.exit(0 if success else 1)
 
 
