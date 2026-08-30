@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
 Deployment orchestration script
-Uses Terraform to deploy Lambda components
+Uses Terraform to deploy Lambda components as full modules
 """
 import sys
 import argparse
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import yaml
 
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 class DeployOrchestrator:
-    """Orchestrates deployment via Terraform"""
+    """Orchestrates module-level deployment via Terraform"""
 
     def __init__(self, config_path: Path, environment: str):
         self.config_path = config_path
@@ -34,11 +34,10 @@ class DeployOrchestrator:
         self.components = self.config.get('components', {})
         self.terraform_config = self.config.get('deploy/terraform', {})
 
-        # Get terraform path from config
-        tf_path = self.terraform_config.get('path', 'deploy/terraform')
+        # Default root terraform directory if executing global actions
+        tf_path = self.terraform_config.get('path', 'deployment/terraform')
         self.tf_dir = Path(__file__).parent.parent / tf_path
 
-        # Initialize Terraform wrapper
         self.terraform = TerraformWrapper(
             environment=environment,
             tf_dir=self.tf_dir
@@ -48,65 +47,60 @@ class DeployOrchestrator:
         """Load configuration from YAML file"""
         if not self.config_path.exists():
             logger.error(f"Config file not found: {self.config_path}")
-            return {'components': {}, 'terraform': {}}
+            return {'components': {}, 'deploy/terraform': {}}
 
         with open(self.config_path) as f:
-            return yaml.safe_load(f)
-
-    def _get_component_resource(self, component_name: str) -> Optional[str]:
-        """Get Terraform resource for a component"""
-        comp = self.components.get(component_name)
-        if not comp:
-            logger.error(f"Component not found: {component_name}")
-            return None
-
-        return comp.get('terraform_resource')
+            return yaml.safe_load(f) or {}
 
     def deploy_all(self) -> bool:
-        """Deploy all infrastructure via Terraform"""
-        logger.info("🚀 Deploying ALL infrastructure via Terraform")
+        """Deploy all infrastructure across configured component modules"""
+        logger.info("🚀 Deploying ALL infrastructure components via Terraform")
+        success = True
 
-        if not self.terraform.init() or not self.terraform.validate():
-            return False
+        for name, comp in self.components.items():
+            if 'path' in comp:
+                if not self.deploy_component(name):
+                    success = False
 
-        if not self.terraform.plan() or not self.terraform.apply():
-            return False
+        if success:
+            logger.info("✅ All infrastructure deployed successfully")
+        else:
+            logger.error("❌ One or more components failed during deployment")
 
-        logger.info("✅ All infrastructure deployed successfully")
-        return True
+        return success
 
     def deploy_component(self, component_name: str) -> bool:
         """Deploy an entire Terraform module directory for a component"""
         comp = self.components.get(component_name)
         if not comp or 'path' not in comp:
-            logger.error(f"Component or path not found: {component_name}")
+            logger.error(f"Component or 'path' field not found in config: {component_name}")
             return False
 
         module_dir = Path(__file__).parent.parent / comp['path']
-        logger.info(f"📤 Deploying component '{component_name}' at {module_dir}")
+        logger.info(f"📤 Deploying module '{component_name}' at {module_dir}")
 
-        # Initialize Terraform Wrapper scoped to the component's directory
+        # Initialize Terraform Wrapper scoped directly to the module directory
         tf = TerraformWrapper(environment=self.environment, tf_dir=module_dir)
 
         if not tf.init() or not tf.validate():
             return False
 
         if not tf.plan() or not tf.apply():
-            logger.error(f"❌ Deployment failed for {component_name}")
+            logger.error(f"❌ Deployment failed for module: {component_name}")
             return False
 
-        logger.info(f"✅ Component {component_name} deployed successfully")
+        logger.info(f"✅ Component module '{component_name}' deployed successfully")
         return True
 
     def destroy_component(self, component_name: str) -> bool:
         """Destroy an entire Terraform module directory for a component"""
         comp = self.components.get(component_name)
         if not comp or 'path' not in comp:
-            logger.error(f"Component or path not found: {component_name}")
+            logger.error(f"Component or 'path' field not found in config: {component_name}")
             return False
 
         module_dir = Path(__file__).parent.parent / comp['path']
-        logger.warning(f"⚠️ Destroying component '{component_name}' at {module_dir}")
+        logger.warning(f"⚠️ Destroying module '{component_name}' at {module_dir}")
 
         tf = TerraformWrapper(environment=self.environment, tf_dir=module_dir)
 
@@ -114,23 +108,22 @@ class DeployOrchestrator:
             return False
 
         if not tf.destroy():
-            logger.error(f"❌ Destruction failed for {component_name}")
+            logger.error(f"❌ Destruction failed for module: {component_name}")
             return False
 
-        logger.info(f"✅ Component {component_name} destroyed successfully")
+        logger.info(f"✅ Component module '{component_name}' destroyed successfully")
         return True
 
 
 def main():
     parser = argparse.ArgumentParser(description="Deployer CLI")
     parser.add_argument("--command", choices=["all", "component", "destroy"], required=True)
-    parser.add_argument("--component", help="Component name (e.g., image-processor)")
+    parser.add_argument("--component", help="Component name (e.g., image-processor, ses, layer)")
     parser.add_argument("--config", required=True, help="Path to components config file")
     parser.add_argument("--environment", default="dev", help="Deployment environment")
 
     args = parser.parse_args()
 
-    # Instantiate DeployOrchestrator with Path object
     deployer = DeployOrchestrator(
         config_path=Path(args.config),
         environment=args.environment

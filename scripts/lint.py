@@ -24,7 +24,8 @@ class LintOrchestrator:
     """Orchestrates flake8 static code analysis for components using local .flake8 configs"""
 
     def __init__(self, config_path: Path):
-        self.config_path = config_path
+        self.config_path = config_path.resolve()
+        self.project_root = self.config_path.parent.parent
         self.config = self._load_config()
         self.components = self.config.get('components', {})
 
@@ -52,7 +53,7 @@ class LintOrchestrator:
         and walking up to the repository root directory.
         """
         current = component_path.resolve()
-        root = Path.cwd().resolve()
+        root = self.project_root.resolve()
 
         while True:
             config_file = current / '.flake8'
@@ -65,29 +66,28 @@ class LintOrchestrator:
         return None
 
     def _lint_component(self, name: str, comp: Dict[str, Any]) -> bool:
-        """Run flake8 on a single component path using its local .flake8 config"""
-        path_str = comp.get('path')
-        if not path_str:
-            logger.warning(f"⚠️ Component '{name}' has no path defined. Skipping.")
+        """Run flake8 on a single component using source_path or path"""
+        rel_path = comp.get('source_path') or comp.get('path')
+        if not rel_path:
+            logger.warning(f"⚠️ Component '{name}' has no 'source_path' or 'path' defined. Skipping.")
             return True
 
-        path = Path(path_str)
-        if not path.exists():
-            logger.warning(f"⚠️ Component '{name}' path not found: {path}")
+        target_dir = (self.project_root / rel_path).resolve()
+        if not target_dir.exists():
+            logger.warning(f"⚠️ Target directory for '{name}' does not exist: {target_dir}")
             return False
 
-        logger.info(f"📝 Linting component '{name}' at {path}...")
+        logger.info(f"📝 Linting component '{name}' at {rel_path}...")
 
-        # Force standard output format: filename:line:col: code text
         cmd = [
             'flake8',
-            str(path),
+            str(target_dir),
             '--filename=*.py',
             '--format=%(path)s:%(row)d:%(col)d: %(code)s %(text)s'
         ]
 
         # Discover and attach local .flake8 config file
-        config_file = self._find_flake8_config(path)
+        config_file = self._find_flake8_config(target_dir)
         if config_file:
             logger.info(f"   Using configuration: {config_file}")
             cmd.extend(['--config', str(config_file)])
@@ -101,17 +101,19 @@ class LintOrchestrator:
             logger.error(f"❌ Linting failed for {name}\n")
             return False
 
-    def lint(self, component_name: Optional[str] = 'all') -> bool:
-        """Lint specific component or all components"""
+    def lint(self, target_component: str = 'all') -> bool:
+        """Run linting for one or all components"""
         if not self.check_flake8():
             return False
 
-        if component_name and component_name != 'all':
-            if component_name not in self.components:
-                logger.error(f"❌ Component '{component_name}' not found in {self.config_path}")
+        if target_component != 'all':
+            comp = self.components.get(target_component)
+            if not comp:
+                logger.error(f"❌ Component '{target_component}' not found in configuration.")
                 return False
-            return self._lint_component(component_name, self.components[component_name])
+            return self._lint_component(target_component, comp)
 
+        logger.info("🚀 Running linting across all components...")
         success = True
         for name, comp in self.components.items():
             if not self._lint_component(name, comp):
