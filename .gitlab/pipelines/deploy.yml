@@ -7,14 +7,12 @@ deploy:
   before_script:
     - apt-get update && apt-get install -y wget unzip bash > /dev/null
     - pip install pyyaml > /dev/null
-    # Install Terraform binary if not present
     - |
       if ! command -v terraform &> /dev/null; then
         wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
         unzip -q terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin/
         rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
       fi
-    # Execute standalone script using 'source' so exported environment variables persist
     - source ${SCRIPTS_DIR}/setup_aws_credentials.sh
   script:
     - python ${SCRIPTS_DIR}/deploy.py --command ${PIPELINE_ACTION} --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG} --environment dev

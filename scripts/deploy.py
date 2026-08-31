@@ -117,8 +117,8 @@ class DeployOrchestrator:
 
 def main():
     parser = argparse.ArgumentParser(description="Deployer CLI")
-    parser.add_argument("--command", choices=["all", "component", "destroy"], required=True)
-    parser.add_argument("--component", help="Component name (e.g., image-processor, ses, layer)")
+    parser.add_argument("--command", choices=["deploy", "destroy", "all", "component"], required=True)
+    parser.add_argument("--component", default="all", help="Component name (e.g., layer, ses, image-processor, or all)")
     parser.add_argument("--config", required=True, help="Path to components config file")
     parser.add_argument("--environment", default="dev", help="Deployment environment")
 
@@ -129,24 +129,32 @@ def main():
         environment=args.environment
     )
 
-    if args.command == "all":
+    if args.command == "deploy":
+        if args.component == "all":
+            if not deployer.deploy_all():
+                sys.exit(1)
+        else:
+            if not deployer.deploy_component(args.component):
+                sys.exit(1)
+
+    elif args.command == "destroy":
+        if not args.component or args.component == "all":
+            logger.error("❌ You must specify a specific --component to destroy (e.g., --component layer).")
+            sys.exit(1)
+
+        if not deployer.destroy_component(args.component):
+            sys.exit(1)
+
+    elif args.command == "all":
         if not deployer.deploy_all():
             sys.exit(1)
 
     elif args.command == "component":
-        if not args.component:
+        if not args.component or args.component == "all":
             logger.error("❌ Component name is required for --command component")
             sys.exit(1)
 
         if not deployer.deploy_component(args.component):
-            sys.exit(1)
-
-    elif args.command == "destroy":
-        if not args.component or args.component == "all":
-            logger.error("❌ You must specify a specific --component to destroy (e.g., --component image-processor).")
-            sys.exit(1)
-
-        if not deployer.destroy_component(args.component):
             sys.exit(1)
 
 
