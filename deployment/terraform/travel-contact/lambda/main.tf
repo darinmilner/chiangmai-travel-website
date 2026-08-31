@@ -1,10 +1,10 @@
 # Lambda Function
 resource "aws_lambda_function" "contact_form" {
   filename      = var.lambda_zip_path
-  function_name = "${var.project_name}-contact-form"
+  function_name = "${local.app_name_lower}-contact-form"
   role          = aws_iam_role.lambda_role.arn
   handler       = "handler.lambda_handler"
-  runtime       = "python3.11"
+  runtime       = "python3.13"
   timeout       = 30
   memory_size   = 256
 

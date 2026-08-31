@@ -8,6 +8,10 @@ data "terraform_remote_state" "cloudfront" {
   }
 }
 
+data "aws_s3_bucket" "image_bucket" {
+  bucket = var.static_bucket_id
+}
+
 # Archive the Lambda code
 data "archive_file" "lambda_zip" {
   type        = "zip"

@@ -11,12 +11,6 @@ variable "singapore_region" {
   default     = "ap-southeast-1"
 }
 
-variable "project_name" {
-  description = "Project name prefix for resources"
-  type        = string
-  default     = "travel-contact"
-}
-
 variable "environment" {
   description = "Environment (dev/staging/prod)"
   type        = string
@@ -88,15 +82,4 @@ variable "log_retention_days" {
   description = "CloudWatch log retention in days"
   type        = number
   default     = 14
-}
-
-variable "tags" {
-  description = "Resource tags"
-  type        = map(string)
-  default = {
-    Environment = "production"
-    Project     = "travel-website"
-    ManagedBy   = "terraform"
-    Region      = "multi-region"
-  }
 }

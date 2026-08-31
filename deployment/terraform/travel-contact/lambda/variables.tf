@@ -1,8 +1,3 @@
-variable "project_name" {
-  description = "Project name prefix"
-  type        = string
-}
-
 variable "bangkok_region" {
   description = "AWS Bangkok region"
   type        = string

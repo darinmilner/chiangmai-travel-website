@@ -14,6 +14,7 @@ stages:
   - deploy
 
 variables:
+  AWS_ROLE_ARN: "arn:aws:iam::433339368384:role/chiangmaivilla-gitlab-oidc-deploy-dev"
   PIPELINE_ACTION:
     value: "deploy"
     options:
@@ -37,7 +38,7 @@ variables:
   CONFIG_DIR: "${CI_PROJECT_DIR}/config"
   COMPONENTS_CONFIG: "${CONFIG_DIR}/components.yml"
   PYTHON_VERSION: "3.13"
-  TERRAFORM_VERSION: "1.16.0" # Centralized version pinning
+  TERRAFORM_VERSION: "1.16.0"
 
 include:
   - local: '.gitlab/pipelines/lint.yml'

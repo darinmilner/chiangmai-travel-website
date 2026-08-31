@@ -64,7 +64,7 @@ variable "health_check_port" {
 }
 
 variable "enable_flow_logs" {
-    description = "Enable VPC flow logs"
-    type = bool
-  default = True 
+  description = "Enable VPC flow logs"
+  type        = bool
+  default     = True
 }

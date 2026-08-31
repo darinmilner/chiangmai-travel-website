@@ -1,13 +1,19 @@
 variable "bucket_id" {
-  description = "ID of the S3 bucket"
+  description = "ID of the statefile S3 bucket"
   type        = string
   default     = "chiangmaivilla-backendfiles-apsoutheast7-beta"
 }
 
-variable "bucket_arn" {
-  description = "ARN of the S3 bucket"
+variable "static_bucket_id" {
+  description = "ID of the static files bucket"
   type        = string
+  default     = "chiangmai-villa-static-files"
 }
+
+# variable "bucket_arn" {
+#   description = "ARN of the S3 bucket"
+#   type        = string
+# }
 
 variable "environment" {
   description = "Deployment Environment"
@@ -72,18 +78,6 @@ variable "medium_size" {
 variable "carousel_size" {
   type    = string
   default = "1200,800"
-}
-
-variable "thumbnail_size" {
-  description = "Thumbnail size [width, height]"
-  type        = list(number)
-  default     = [300, 200]
-}
-
-variable "medium_size" {
-  description = "Medium image size [width, height]"
-  type        = list(number)
-  default     = [800, 600]
 }
 
 variable "log_level" {

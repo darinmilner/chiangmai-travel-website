@@ -5,7 +5,6 @@ module "ses" {
     aws = aws.singapore
   }
 
-  project_name          = var.project_name
   singapore_region      = var.singapore_region
   ses_domain            = var.ses_domain
   ses_source_email      = var.ses_source_email
@@ -14,8 +13,6 @@ module "ses" {
   create_receipt_rules   = false
   create_route53_records = var.create_route53_records
   route53_zone_id        = var.route53_zone_id
-
-  tags = var.tags
 }
 
 # Lambda Module (Bangkok region)
@@ -25,7 +22,6 @@ module "lambda" {
     aws = aws.bangkok
   }
 
-  project_name    = var.project_name
   bangkok_region  = var.bangkok_region
   lambda_zip_path = var.lambda_zip_path
 
@@ -48,12 +44,11 @@ module "api_gateway" {
     aws = aws.bangkok
   }
 
-  project_name         = var.project_name
   environment          = var.environment
   lambda_arn           = module.lambda.lambda_function_arn
   lambda_function_name = module.lambda.lambda_function_name
   allowed_origins      = var.allowed_origins
   log_retention_days   = var.log_retention_days
 
-  tags = var.tags
+  tags = local.tags
 }

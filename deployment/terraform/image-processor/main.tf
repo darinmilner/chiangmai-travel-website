@@ -5,7 +5,7 @@ resource "aws_lambda_function" "image_processor" {
   function_name    = "${local.app_name_lower}-image-processor-${var.environment}"
   role             = aws_iam_role.lambda_role.arn
   handler          = "index.lambda_handler"
-  runtime          = "python3.14"
+  runtime          = "python3.13"
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
   publish          = true
@@ -65,5 +65,5 @@ resource "aws_lambda_permission" "allow_s3" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.image_processor.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = var.bucket_arn
+  source_arn    = data.aws_s3_bucket.image_bucket.arn
 }

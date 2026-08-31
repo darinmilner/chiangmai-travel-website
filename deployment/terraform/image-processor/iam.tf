@@ -34,7 +34,7 @@ resource "aws_iam_policy" "lambda_policy" {
           "s3:DeleteObject"
         ]
         Resource = [
-          "${var.bucket_arn}/*"
+          "${data.aws_s3_bucket.static_bucket_id.arn}/*"
         ]
       },
       {

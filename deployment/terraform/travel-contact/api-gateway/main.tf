@@ -1,15 +1,6 @@
-terraform {
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
 # HTTP API Gateway
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "${var.project_name}-api"
+  name          = "${local.app_name_lower}-api"
   protocol_type = "HTTP"
   description   = "Contact form API for travel website"
 
@@ -51,7 +42,7 @@ resource "aws_apigatewayv2_stage" "api_stage" {
 
 # CloudWatch Log Group for API Gateway
 resource "aws_cloudwatch_log_group" "api_gateway_logs" {
-  name              = "/aws/apigateway/${var.project_name}-api"
+  name              = "/aws/apigateway/${local.app_name_lower}-api"
   retention_in_days = var.log_retention_days
 }
 

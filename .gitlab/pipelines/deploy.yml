@@ -1,22 +1,20 @@
-# .gitlab/pipelines/deploy.yml
-
-.deploy_base:
-  image: python:3.13-slim
-  before_script:
-    - apt-get update && apt-get install -y curl unzip awscli
-    - |
-      curl -fsSL "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip" -o terraform.zip
-      unzip terraform.zip -d /usr/local/bin/
-      rm terraform.zip
-    - pip install pyyaml boto3
-
-deploy:execute:
+deploy:
   stage: deploy
-  extends: .deploy_base
+  image: python:3.13-slim
+  id_tokens:
+    AWS_JWT_TOKEN:
+      aud: https://gitlab.com
+  before_script:
+    - apt-get update && apt-get install -y wget unzip bash > /dev/null
+    - pip install pyyaml > /dev/null
+    # Install Terraform binary if not present
+    - |
+      if ! command -v terraform &> /dev/null; then
+        wget -q https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+        unzip -q terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /usr/local/bin/
+        rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+      fi
+    # Execute standalone script using 'source' so exported environment variables persist
+    - source ${SCRIPTS_DIR}/setup_aws_credentials.sh
   script:
-    - bash ${SCRIPTS_DIR}/deploy.sh
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "web"'
-      when: on_success
-    - if: '$CI_PIPELINE_SOURCE == "push"'
-      when: on_success
+    - python ${SCRIPTS_DIR}/deploy.py --command ${PIPELINE_ACTION} --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG} --environment dev
