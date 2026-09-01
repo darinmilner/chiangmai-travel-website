@@ -16,7 +16,7 @@ resource "aws_iam_openid_connect_provider" "gitlab" {
 resource "aws_iam_role" "gitlab_oidc" {
   name                 = local.role_name
   assume_role_policy   = jsonencode(local.trust_policy)
-  description          = "IAM role for GitLab OIDC authentication - Project ${var.project_id}"
+  description          = "IAM role for GitLab OIDC authentication - Project ${var.project_path}"
   max_session_duration = var.max_session_duration
 
   tags = merge(local.common_tags, {

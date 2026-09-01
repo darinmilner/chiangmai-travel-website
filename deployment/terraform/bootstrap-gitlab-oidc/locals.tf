@@ -32,8 +32,8 @@ locals {
           }
 
           StringLike = {
-            # Fixed 'project:' to 'project_id:' and added trailing wildcard for pipeline execution flexibility
-            "${local.oidc_provider_url}:sub" = "project_id:${var.project_id}:ref_type:branch:ref:*"
+            # Uses project_path instead of project_id
+            "${local.oidc_provider_url}:sub" = "project_path:${var.project_path}:ref_type:branch:ref:*"
           }
         }
       }

@@ -2,7 +2,7 @@
 module "ses" {
   source = "./ses"
   providers = {
-    aws = aws.singapore
+    aws.singapore = aws.singapore
   }
 
   singapore_region      = var.singapore_region

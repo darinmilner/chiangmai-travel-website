@@ -1,12 +1,18 @@
-variable "project_id" {
-  description = "GitLab project ID for OIDC authentication"
-  type        = string
-  default     = "85467376"
+# variable "project_id" {
+#   description = "GitLab project ID for OIDC authentication"
+#   type        = string
+#   default     = "85467376"
 
-  validation {
-    condition     = can(regex("^[0-9]+$", var.project_id))
-    error_message = "Project ID must be a numeric value."
-  }
+#   validation {
+#     condition     = can(regex("^[0-9]+$", var.project_id))
+#     error_message = "Project ID must be a numeric value."
+#   }
+# }
+
+variable "project_path" {
+  type        = string
+  description = "GitLab project path in namespace/repository format"
+  default     = "darinmilner/chiangmai-travel-website"
 }
 
 variable "gitlab_audience" {

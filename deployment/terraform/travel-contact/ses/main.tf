@@ -17,7 +17,7 @@ resource "aws_ses_configuration_set" "main" {
 # SES Event Destination (CloudWatch)
 resource "aws_ses_event_destination" "cloudwatch" {
   provider               = aws.singapore
-  name                   = "${var.project_name}-cloudwatch"
+  name                   = "${local.app_name_lower}-cloudwatch"
   configuration_set_name = aws_ses_configuration_set.main.name
 
   cloudwatch_destination {
@@ -57,7 +57,7 @@ resource "aws_ses_receipt_rule" "store_in_s3" {
   scan_enabled  = true
 
   s3_action {
-    bucket_name = "${var.s3_bucket_name}-${local.short_bangkok_region}"
+    bucket_name = "${var.s3_bucket_name}-${local.bucket_short_region}"
     position    = 1
   }
 }

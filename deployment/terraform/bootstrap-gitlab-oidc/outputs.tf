@@ -24,7 +24,7 @@ output "gitlab_oidc_config" {
   value = {
     role_arn      = aws_iam_role.gitlab_oidc.arn
     account_id    = local.account_id
-    project_id    = var.project_id
+    project_path    = var.project_path
     oidc_provider = local.oidc_provider_url
   }
   sensitive = false
