@@ -79,21 +79,23 @@ class DeployOrchestrator:
         module_dir = Path(__file__).parent.parent / comp['path']
         logger.info(f"📤 Deploying module '{component_name}' at {module_dir}")
 
-        # Extract zip artifact path and variable name if defined
         extra_env = {}
         tf_var_name = comp.get('tf_var_name')
         artifact_rel_path = comp.get('artifact')
 
         if tf_var_name and artifact_rel_path:
+            # Resolves /builds/.../artifacts/villa-shared-layer.zip
             abs_artifact_path = (Path(__file__).parent.parent / artifact_rel_path).resolve()
+
             if not abs_artifact_path.exists():
-                logger.error(f"❌ Required deployment zip missing: {abs_artifact_path}")
+                logger.error(f"❌ Required deployment zip missing at: {abs_artifact_path}")
                 return False
 
+            # Passes absolute path so Terraform can open the file regardless of cwd
             extra_env[f"TF_VAR_{tf_var_name}"] = str(abs_artifact_path)
             logger.info(f"🔑 Injected variable: TF_VAR_{tf_var_name}={abs_artifact_path}")
-
-        # Initialize Terraform Wrapper scoped directly to the module directory with extra_env
+            
+        # Pass extra_env to TerraformWrapper
         tf = TerraformWrapper(
             environment=self.environment,
             tf_dir=module_dir,
@@ -109,7 +111,7 @@ class DeployOrchestrator:
 
         logger.info(f"✅ Component module '{component_name}' deployed successfully")
         return True
-    
+
 
     def destroy_component(self, component_name: str) -> bool:
         """Destroy an entire Terraform module directory for a component"""

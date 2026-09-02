@@ -3,16 +3,19 @@ components:
     type: layer
     path: deployment/terraform/lambda-layer
     source_path: deployment/terraform/lambda-layer/shared-layer
+    artifact: "artifacts/villa-shared-layer.zip"
     tf_var_name: "filename"
 
   image-processor:
     type: lambda
     path: deployment/terraform/image-processor
     source_path: deployment/terraform/image-processor/src
+    artifact: "artifacts/image-processor.zip"
     tf_var_name: "lambda_zip_path"
 
   ses:
     type: lambda
     path: deployment/terraform/travel-contact
     source_path: deployment/terraform/travel-contact/lambda/src
+    artifact: "artifacts/travel-contact.zip"
     tf_var_name: "lambda_zip_path"

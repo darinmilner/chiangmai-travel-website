@@ -41,6 +41,13 @@ class PackageOrchestrator:
         with open(self.config_path) as f:
             return yaml.safe_load(f) or {'components': {}}
 
+    def _get_target_zip_path(self, name: str, comp: Dict[str, Any]) -> Path:
+        """Derive target zip path from component config 'artifact' field or fallback to {name}.zip"""
+        artifact_path = comp.get('artifact')
+        if artifact_path:
+            return self.artifacts_dir / Path(artifact_path).name
+        return self.artifacts_dir / f"{name}.zip"
+
     def _package_layer(self, name: str, comp: Dict[str, Any]) -> bool:
         """Package Lambda Layer via package_layer.sh and normalize output artifact path"""
         source_dir = comp.get('source_path') or comp.get('path', '')
@@ -64,14 +71,13 @@ class PackageOrchestrator:
             logger.error(f"❌ package_layer.sh failed for {name}")
             return False
 
-        target_zip = self.artifacts_dir / f"{name}.zip"
+        target_zip = self._get_target_zip_path(name, comp)
 
-        # If artifacts/layer.zip already exists, packaging succeeded
         if target_zip.exists():
             logger.info(f"✅ Created artifact: {target_zip}")
             return True
 
-        # Copy generated zip from dist/ or artifacts/ (e.g. dist/villa-shared-layer-*.zip) to artifacts/layer.zip
+        # Copy generated zip from dist/ or artifacts/ to target_zip
         search_dirs = [self.project_root / 'dist', self.artifacts_dir]
         found_zip = None
 
@@ -79,17 +85,19 @@ class PackageOrchestrator:
             if d.exists():
                 zips = list(d.glob("*.zip"))
                 if zips:
-                    # Sort by modification time to get the newest zip file
                     zips.sort(key=lambda x: x.stat().st_mtime, reverse=True)
                     found_zip = zips[0]
                     break
 
         if found_zip and found_zip.exists():
-            shutil.copy2(found_zip, target_zip)
-            logger.info(f"✅ Copied {found_zip.name} -> {target_zip}")
+            if found_zip.resolve() != target_zip.resolve():
+                shutil.copy2(found_zip, target_zip)
+                logger.info(f"✅ Copied {found_zip.name} -> {target_zip.name}")
+            else:
+                logger.info(f"✅ Found artifact: {target_zip}")
             return True
 
-        logger.error(f"❌ {name}.zip not found and could not be resolved.")
+        logger.error(f"❌ {target_zip.name} not found and could not be resolved.")
         return False
 
     def _package_lambda(self, name: str, comp: Dict[str, Any]) -> bool:
@@ -101,10 +109,9 @@ class PackageOrchestrator:
             logger.error(f"❌ Source path for '{name}' does not exist: {source_path}")
             return False
 
-        target_zip = self.artifacts_dir / f"{name}.zip"
+        target_zip = self._get_target_zip_path(name, comp)
         logger.info(f"📦 Packaging Lambda '{name}' from {source_dir} -> {target_zip}")
 
-        # Create zip archive of source directory
         shutil.make_archive(
             base_name=str(target_zip.with_suffix('')),
             format='zip',
