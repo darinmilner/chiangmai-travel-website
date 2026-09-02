@@ -4,16 +4,17 @@ variable "bucket_id" {
   default     = "chiangmaivilla-backendfiles-apsoutheast7-beta"
 }
 
+variable "lambda_zip_path" {
+  description = "Path to Lambda deployment zip file"
+  type        = string
+  default     = "build/image-processor.zip"
+}
+
 variable "static_bucket_id" {
   description = "ID of the static files bucket"
   type        = string
   default     = "chiangmai-villa-static-files"
 }
-
-# variable "bucket_arn" {
-#   description = "ARN of the S3 bucket"
-#   type        = string
-# }
 
 variable "environment" {
   description = "Deployment Environment"
@@ -25,11 +26,11 @@ variable "environment" {
   }
 }
 
-variable "secret_arn" {
-  description = "ARN of the Secrets Manager secret for environment variables"
-  type        = string
-  default     = ""
-}
+# variable "secret_arn" {
+#   description = "ARN of the Secrets Manager secret for environment variables"
+#   type        = string
+#   default     = ""
+# }
 
 variable "s3_prefix" {
   description = "S3 prefix/folder for images"

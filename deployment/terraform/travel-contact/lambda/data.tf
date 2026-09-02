@@ -1,4 +1,4 @@
 data "aws_lambda_layer_version" "shared" {
-  layer_name = "villa-shared-layer"
-  version    = 2 # Increment to the new version
+  layer_name = "${var.layer_name}-${local.environment}-${local.short_region}"
+  version    = 1 # Increment to the new version
 }

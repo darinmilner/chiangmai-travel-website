@@ -46,13 +46,13 @@ resource "aws_iam_policy" "lambda_policy" {
         ]
         Resource = "arn:aws:logs:*:*:*"
       },
-      {
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Resource = var.secret_arn != "" ? var.secret_arn : "arn:aws:secretsmanager:*:*:secret:${local.app_name_lower}-*"
-      }
+      # {
+      #   Effect = "Allow"
+      #   Action = [
+      #     "secretsmanager:GetSecretValue"
+      #   ]
+      #   Resource = var.secret_arn != "" ? var.secret_arn : "arn:aws:secretsmanager:*:*:secret:${local.app_name_lower}-*"
+      # }
     ]
   })
 }

@@ -14,11 +14,13 @@ class TerraformWrapper:
         self,
         environment: str = "dev",
         tf_dir: Optional[Path] = None,
-        binary_path: str = "terraform"
+        binary_path: str = "terraform",
+        extra_env_vars: Optional[Dict[str, str]] = None  # <--- 1. Add optional parameter
     ):
         self.environment = environment
         self.tf_dir = Path(tf_dir).resolve() if tf_dir else Path.cwd().resolve()
         self.binary_path = binary_path if os.path.isabs(binary_path) else "terraform"
+        self.extra_env_vars = extra_env_vars or {}       # <--- 2. Store extra variables
 
     def _run_command(self, args: List[str], env_vars: Optional[Dict[str, str]] = None) -> bool:
         """Executes a terraform CLI command in self.tf_dir"""
@@ -29,6 +31,7 @@ class TerraformWrapper:
         full_cmd = [self.binary_path] + args
         cmd_env = os.environ.copy()
         cmd_env["TF_VAR_environment"] = self.environment
+        cmd_env.update(self.extra_env_vars)              # <--- Inject into process environment
 
         if env_vars:
             cmd_env.update(env_vars)

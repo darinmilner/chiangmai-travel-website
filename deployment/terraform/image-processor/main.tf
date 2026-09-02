@@ -1,7 +1,8 @@
 # Lambda Function - Image Processor
 resource "aws_lambda_function" "image_processor" {
-  filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  # filename         = data.archive_file.lambda_zip.output_path
+  filename         = var.lambda_zip_path
+  source_code_hash = filebase64sha256(var.lambda_zip_path)
   function_name    = "${local.app_name_lower}-image-processor-${var.environment}"
   role             = aws_iam_role.lambda_role.arn
   handler          = "index.lambda_handler"

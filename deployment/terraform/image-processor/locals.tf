@@ -1,6 +1,6 @@
 locals {
   # Merge environment variables from secrets
-  secret_vars    = var.secret_arn != "" ? jsondecode(data.aws_secretsmanager_secret_version.lambda_config[0].secret_string) : {}
+  # secret_vars    = var.secret_arn != "" ? jsondecode(data.aws_secretsmanager_secret_version.lambda_config[0].secret_string) : {}
   app_name       = "ChiangMaiVilla"
   app_name_lower = local.app_name_lower
   environment_variables = merge(
@@ -11,7 +11,7 @@ locals {
       QUALITY        = tostring(var.image_quality)
       LOG_LEVEL      = var.log_level
     },
-    local.secret_vars
+    # local.secret_vars
   )
 
   tags = {

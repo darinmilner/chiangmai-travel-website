@@ -13,6 +13,7 @@ variable "description" {
 variable "filename" {
   description = "Path to the layer ZIP file"
   type        = string
+  default     = "dist/villa-shared-layer.zip"
 }
 
 variable "compatible_runtimes" {

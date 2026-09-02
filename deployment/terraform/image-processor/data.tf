@@ -12,17 +12,17 @@ data "aws_s3_bucket" "image_bucket" {
   bucket = var.static_bucket_id
 }
 
-# Archive the Lambda code
-data "archive_file" "lambda_zip" {
-  type        = "zip"
-  source_dir  = "${path.module}/src"
-  output_path = "${path.module}/src/function.zip"
+# # Archive the Lambda code
+# data "archive_file" "lambda_zip" {
+#   type        = "zip"
+#   source_dir  = "${path.module}/src"
+#   output_path = "${path.module}/src/function.zip"
 
-  excludes = [
-    "tests/",
-    "*.pyc",
-    "__pycache__/",
-    ".pytest_cache/",
-    "*.egg-info/"
-  ]
-}
+#   excludes = [
+#     "tests/",
+#     "*.pyc",
+#     "__pycache__/",
+#     ".pytest_cache/",
+#     "*.egg-info/"
+#   ]
+# }

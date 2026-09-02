@@ -7,6 +7,13 @@ variable "bangkok_region" {
 variable "lambda_zip_path" {
   description = "Path to Lambda deployment zip file"
   type        = string
+  default     = "build/travel-contact.zip"
+}
+
+variable "layer_name" {
+  description = "Name of the Lambda layer"
+  type        = string
+  default     = "chiangmai-villa-shared-layer"
 }
 
 variable "ses_source_email" {
