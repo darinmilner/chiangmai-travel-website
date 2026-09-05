@@ -12,7 +12,7 @@ import (
 func LoadConfig() models.ImageServiceConfig {
 	return models.ImageServiceConfig{
 		S3Bucket:      getEnv("S3_BUCKET", ""),
-		S3Region:      getEnv("AWS_REGION", "us-east-1"),
+		S3Region:      getEnv("AWS_REGION", "ap-southeast-7"),
 		S3Prefix:      getEnv("S3_PREFIX", "villa/"),
 		CloudFrontURL: getEnv("CLOUDFRONT_URL", ""),
 		LocalImageDir: getEnv("LOCAL_IMAGE_DIR", "static/images/villa"),
@@ -30,7 +30,7 @@ func LoadFullConfig() *AppConfig {
 			APIURL:         getEnv("CONTACT_API_URL", "https://your-api-gateway-url.com/contact"),
 		},
 		AWS: AWSConfig{
-			Region:     getEnv("AWS_REGION", "us-east-1"),
+			Region:     getEnv("AWS_REGION", "ap-southeast-7"),
 			Bucket:     getEnv("S3_BUCKET", ""),
 			CloudFront: getEnv("CLOUDFRONT_URL", ""),
 		},

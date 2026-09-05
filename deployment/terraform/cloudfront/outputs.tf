@@ -23,16 +23,6 @@ output "cloudfront_hosted_zone_id" {
   value       = aws_cloudfront_distribution.images.hosted_zone_id
 }
 
-output "origin_access_identity_iam_arn" {
-  description = "Origin Access Identity IAM ARN"
-  value       = aws_cloudfront_origin_access_identity.oai.iam_arn
-}
-
-output "origin_access_identity_s3_canonical_user_id" {
-  description = "Origin Access Identity S3 canonical user ID"
-  value       = aws_cloudfront_origin_access_identity.oai.s3_canonical_user_id
-}
-
 output "cache_policy_id" {
   description = "CloudFront cache policy ID"
   value       = aws_cloudfront_cache_policy.images.id
