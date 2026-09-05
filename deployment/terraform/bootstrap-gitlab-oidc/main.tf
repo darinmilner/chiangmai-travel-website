@@ -139,7 +139,8 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "s3:GetObject",
           "s3:PutObject",
           "s3:DeleteObject",
-          "s3:ListBucket"
+          "s3:ListBucket",
+          "s3:GetBucketCORS",
         ]
         Resource = "*"
       },
@@ -291,7 +292,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "ec2:CreateTags",
           "ec2:DeleteTags"
         ]
-
         Resource = "*"
       },
 
@@ -313,12 +313,13 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "kms:UpdateAlias",
           "kms:DeleteAlias",
           "kms:ListAliases",
+          "kms:ListResourceTags",
           "kms:TagResource",
           "kms:UntagResource",
           "kms:GetKeyPolicy",
-          "kms:PutKeyPolicy"
+          "kms:PutKeyPolicy",
+          "kms:GetKeyRotationStatus",
         ]
-
         Resource = "*"
       },
 

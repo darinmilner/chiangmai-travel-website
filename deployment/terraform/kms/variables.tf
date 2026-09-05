@@ -4,6 +4,12 @@ variable "environment" {
   default     = "beta"
 }
 
+variable "region" {
+  description = "Deployment Region"
+  type = string
+  default = "ap-southeast-7"
+}
+
 variable "app_name" {
   description = "Application name"
   type        = string

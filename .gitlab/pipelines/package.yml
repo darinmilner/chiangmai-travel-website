@@ -2,7 +2,7 @@ package:
   stage: package
   image: python:3.13-slim
   rules:
-    - if: '$DEPLOY_TARGET =~ /^(cloudfront|ses)$/'
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms)$/'
       when: never
     - when: always
   before_script:
