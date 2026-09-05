@@ -18,3 +18,6 @@ test:all:
   rules:
     - if: $CI_PIPELINE_SOURCE == "web"
       when: on_success
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|ses)$/'
+      when: never
+    - when: always

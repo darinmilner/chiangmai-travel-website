@@ -134,6 +134,12 @@ class PackageOrchestrator:
                 return False
 
             comp_type = comp.get('type', 'lambda')
+
+            # Skip packaging for pure infrastructure / Terraform modules
+            if comp_type == 'terraform':
+                logger.info(f"ℹ️ Component '{target_component}' is pure Terraform. Skipping packaging.")
+                return True
+
             if comp_type == 'layer':
                 return self._package_layer(target_component, comp)
             return self._package_lambda(target_component, comp)
@@ -141,9 +147,14 @@ class PackageOrchestrator:
         logger.info("🚀 Packaging all components...")
         success = True
         for name, comp in self.components.items():
-            logger.info(f"📦 Packaging {name} ({comp.get('path')})...")
             comp_type = comp.get('type', 'lambda')
 
+            # Skip Terraform components during 'all' packaging
+            if comp_type == 'terraform':
+                logger.info(f"ℹ️ Skipping non-code component: {name}")
+                continue
+
+            logger.info(f"📦 Packaging {name} ({comp.get('path')})...")
             if comp_type == 'layer':
                 if not self._package_layer(name, comp):
                     success = False

@@ -1,6 +1,10 @@
 package:
   stage: package
   image: python:3.13-slim
+  rules:
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|ses)$/'
+      when: never
+    - when: always
   before_script:
     - apt-get update && apt-get install -y zip bash > /dev/null
     - pip install pyyaml > /dev/null

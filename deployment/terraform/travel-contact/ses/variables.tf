@@ -5,13 +5,13 @@ variable "ses_domain" {
 
 variable "ses_source_email" {
   type        = string
-  default     = ""
+  default     = "npraprudchob@gmail.com"
   description = "Optional source email address for testing"
 }
 
 variable "ses_destination_email" {
   type        = string
-  default     = ""
+  default     = "darin.milner@gmail.com"
   description = "Optional destination email address for testing"
 }
 

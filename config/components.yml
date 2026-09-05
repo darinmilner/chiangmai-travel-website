@@ -19,3 +19,12 @@ components:
     source_path: deployment/terraform/travel-contact/lambda/src
     artifact: "artifacts/travel-contact.zip"
     tf_var_name: "lambda_zip_path"
+
+  cloudfront:
+    type: "terraform"
+    path: "deployment/terraform/cloudfront"
+
+  kms:
+    type: "terraform"
+    path: "deployment/terraform/kms"
+    
