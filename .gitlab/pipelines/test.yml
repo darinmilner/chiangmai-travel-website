@@ -16,8 +16,8 @@ test:all:
       junit: artifacts/test-reports/junit-*.xml
     expire_in: 7 days
   rules:
-    - if: $CI_PIPELINE_SOURCE == "web"
-      when: on_success
-    - if: '$DEPLOY_TARGET =~ /^(cloudfront|ses)$/'
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms)$/'
       when: never
     - when: always
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: on_success

@@ -9,11 +9,13 @@ lint:all:
   script:
     - python ${SCRIPTS_DIR}/lint.py --config ${COMPONENTS_CONFIG}
   rules:
+    # 1. Always evaluate exclusion rule FIRST
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms)$/'
+      when: never
+
+    # 2. Pipeline source rules
     - if: $CI_PIPELINE_SOURCE == "web"
       when: manual
     - if: $CI_PIPELINE_SOURCE == "trigger"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - when: never
-    - if: '$DEPLOY_TARGET =~ /^(cloudfront|ses)$/'
-      when: never
-    - when: always

@@ -1,6 +1,10 @@
-# CloudFront Origin Access Identity
-resource "aws_cloudfront_origin_access_identity" "oai" {
-  comment = "OAI for ${local.app_name} images"
+# NEW: Define Origin Access Control
+resource "aws_cloudfront_origin_access_control" "oac" {
+  name                              = "${local.lower_app_name}-s3-oac"
+  description                       = "OAC for ${aws_s3_bucket.static_bucket.id}"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
 }
 
 # CloudFront distribution
@@ -13,11 +17,10 @@ resource "aws_cloudfront_distribution" "images" {
 
   origin {
     domain_name = aws_s3_bucket.static_bucket.bucket_regional_domain_name
-    origin_id   = "S3Origin"
+    origin_id   = "S3-${aws_s3_bucket.static_bucket.id}"
 
-    s3_origin_config {
-      origin_access_identity = aws_cloudfront_origin_access_identity.oai.cloudfront_access_identity_path
-    }
+    # NEW: Attach OAC ID directly to the origin
+    origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
 
   default_cache_behavior {

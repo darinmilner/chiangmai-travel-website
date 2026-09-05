@@ -44,11 +44,9 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "sts:GetCallerIdentity"
         ]
-
         Resource = "*"
       },
 
@@ -58,7 +56,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "lambda:CreateFunction",
           "lambda:UpdateFunctionCode",
@@ -88,14 +85,11 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "lambda:UntagResource",
           "lambda:ListTags"
         ]
-
         Resource = "*"
       },
-
       # ----------------------------------------------------------
       # ECR
       # ----------------------------------------------------------
-
       {
         Effect = "Allow"
 
@@ -116,7 +110,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "ecr:SetRepositoryPolicy",
           "ecr:TagResource"
         ]
-
         Resource = "*"
       },
 
@@ -126,10 +119,11 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "s3:CreateBucket",
           "s3:DeleteBucket",
+          "s3:GetBucketAcl",
+          "s3:PutBucketAcl",
           "s3:GetBucketLocation",
           "s3:GetBucketVersioning",
           "s3:PutBucketVersioning",
@@ -147,7 +141,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "s3:DeleteObject",
           "s3:ListBucket"
         ]
-
         Resource = "*"
       },
 
@@ -157,21 +150,76 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
+          # Distributions
           "cloudfront:CreateDistribution",
           "cloudfront:GetDistribution",
           "cloudfront:UpdateDistribution",
           "cloudfront:DeleteDistribution",
+
+          # Origin Access Identities (OAI)
+          "cloudfront:CreateCloudFrontOriginAccessIdentity",
+          "cloudfront:GetCloudFrontOriginAccessIdentity",
+          "cloudfront:DeleteCloudFrontOriginAccessIdentity",
+
+          # Origin Access Control (OAC)
           "cloudfront:CreateOriginAccessControl",
           "cloudfront:GetOriginAccessControl",
           "cloudfront:UpdateOriginAccessControl",
           "cloudfront:DeleteOriginAccessControl",
+
+          # Cache Policies
+          "cloudfront:CreateCachePolicy",
+          "cloudfront:GetCachePolicy",
+          "cloudfront:DeleteCachePolicy",
+
+          # Response Headers Policies
+          "cloudfront:CreateResponseHeadersPolicy",
+          "cloudfront:GetResponseHeadersPolicy",
+          "cloudfront:DeleteResponseHeadersPolicy",
+
+          # Tagging
           "cloudfront:ListTagsForResource",
           "cloudfront:TagResource",
           "cloudfront:UntagResource"
         ]
+        Resource = "*"
+      },
 
+      # ----------------------------------------------------------
+      # Route 53 (DNS Management)
+      # ----------------------------------------------------------
+
+      {
+        Effect = "Allow"
+        Action = [
+          "route53:GetHostedZone",
+          "route53:ListHostedZones",
+          "route53:ListHostedZonesByName",
+          "route53:ChangeResourceRecordSets",
+          "route53:GetChange",
+          "route53:ListResourceRecordSets",
+          "route53:ListTagsForResource"
+        ]
+        Resource = "*"
+      },
+
+      # ----------------------------------------------------------
+      # ACM (SSL Certificates for CloudFront in us-east-1)
+      # ----------------------------------------------------------
+
+      {
+        Effect = "Allow"
+        Action = [
+          "acm:RequestCertificate",
+          "acm:DescribeCertificate",
+          "acm:DeleteCertificate",
+          "acm:ListCertificates",
+          "acm:GetCertificate",
+          "acm:AddTagsToCertificate",
+          "acm:RemoveTagsFromCertificate",
+          "acm:UpdateCertificateOptions"
+        ]
         Resource = "*"
       },
 

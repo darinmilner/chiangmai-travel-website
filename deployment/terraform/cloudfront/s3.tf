@@ -28,3 +28,17 @@ resource "aws_s3_bucket_cors_configuration" "static_images" {
     max_age_seconds = 3000
   }
 }
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "static_bucket_encryption" {
+  bucket = aws_s3_bucket.static_bucket.id
+
+  rule {
+    apply_server_side_encryption_by_default {
+      kms_master_key_id = data.aws_kms_key.s3_kms_key.arn
+      sse_algorithm     = "aws:kms"
+    }
+
+    # Dramatically reduces KMS API requests & cost for CloudFront traffic
+    bucket_key_enabled = true
+  }
+}
