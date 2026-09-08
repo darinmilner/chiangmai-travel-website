@@ -11,7 +11,7 @@ variable "environment" {
 variable "bucket_name" {
   description = "S3 bucket ID"
   type        = string
-  default     = "chiangmai-villa-static-files"
+  default     = "static-files"
 }
 
 variable "s3_prefix" {

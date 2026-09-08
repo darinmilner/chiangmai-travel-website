@@ -122,10 +122,11 @@ resource "aws_iam_role_policy" "terraform_deployment" {
         Action = [
           "s3:*"
         ]
-        Resource = [
-          "arn:aws:s3:::chiangmaivilla-*",
-          "arn:aws:s3:::chiangmaivilla-*/*"
-        ]
+        # Resource = [
+        #   "arn:aws:s3:::chiangmaivilla-*",
+        #   "arn:aws:s3:::chiangmaivilla-*/*"
+        # ]
+        Resource = "*"
       },
 
       # ----------------------------------------------------------
