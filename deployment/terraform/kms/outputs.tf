@@ -19,3 +19,7 @@ output "kms_alias_to_arn" {
     for k, v in aws_kms_alias.kms_alias : v.name => aws_kms_key.kms_key[k].arn
   }
 }
+
+output "region" {
+  value = var.region
+}
