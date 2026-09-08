@@ -16,10 +16,8 @@ resource "aws_cloudfront_distribution" "images" {
   price_class         = var.price_class
 
   origin {
-    domain_name = aws_s3_bucket.static_bucket.bucket_regional_domain_name
-    origin_id   = "S3-${aws_s3_bucket.static_bucket.id}"
-
-    # NEW: Attach OAC ID directly to the origin
+    domain_name              = aws_s3_bucket.static_bucket.bucket_regional_domain_name
+    origin_id                = "S3Origin"
     origin_access_control_id = aws_cloudfront_origin_access_control.oac.id
   }
 
@@ -75,21 +73,19 @@ resource "aws_cloudfront_distribution" "images" {
     max_ttl     = var.max_ttl
   }
 
+  # ADDED: Required restrictions block
   restrictions {
     geo_restriction {
-      restriction_type = var.geo_restriction_type
-      locations        = var.geo_restriction_locations
+      restriction_type = "none"
+      locations        = []
     }
   }
 
   viewer_certificate {
-    # If ARN is null, use default certificate
     cloudfront_default_certificate = var.certificate_arn == null ? true : false
-
-    # If ARN is provided, use ACM certificate
-    acm_certificate_arn      = var.certificate_arn
-    ssl_support_method       = var.certificate_arn != null ? "sni-only" : null
-    minimum_protocol_version = var.certificate_arn != null ? "TLSv1.2_2021" : "TLSv1"
+    acm_certificate_arn            = var.certificate_arn
+    ssl_support_method             = var.certificate_arn != null ? "sni-only" : null
+    minimum_protocol_version       = var.certificate_arn != null ? "TLSv1.2_2021" : "TLSv1"
   }
 
   custom_error_response {
