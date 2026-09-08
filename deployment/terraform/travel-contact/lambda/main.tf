@@ -40,7 +40,7 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
 resource "aws_s3_bucket_notification" "images" {
   count = var.create_s3_notification ? 1 : 0
 
-  bucket = var.s3_bucket
+  bucket = data.aws_s3_bucket.static_bucket.bucket
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.image_processor.arn
@@ -62,5 +62,5 @@ resource "aws_lambda_permission" "allow_s3" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.image_processor.function_name
   principal     = "s3.amazonaws.com"
-  source_arn    = "arn:aws:s3:::${var.s3_bucket}"
+  source_arn    = data.aws_s3_bucket.static_bucket.arn
 }

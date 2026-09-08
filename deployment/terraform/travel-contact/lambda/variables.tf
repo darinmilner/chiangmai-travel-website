@@ -67,11 +67,6 @@ variable "create_s3_notification" {
   default     = false
 }
 
-variable "s3_bucket" {
-  description = "S3 Bucket for notifications"
-  type        = string
-}
-
 variable "s3_notification_prefix" {
   description = "S3 Notification prefix"
   type        = string
