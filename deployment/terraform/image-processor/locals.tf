@@ -2,21 +2,12 @@ locals {
   # Merge environment variables from secrets
   # secret_vars    = var.secret_arn != "" ? jsondecode(data.aws_secretsmanager_secret_version.lambda_config[0].secret_string) : {}
   app_name       = "ChiangMaiVilla"
-  app_name_lower = local.app_name_lower
+  app_name_lower = lower(local.app_name)
   short_region   = replace(var.region, "-", "")
-  environment_variables = merge(
-    {
-      THUMBNAIL_SIZE = join(",", var.thumbnail_size)
-      MEDIUM_SIZE    = join(",", var.medium_size)
-      CAROUSEL_SIZE  = join(",", var.carousel_size)
-      QUALITY        = tostring(var.image_quality)
-      LOG_LEVEL      = var.log_level
-    },
-  )
 
   tags = {
-    Environment = "production"
-    Service     = "villa-images"
-    ManagedBy   = "terraform"
+    Environment = var.environment
+    Service     = "${local.app_name}-Image-Compression-Lambda"
+    ManagedBy   = "Terraform"
   }
 }

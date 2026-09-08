@@ -2,7 +2,7 @@ data "terraform_remote_state" "cloudfront" {
   backend = "s3"
 
   config = {
-    bucket = var.bucket_id                  # Same bucket
+    bucket = "chiangmaivilla-backendfiles-apsoutheast7-beta"               # Same bucket
     key    = "cloudfront/terraform.tfstate" # Exact folder path to CloudFront state
     region = var.region
   }
