@@ -9,7 +9,7 @@ data "terraform_remote_state" "cloudfront" {
 }
 
 data "aws_s3_bucket" "image_bucket" {
-  bucket = var.static_bucket_id
+  bucket = "${local.app_name_lower}-static-file-${local.short_region}"
 }
 
 # # Archive the Lambda code

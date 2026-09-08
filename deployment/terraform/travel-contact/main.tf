@@ -33,8 +33,6 @@ module "lambda" {
   max_email_size_kb     = var.max_email_size_kb
   rate_limit_per_minute = var.rate_limit_per_minute
   log_retention_days    = var.log_retention_days
-
-  s3_bucket = data.aws_s3_bucket.notifications_bucket.bucket
 }
 
 # API Gateway Module (Bangkok region)

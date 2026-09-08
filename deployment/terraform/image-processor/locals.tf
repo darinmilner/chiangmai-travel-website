@@ -3,6 +3,7 @@ locals {
   # secret_vars    = var.secret_arn != "" ? jsondecode(data.aws_secretsmanager_secret_version.lambda_config[0].secret_string) : {}
   app_name       = "ChiangMaiVilla"
   app_name_lower = local.app_name_lower
+  short_region   = replace(var.region, "-", "")
   environment_variables = merge(
     {
       THUMBNAIL_SIZE = join(",", var.thumbnail_size)
@@ -11,7 +12,6 @@ locals {
       QUALITY        = tostring(var.image_quality)
       LOG_LEVEL      = var.log_level
     },
-    # local.secret_vars
   )
 
   tags = {

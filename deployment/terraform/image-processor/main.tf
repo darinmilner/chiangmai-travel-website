@@ -13,7 +13,7 @@ resource "aws_lambda_function" "image_processor" {
 
   environment {
     variables = {
-      S3_BUCKET      = var.bucket_id
+      S3_BUCKET      = data.aws_s3_bucket.image_bucket.arn
       S3_PREFIX      = var.s3_prefix
       CLOUDFRONT_URL = "https://${data.terraform_remote_state.cloudfront.outputs.cloudfront_domain_name}"
       THUMBNAIL_SIZE = var.thumbnail_size
@@ -25,10 +25,10 @@ resource "aws_lambda_function" "image_processor" {
     }
   }
 
-  vpc_config {
-    subnet_ids         = var.subnet_ids
-    security_group_ids = var.security_group_ids
-  }
+  # vpc_config {
+  #   subnet_ids         = var.subnet_ids
+  #   security_group_ids = var.security_group_ids
+  # }
 
   depends_on = [
     aws_cloudwatch_log_group.lambda,
@@ -46,7 +46,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 # S3 Event Notification for Lambda
 resource "aws_s3_bucket_notification" "images" {
-  bucket = var.bucket_id
+  bucket = data.aws_s3_bucket.image_bucket.arn
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.image_processor.arn

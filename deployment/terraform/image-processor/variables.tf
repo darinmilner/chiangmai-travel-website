@@ -1,19 +1,7 @@
-variable "bucket_id" {
-  description = "ID of the statefile S3 bucket"
-  type        = string
-  default     = "chiangmaivilla-backendfiles-apsoutheast7-beta"
-}
-
 variable "lambda_zip_path" {
   description = "Path to Lambda deployment zip file"
   type        = string
   default     = "build/image-processor.zip"
-}
-
-variable "static_bucket_id" {
-  description = "ID of the static files bucket"
-  type        = string
-  default     = "chiangmai-villa-static-files"
 }
 
 variable "environment" {
@@ -25,12 +13,6 @@ variable "environment" {
     error_message = "Environment must be one of: dev, staging, beta or prod"
   }
 }
-
-# variable "secret_arn" {
-#   description = "ARN of the Secrets Manager secret for environment variables"
-#   type        = string
-#   default     = ""
-# }
 
 variable "s3_prefix" {
   description = "S3 prefix/folder for images"
@@ -98,17 +80,17 @@ variable "log_retention_days" {
   default     = 30
 }
 
-variable "subnet_ids" {
-  description = "Subnet IDs for Lambda VPC (empty for no VPC)"
-  type        = list(string)
-  default     = []
-}
+# variable "subnet_ids" {
+#   description = "Subnet IDs for Lambda VPC (empty for no VPC)"
+#   type        = list(string)
+#   default     = []
+# }
 
-variable "security_group_ids" {
-  description = "Security group IDs for Lambda VPC"
-  type        = list(string)
-  default     = []
-}
+# variable "security_group_ids" {
+#   description = "Security group IDs for Lambda VPC"
+#   type        = list(string)
+#   default     = []
+# }
 
 variable "create_alarms" {
   description = "Create CloudWatch alarms"

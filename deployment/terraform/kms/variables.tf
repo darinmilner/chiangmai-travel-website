@@ -6,8 +6,8 @@ variable "environment" {
 
 variable "region" {
   description = "Deployment Region"
-  type = string
-  default = "ap-southeast-7"
+  type        = string
+  default     = "ap-southeast-7"
 }
 
 variable "app_name" {
