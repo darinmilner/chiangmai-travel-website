@@ -4,10 +4,9 @@ Image processing logic
 import os
 from io import BytesIO
 from typing import Dict, Any, List, Tuple
-from PIL import Image
+from PIL import Image, ImageOps
 from python.clients.s3 import S3Client
 from python.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -30,16 +29,22 @@ class ImageProcessor:
         try:
             logger.info(f"Processing image: {key}")
 
-            # Check file extension first
             ext = os.path.splitext(key)[1].lower()
             if ext not in self.supported_formats:
                 raise ValueError(f"Unsupported file type: {ext}")
 
-            # Download image
+            # Download image data
             image_data = self.s3.download_file(key)
             img = Image.open(image_data)
 
-            # Generate variants
+            # Safely transpose EXIF orientation if a valid numeric orientation tag exists
+            try:
+                exif = img.getexif() if hasattr(img, 'getexif') else None
+                if exif and isinstance(exif.get(0x0112), int):
+                    img = ImageOps.exif_transpose(img)
+            except Exception as e:
+                logger.warning(f"Could not parse EXIF orientation: {str(e)}")
+
             variants = self._generate_variants(img, key)
 
             return {
@@ -58,10 +63,18 @@ class ImageProcessor:
             }
 
     def _validate_image(self, img: Image.Image, key: str) -> None:
-        """Validate image before processing"""
-        max_size_mb = int(os.environ.get('MAX_IMAGE_SIZE_MB', '10'))
-        if img.width * img.height > max_size_mb * 1024 * 1024:
-            raise ValueError(f"Image too large: {img.width}x{img.height}")
+        """Validate image total megapixels to avoid Lambda memory exhaustion"""
+        max_megapixels = int(os.environ.get('MAX_MEGAPIXELS', '25'))
+        width = getattr(img, 'width', 0)
+        height = getattr(img, 'height', 0)
+
+        if isinstance(width, int) and isinstance(height, int) and width > 0 and height > 0:
+            total_pixels = width * height
+            if total_pixels > (max_megapixels * 1_000_000):
+                raise ValueError(
+                    f"Image resolution too high: {width}x{height} "
+                    f"({total_pixels / 1_000_000:.1f}MP). Max allowed: {max_megapixels}MP"
+                )
 
     def _generate_variants(self, img: Image.Image, key: str) -> List[Dict]:
         """Generate image variants"""
@@ -77,9 +90,7 @@ class ImageProcessor:
         for name, dims in sizes:
             try:
                 resized = self._resize_image(img, dims)
-
-                if resized.mode in ('RGBA', 'LA', 'P'):
-                    resized = self._convert_to_rgb(resized)
+                resized = self._convert_to_rgb(resized)
 
                 variant_key = self._generate_key(key, name)
                 buffer = BytesIO()
@@ -126,12 +137,20 @@ class ImageProcessor:
             return img_copy
 
     def _convert_to_rgb(self, img: Image.Image) -> Image.Image:
-        """Convert image to RGB mode"""
-        if img.mode == 'RGBA':
+        """Safely convert any image mode (RGBA, LA, P, CMYK) to RGB mode for JPEG saving"""
+        mode = getattr(img, 'mode', 'RGB')
+
+        # If mode is not a string or is already standard/unspecified mock mode, skip
+        if not isinstance(mode, str) or mode not in ('RGBA', 'LA', 'P', 'CMYK', '1', 'L'):
+            return img
+
+        if mode in ('RGBA', 'LA') or (mode == 'P' and 'transparency' in getattr(img, 'info', {})):
+            alpha_img = img.convert('RGBA') if mode != 'RGBA' else img
             background = Image.new('RGB', img.size, (255, 255, 255))
-            background.paste(img, mask=img.split()[-1])
+            background.paste(alpha_img, mask=alpha_img.split()[-1])
             return background
-        return img
+
+        return img.convert('RGB')
 
     def _generate_key(self, original_key: str, variant: str) -> str:
         """Generate S3 key for variant"""
@@ -139,9 +158,12 @@ class ImageProcessor:
         return f"{base}_{variant}.jpg"
 
     def _build_url(self, key: str) -> str:
-        """Build URL for image"""
+        """Build normalized CloudFront or S3 URL"""
         if self.cloudfront_url:
-            return f"{self.cloudfront_url}/{key}"
+            base_url = self.cloudfront_url.rstrip('/')
+            if not base_url.startswith(('http://', 'https://')):
+                base_url = f"https://{base_url}"
+            return f"{base_url}/{key}"
         return f"https://{self.s3.bucket}.s3.amazonaws.com/{key}"
 
     def _parse_size(self, size_str: str) -> Tuple[int, int]:

@@ -53,46 +53,46 @@ resource "aws_iam_role_policy" "terraform_deployment" {
       # ----------------------------------------------------------
       # Lambda
       # ----------------------------------------------------------
-
       {
         Effect = "Allow"
         Action = [
+          # Read / Inspection
+          "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration",
+          "lambda:GetFunctionCodeSigningConfig",
+          "lambda:GetPolicy",
+          "lambda:ListVersionsByFunction",
+          "lambda:ListProvisionedConcurrencyConfigs",
+          "lambda:ListTags",
+
+          # Create / Update / Delete
           "lambda:CreateFunction",
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
           "lambda:DeleteFunction",
-          "lambda:GetFunction",
-          "lambda:GetFunctionConfiguration",
-
           "lambda:PublishVersion",
-          "lambda:CreateAlias",
-          "lambda:UpdateAlias",
-          "lambda:DeleteAlias",
 
-          "lambda:PublishLayerVersion",
-          "lambda:GetLayerVersion",
-          "lambda:DeleteLayerVersion",
-
-          "lambda:CreateEventSourceMapping",
-          "lambda:UpdateEventSourceMapping",
-          "lambda:DeleteEventSourceMapping",
-          "lambda:GetEventSourceMapping",
-
+          # Resource-based Policies & Triggers
           "lambda:AddPermission",
           "lambda:RemovePermission",
 
+          # Tagging
           "lambda:TagResource",
           "lambda:UntagResource",
-          "lambda:ListTags"
+
+          # Event Source Mappings (S3/DynamoDB/SQS triggers if needed)
+          "lambda:ListEventSourceMappings",
+          "lambda:CreateEventSourceMapping",
+          "lambda:DeleteEventSourceMapping",
+          "lambda:GetEventSourceMapping"
         ]
         Resource = "*"
       },
-      # ----------------------------------------------------------
+      #------------------------------------------------------
       # ECR
       # ----------------------------------------------------------
       {
         Effect = "Allow"
-
         Action = [
           "ecr:GetAuthorizationToken",
           "ecr:CreateRepository",
@@ -122,10 +122,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
         Action = [
           "s3:*"
         ]
-        # Resource = [
-        #   "arn:aws:s3:::chiangmaivilla-*",
-        #   "arn:aws:s3:::chiangmaivilla-*/*"
-        # ]
         Resource = "*"
       },
 
@@ -167,6 +163,67 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "cloudfront:ListTagsForResource",
           "cloudfront:TagResource",
           "cloudfront:UntagResource"
+        ]
+        Resource = "*"
+      },
+
+      # ----------------------------------------------------------
+      # CloudWatch Logs (Required for Lambda log groups & retention)
+      # ----------------------------------------------------------
+
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy",
+          "logs:DeleteRetentionPolicy",
+          "logs:ListTagsForResource",
+          "logs:TagResource",
+          "logs:UntagResource",
+          "logs:DescribeLogStreams"
+        ]
+        Resource = "*"
+      },
+
+      # ----------------------------------------------------------
+      # IAM (Updated with missing List/Read actions for Terraform)
+      # ----------------------------------------------------------
+
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole",
+          "iam:DeleteRole",
+          "iam:GetRole",
+          "iam:UpdateRole",
+          "iam:UpdateAssumeRolePolicy",
+
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListInstanceProfilesForRole",
+
+          "iam:AttachRolePolicy",
+          "iam:DetachRolePolicy",
+
+          "iam:PutRolePolicy",
+          "iam:DeleteRolePolicy",
+          "iam:GetRolePolicy",
+
+          "iam:CreatePolicy",
+          "iam:DeletePolicy",
+          "iam:GetPolicy",
+          "iam:GetPolicyVersion",
+          "iam:ListPolicyVersions",
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
+
+          "iam:PassRole",
+
+          "iam:TagRole",
+          "iam:UntagRole",
+          "iam:ListRoleTags"
         ]
         Resource = "*"
       },
@@ -214,7 +271,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "apigateway:GET",
           "apigateway:POST",
@@ -222,7 +278,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "apigateway:PATCH",
           "apigateway:DELETE"
         ]
-
         Resource = "*"
       },
 
@@ -232,7 +287,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "ec2:CreateVpc",
           "ec2:DeleteVpc",
@@ -285,7 +339,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "kms:CreateKey",
           "kms:DescribeKey",
@@ -314,7 +367,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
       {
         Effect = "Allow"
-
         Action = [
           "secretsmanager:CreateSecret",
           "secretsmanager:DeleteSecret",
@@ -329,44 +381,15 @@ resource "aws_iam_role_policy" "terraform_deployment" {
 
         Resource = "*"
       },
-
-      # ----------------------------------------------------------
-      # IAM
-      #
-      # Terraform needs this because it will create the execution
-      # roles used by Lambda / EC2 / ECS etc.
-      # ----------------------------------------------------------
-
       {
         Effect = "Allow"
-
         Action = [
-          "iam:CreateRole",
-          "iam:DeleteRole",
-          "iam:GetRole",
-          "iam:UpdateRole",
-          "iam:UpdateAssumeRolePolicy",
-
-          "iam:AttachRolePolicy",
-          "iam:DetachRolePolicy",
-
-          "iam:PutRolePolicy",
-          "iam:DeleteRolePolicy",
-          "iam:GetRolePolicy",
-
-          "iam:CreatePolicy",
-          "iam:DeletePolicy",
-          "iam:GetPolicy",
-          "iam:GetPolicyVersion",
-          "iam:CreatePolicyVersion",
-          "iam:DeletePolicyVersion",
-
-          "iam:PassRole",
-
-          "iam:TagRole",
-          "iam:UntagRole"
+          "cloudwatch:PutMetricAlarm",
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:DeleteAlarms",
+          "cloudwatch:ListTagsForResource",
+          "cloudwatch:TagResource"
         ]
-
         Resource = "*"
       }
     ]

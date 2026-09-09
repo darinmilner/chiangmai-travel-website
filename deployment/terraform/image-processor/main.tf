@@ -40,7 +40,7 @@ resource "aws_cloudwatch_log_group" "lambda" {
 
 # S3 Event Notification for Lambda
 resource "aws_s3_bucket_notification" "images" {
-  bucket = data.aws_s3_bucket.image_bucket.arn
+  bucket = data.aws_s3_bucket.image_bucket.id
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.image_processor.arn
@@ -49,14 +49,12 @@ resource "aws_s3_bucket_notification" "images" {
     filter_suffix       = var.image_extensions_filter
   }
 
-  depends_on = [
-    aws_lambda_permission.allow_s3
-  ]
+  depends_on = [aws_lambda_permission.allow_s3]
 }
 
 # Lambda permission for S3
 resource "aws_lambda_permission" "allow_s3" {
-  statement_id  = "AllowS3Invocation"
+  statement_id  = "AllowS3BucketInvocation"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.image_processor.function_name
   principal     = "s3.amazonaws.com"
