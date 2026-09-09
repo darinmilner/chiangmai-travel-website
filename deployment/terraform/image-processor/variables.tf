@@ -95,7 +95,7 @@ variable "log_retention_days" {
 variable "create_alarms" {
   description = "Create CloudWatch alarms"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "sns_topic_arns" {

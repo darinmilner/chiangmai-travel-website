@@ -1,4 +1,3 @@
-
 # CloudWatch Alarms
 resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
   count = var.create_alarms ? 1 : 0
