@@ -27,4 +27,7 @@ components:
   kms:
     type: "terraform"
     path: "deployment/terraform/kms"
-    
+
+  route53:
+    type: "terraform"
+    path: "deployment/terraform/route53"

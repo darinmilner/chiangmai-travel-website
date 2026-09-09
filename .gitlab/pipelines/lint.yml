@@ -10,7 +10,7 @@ lint:all:
     - python ${SCRIPTS_DIR}/lint.py --config ${COMPONENTS_CONFIG}
   rules:
     # 1. Always evaluate exclusion rule FIRST
-    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms)$/'
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms|route53)$/'
       when: never
 
     # 2. Pipeline source rules

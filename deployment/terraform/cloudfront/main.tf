@@ -15,6 +15,8 @@ resource "aws_cloudfront_distribution" "images" {
   aliases             = var.custom_domains
   price_class         = var.price_class
 
+  
+
   origin {
     domain_name              = aws_s3_bucket.static_bucket.bucket_regional_domain_name
     origin_id                = "S3Origin"
