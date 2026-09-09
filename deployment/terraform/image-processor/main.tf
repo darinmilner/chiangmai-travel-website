@@ -1,6 +1,5 @@
 # Lambda Function - Image Processor
 resource "aws_lambda_function" "image_processor" {
-  # filename         = data.archive_file.lambda_zip.output_path
   filename         = var.lambda_zip_path
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   function_name    = "${local.app_name_lower}-image-processor-${var.environment}"
@@ -29,11 +28,6 @@ resource "aws_lambda_function" "image_processor" {
   #   subnet_ids         = var.subnet_ids
   #   security_group_ids = var.security_group_ids
   # }
-
-  depends_on = [
-    aws_cloudwatch_log_group.lambda,
-    data.archive_file.lambda_zip
-  ]
 
   tags = local.tags
 }
