@@ -9,5 +9,5 @@ data "terraform_remote_state" "cloudfront" {
 }
 
 data "aws_s3_bucket" "image_bucket" {
-  bucket = "${local.app_name_lower}-static-file-${local.short_region}"
+  bucket = "${local.app_name_lower}-static-files-${local.short_region}"
 }
