@@ -32,3 +32,8 @@ output "response_headers_policy_id" {
   description = "CloudFront response headers policy ID"
   value       = aws_cloudfront_response_headers_policy.security.id
 }
+
+output "cloudfront_domain_name" {
+  description = "The domain name of the CloudFront distribution"
+  value       = aws_cloudfront_distribution.images.domain_name
+}
