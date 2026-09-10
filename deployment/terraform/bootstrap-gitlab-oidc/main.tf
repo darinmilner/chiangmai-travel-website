@@ -388,7 +388,10 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "cloudwatch:DescribeAlarms",
           "cloudwatch:DeleteAlarms",
           "cloudwatch:ListTagsForResource",
-          "cloudwatch:TagResource"
+          "cloudwatch:TagResource",
+          "cloudwatch:UntagResource",
+          "tag:GetResources",
+          "tag:GetTagKeys"
         ]
         Resource = "*"
       }

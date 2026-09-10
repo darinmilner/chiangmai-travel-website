@@ -46,7 +46,6 @@ resource "aws_s3_bucket_notification" "images" {
     lambda_function_arn = aws_lambda_function.image_processor.arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = var.s3_prefix
-    filter_suffix       = var.image_extensions_filter
   }
 
   depends_on = [aws_lambda_permission.allow_s3]

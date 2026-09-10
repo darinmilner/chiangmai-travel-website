@@ -20,12 +20,6 @@ variable "s3_prefix" {
   default     = "villa/"
 }
 
-variable "image_extensions_filter" {
-  description = "S3 event filter for image extensions"
-  type        = string
-  default     = ".jpg,.jpeg,.png,.webp,.gif,.avif"
-}
-
 variable "lambda_timeout" {
   description = "Lambda function timeout in seconds"
   type        = number
