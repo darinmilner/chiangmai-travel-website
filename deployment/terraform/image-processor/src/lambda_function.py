@@ -5,7 +5,7 @@ import json
 import os
 from typing import Dict, Any
 
-from python.logger import get_logger
+from logger import get_logger
 from processor import ImageProcessor
 
 logger = get_logger(__name__)

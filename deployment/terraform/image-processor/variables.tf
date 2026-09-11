@@ -14,6 +14,12 @@ variable "environment" {
   }
 }
 
+variable "layer_name" {
+  description = "Name of Lambda Layer"
+  type        = string
+  default     = "chiangmai-villa-shared-layer"
+}
+
 variable "input_prefix" {
   description = "S3 prefix/folder for images"
   type        = string

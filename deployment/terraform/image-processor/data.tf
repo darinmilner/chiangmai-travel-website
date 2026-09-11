@@ -11,3 +11,8 @@ data "terraform_remote_state" "cloudfront" {
 data "aws_s3_bucket" "image_bucket" {
   bucket = "${local.app_name_lower}-static-files-${local.short_region}"
 }
+
+data "aws_lambda_layer_version" "shared_layer" {
+  layer_name = "${var.layer_name}-${var.environment}-${local.short_region}"
+  version = 1
+}

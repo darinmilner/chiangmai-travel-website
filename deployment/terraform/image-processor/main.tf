@@ -10,6 +10,10 @@ resource "aws_lambda_function" "image_processor" {
   memory_size      = var.lambda_memory
   publish          = true
 
+  layers = [
+    data.aws_lambda_layer_version.shared_layer.arn
+  ]
+
   environment {
     variables = {
       S3_BUCKET      = data.aws_s3_bucket.image_bucket.arn
