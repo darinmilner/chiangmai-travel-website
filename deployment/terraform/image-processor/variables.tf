@@ -6,7 +6,7 @@ variable "lambda_zip_path" {
 
 variable "environment" {
   description = "Deployment Environment"
-  default     = "dev"
+  default     = "beta"
 
   validation {
     condition     = contains(["dev", "staging", "beta", "prod"], var.environment)

@@ -61,6 +61,7 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "lambda:GetFunctionConfiguration",
           "lambda:GetFunctionCodeSigningConfig",
           "lambda:GetPolicy",
+          "lambda:GetLayerVersion",
           "lambda:ListVersionsByFunction",
           "lambda:ListProvisionedConcurrencyConfigs",
           "lambda:ListTags",
