@@ -26,10 +26,10 @@ class TestImageProcessor:
     def test_process_image_success(self, mock_pil_image):
         """Test successful image processing"""
         processor = ImageProcessor()
-        result = processor.process_image('test-bucket', 'villa/test-image.jpg')
+        result = processor.process_image('test-bucket', 'uploads/villa/test-image.jpg')
 
         assert result['success'] is True
-        assert result['key'] == 'villa/test-image.jpg'
+        assert result['key'] == 'uploads/villa/test-image.jpg'
         assert 'variants' in result
         assert len(result['variants']) == 3
 
@@ -38,11 +38,15 @@ class TestImageProcessor:
         assert 'medium' in variant_names
         assert 'carousel' in variant_names
 
+        # Verify generated key output prefix
+        variant_keys = [v['key'] for v in result['variants']]
+        assert 'static/villa/test-image_thumb.jpg' in variant_keys
+
     def test_process_image_with_unsupported_format(self, mock_pil_image):
         """Test processing unsupported format"""
         with patch('PIL.Image.open') as mock_open:
             processor = ImageProcessor()
-            result = processor.process_image('test-bucket', 'villa/test-image.txt')
+            result = processor.process_image('test-bucket', 'uploads/villa/test-image.txt')
 
             mock_open.assert_not_called()
 
@@ -55,7 +59,7 @@ class TestImageProcessor:
         processor.s3.set_fail_mode(True, 'Download error')
 
         with patch('PIL.Image.open') as mock_open:
-            result = processor.process_image('test-bucket', 'villa/test-image.jpg')
+            result = processor.process_image('test-bucket', 'uploads/villa/test-image.jpg')
 
             mock_open.assert_not_called()
 
@@ -125,26 +129,34 @@ class TestImageProcessor:
         assert result is mock_img
         mock_img.convert.assert_not_called()
 
-    def test_generate_key(self):
-        """Test key generation"""
+    @pytest.mark.parametrize(
+        "input_key, variant, expected_key",
+        [
+            ('uploads/villa/bedroom.jpg', 'thumb', 'static/villa/bedroom_thumb.jpg'),
+            ('uploads/home/hero.jpg', 'medium', 'static/home/hero_medium.jpg'),
+            ('uploads/hostel/dorm.jpg', 'carousel', 'static/hostel/dorm_carousel.jpg'),
+            ('uploads/photo.jpg', 'thumb', 'static/photo_thumb.jpg'),
+        ]
+    )
+    def test_generate_key_prefix_swapping(self, input_key, variant, expected_key):
+        """Test key generation and subfolder path translation across sections"""
         processor = ImageProcessor()
-
-        key = processor._generate_key('villa/test-image.jpg', 'thumb')
-        assert key == 'villa/test-image_thumb.jpg'
+        key = processor._generate_key(input_key, variant)
+        assert key == expected_key
 
     def test_build_url_with_cloudfront(self):
         """Test URL building with CloudFront"""
         processor = ImageProcessor()
-        url = processor._build_url('villa/test-image.jpg')
-        assert url == 'https://test.cloudfront.net/villa/test-image.jpg'
+        url = processor._build_url('static/villa/test-image.jpg')
+        assert url == 'https://test.cloudfront.net/static/villa/test-image.jpg'
 
     def test_build_url_without_cloudfront(self, monkeypatch):
         """Test URL building without CloudFront"""
         monkeypatch.delenv('CLOUDFRONT_URL', raising=False)
 
         processor = ImageProcessor()
-        url = processor._build_url('villa/test-image.jpg')
-        assert url == 'https://test-bucket.s3.amazonaws.com/villa/test-image.jpg'
+        url = processor._build_url('static/villa/test-image.jpg')
+        assert url == 'https://test-bucket.s3.amazonaws.com/static/villa/test-image.jpg'
 
     def test_parse_size_valid(self):
         """Test parsing valid size string"""

@@ -4,7 +4,7 @@ resource "aws_lambda_function" "image_processor" {
   source_code_hash = filebase64sha256(var.lambda_zip_path)
   function_name    = "${local.app_name_lower}-image-processor-${var.environment}"
   role             = aws_iam_role.lambda_role.arn
-  handler          = "index.lambda_handler"
+  handler          = "lambda_function.lambda_handler"
   runtime          = "python3.13"
   timeout          = var.lambda_timeout
   memory_size      = var.lambda_memory
@@ -13,7 +13,8 @@ resource "aws_lambda_function" "image_processor" {
   environment {
     variables = {
       S3_BUCKET      = data.aws_s3_bucket.image_bucket.arn
-      S3_PREFIX      = var.s3_prefix
+      OUTPUT_PREFIX  = var.output_prefix
+      INPUT_PREFIX   = var.input_prefix
       CLOUDFRONT_URL = "https://${data.terraform_remote_state.cloudfront.outputs.cloudfront_domain_name}"
       THUMBNAIL_SIZE = var.thumbnail_size
       MEDIUM_SIZE    = var.medium_size
@@ -39,13 +40,13 @@ resource "aws_cloudwatch_log_group" "lambda" {
 }
 
 # S3 Event Notification for Lambda
-resource "aws_s3_bucket_notification" "images" {
+resource "aws_s3_bucket_notification" "bucket_notification" {
   bucket = data.aws_s3_bucket.image_bucket.id
 
   lambda_function {
     lambda_function_arn = aws_lambda_function.image_processor.arn
     events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = var.s3_prefix
+    filter_prefix       = var.input_prefix
   }
 
   depends_on = [aws_lambda_permission.allow_s3]
@@ -55,7 +56,7 @@ resource "aws_s3_bucket_notification" "images" {
 resource "aws_lambda_permission" "allow_s3" {
   statement_id  = "AllowS3BucketInvocation"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.image_processor.function_name
+  function_name = aws_lambda_function.image_processor.arn
   principal     = "s3.amazonaws.com"
   source_arn    = data.aws_s3_bucket.image_bucket.arn
 }

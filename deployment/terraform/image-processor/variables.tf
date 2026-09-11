@@ -14,10 +14,16 @@ variable "environment" {
   }
 }
 
-variable "s3_prefix" {
+variable "input_prefix" {
   description = "S3 prefix/folder for images"
   type        = string
-  default     = "villa/"
+  default     = "uploads/"
+}
+
+variable "output_prefix" {
+  description = "s3 output prefix for satic images"
+  type        = string
+  default     = "static/"
 }
 
 variable "lambda_timeout" {

@@ -22,6 +22,7 @@ class ImageProcessor:
         self.carousel_size = self._parse_size(os.environ.get('CAROUSEL_SIZE', '1200,800'))
         self.quality = int(os.environ.get('QUALITY', '85'))
         self.cloudfront_url = os.environ.get('CLOUDFRONT_URL', '')
+        self.output_prefix = os.environ.get('OUTPUT_PREFIX', 'uploads/static')
         self.supported_formats = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
 
     def process_image(self, bucket: str, key: str) -> Dict[str, Any]:
@@ -140,7 +141,6 @@ class ImageProcessor:
         """Safely convert any image mode (RGBA, LA, P, CMYK) to RGB mode for JPEG saving"""
         mode = getattr(img, 'mode', 'RGB')
 
-        # If mode is not a string or is already standard/unspecified mock mode, skip
         if not isinstance(mode, str) or mode not in ('RGBA', 'LA', 'P', 'CMYK', '1', 'L'):
             return img
 
@@ -153,9 +153,28 @@ class ImageProcessor:
         return img.convert('RGB')
 
     def _generate_key(self, original_key: str, variant: str) -> str:
-        """Generate S3 key for variant"""
-        base = os.path.splitext(original_key)[0]
-        return f"{base}_{variant}.jpg"
+        """
+        Preserves subfolder hierarchy (villa, home, hostel) while swapping input and output prefixes.
+        Example:
+        original_key: 'uploads/villa/bedroom.jpg'
+        Result: 'static/villa/bedroom_thumb.jpg'
+        """
+        input_prefix = os.environ.get('INPUT_PREFIX', 'uploads').strip('/')
+        output_prefix = os.environ.get('OUTPUT_PREFIX', 'static').strip('/')
+
+        # Strip input prefix if present
+        relative_key = original_key
+        if relative_key.startswith(f"{input_prefix}/"):
+            relative_key = relative_key[len(f"{input_prefix}/"):]
+
+        # Separate directory path and filename
+        dirname, filename = os.path.split(relative_key)
+        name_without_ext = os.path.splitext(filename)[0]
+
+        # Reconstruct path under the output prefix
+        if dirname:
+            return f"{output_prefix}/{dirname}/{name_without_ext}_{variant}.jpg"
+        return f"{output_prefix}/{name_without_ext}_{variant}.jpg"
 
     def _build_url(self, key: str) -> str:
         """Build normalized CloudFront or S3 URL"""
