@@ -13,7 +13,7 @@ components:
     artifact: "artifacts/image-processor.zip"
     tf_var_name: "lambda_zip_path"
 
-  ses:
+  travel-contact:
     type: lambda
     path: deployment/terraform/travel-contact
     source_path: deployment/terraform/travel-contact/lambda/src
