@@ -14,7 +14,7 @@ variable "singapore_region" {
 variable "environment" {
   description = "Environment (dev/staging/prod)"
   type        = string
-  default     = "prod"
+  default     = "beta"
 }
 
 # Lambda Configuration

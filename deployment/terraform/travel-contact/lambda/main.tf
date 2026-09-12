@@ -17,7 +17,7 @@ resource "aws_lambda_function" "contact_form" {
       MAX_EMAIL_SIZE_KB     = var.max_email_size_kb
       RATE_LIMIT_PER_MINUTE = var.rate_limit_per_minute
       LOG_LEVEL             = var.log_level
-      ENVIRONMENT           = local.environment
+      ENVIRONMENT           = var.environment
       APP_NAME              = local.app_name
     }
   }
@@ -46,7 +46,7 @@ resource "aws_s3_bucket_notification" "images" {
     lambda_function_arn = aws_lambda_function.image_processor.arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = var.s3_notification_prefix
-    filter_suffix       = local.environment
+    filter_suffix       = var.environment
   }
 
   depends_on = [

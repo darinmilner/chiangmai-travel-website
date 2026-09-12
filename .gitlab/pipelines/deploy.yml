@@ -5,7 +5,7 @@ deploy:
     AWS_JWT_TOKEN:
       aud: https://gitlab.com
   before_script:
-    - apt-get update && apt-get install -y wget unzip bash > /dev/null
+    - apt-get update && apt-get install -y wget unzip bash > /dev/nul
     - pip install pyyaml > /dev/null
     - |
       if ! command -v terraform &> /dev/null; then
@@ -15,4 +15,4 @@ deploy:
       fi
     - source ${SCRIPTS_DIR}/setup_aws_credentials.sh
   script:
-    - python ${SCRIPTS_DIR}/deploy.py --command ${PIPELINE_ACTION} --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG} --environment dev
+    - python ${SCRIPTS_DIR}/deploy.py --command ${PIPELINE_ACTION} --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG}

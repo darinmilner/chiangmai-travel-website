@@ -4,6 +4,11 @@ variable "bangkok_region" {
   default     = "ap-southeast-7"
 }
 
+variable "environment" {
+  description = "Deployment environment"
+  type        = string
+}
+
 variable "lambda_zip_path" {
   description = "Path to Lambda deployment zip file"
   type        = string

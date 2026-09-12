@@ -21,7 +21,7 @@ module "lambda" {
   providers = {
     aws = aws.bangkok
   }
-
+  environment     = var.environment
   bangkok_region  = var.bangkok_region
   lambda_zip_path = var.lambda_zip_path
 

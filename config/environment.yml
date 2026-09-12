@@ -80,7 +80,7 @@ regions:
 
 # Defaults
 defaults:
-  environment: dev
+  environment: beta
   aws_region: ap-southeast-7
   tags:
     CreatedBy: Terraform
