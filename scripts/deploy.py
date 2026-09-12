@@ -8,7 +8,7 @@ import argparse
 import logging
 from pathlib import Path
 from typing import Dict, Any
-
+import os 
 import yaml
 
 # Add parent directory to path for imports
@@ -94,7 +94,7 @@ class DeployOrchestrator:
             # Passes absolute path so Terraform can open the file regardless of cwd
             extra_env[f"TF_VAR_{tf_var_name}"] = str(abs_artifact_path)
             logger.info(f"🔑 Injected variable: TF_VAR_{tf_var_name}={abs_artifact_path}")
-            
+
         # Pass extra_env to TerraformWrapper
         tf = TerraformWrapper(
             environment=self.environment,
@@ -137,11 +137,12 @@ class DeployOrchestrator:
 
 
 def main():
+    default_env = os.environ.get("ENVIRONMENT") or os.environ.get("TF_VAR_environment") or "beta"
     parser = argparse.ArgumentParser(description="Deployer CLI")
     parser.add_argument("--command", choices=["deploy", "destroy", "all", "component"], required=True)
     parser.add_argument("--component", default="all", help="Component name (e.g., layer, ses, image-processor, or all)")
     parser.add_argument("--config", required=True, help="Path to components config file")
-    parser.add_argument("--environment", default="dev", help="Deployment environment")
+    parser.add_argument("--environment", default=default_env, help="Deployment environment")
 
     args = parser.parse_args()
 

@@ -16,3 +16,4 @@ deploy:
     - source ${SCRIPTS_DIR}/setup_aws_credentials.sh
   script:
     - python ${SCRIPTS_DIR}/deploy.py --command ${PIPELINE_ACTION} --component ${DEPLOY_TARGET} --config ${COMPONENTS_CONFIG}
+    
