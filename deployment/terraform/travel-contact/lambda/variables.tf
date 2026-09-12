@@ -26,11 +26,6 @@ variable "ses_source_email" {
   type        = string
 }
 
-variable "ses_destination_email" {
-  description = "SES destination email (from Singapore region)"
-  type        = string
-}
-
 variable "ses_region" {
   description = "SES region (Singapore)"
   type        = string

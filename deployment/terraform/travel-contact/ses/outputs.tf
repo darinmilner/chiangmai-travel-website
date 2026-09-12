@@ -14,3 +14,7 @@ output "ses_configuration_set_name" {
 output "ses_iam_policy_arn" {
   value = try(aws_iam_policy.ses_lambda_policy[0].arn, null)
 }
+
+output "ses_source_email" {
+  value = aws_ses_email_identity.sender
+}

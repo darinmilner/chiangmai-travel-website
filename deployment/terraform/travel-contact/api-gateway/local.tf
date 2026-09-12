@@ -1,11 +1,9 @@
 locals {
   app_name       = "ChiangMaiVilla"
-  app_name_lower = lower(local.app_name_lower)
+  app_name_lower = lower(local.app_name)
   tags = {
-    default = {
-      Environment = var.environment
-      Project     = local.app_name
-      ManagedBy   = "Terraform"
-    }
+    Environment = var.environment
+    Project     = local.app_name
+    ManagedBy   = "Terraform"
   }
 }

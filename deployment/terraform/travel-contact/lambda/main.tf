@@ -11,7 +11,6 @@ resource "aws_lambda_function" "contact_form" {
   environment {
     variables = {
       SES_SOURCE_EMAIL      = var.ses_source_email
-      SES_DESTINATION_EMAIL = var.ses_destination_email
       SES_REGION            = var.ses_region     # Singapore region
       AWS_REGION            = var.bangkok_region # Bangkok region
       MAX_EMAIL_SIZE_KB     = var.max_email_size_kb
@@ -60,7 +59,7 @@ resource "aws_lambda_permission" "allow_s3" {
 
   statement_id  = "AllowS3Invocation"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.image_processor.function_name
+  function_name = aws_lambda_function.contact_form.function_name
   principal     = "s3.amazonaws.com"
   source_arn    = data.aws_s3_bucket.static_bucket.arn
 }

@@ -25,10 +25,9 @@ module "lambda" {
   bangkok_region  = var.bangkok_region
   lambda_zip_path = var.lambda_zip_path
 
-  ses_source_email      = module.ses.ses_source_email
-  ses_destination_email = module.ses.ses_destination_email
-  ses_region            = var.singapore_region
-  ses_iam_policy_arn    = module.ses.ses_iam_policy_arn
+  ses_source_email   = var.ses_source_email
+  ses_region         = var.singapore_region
+  ses_iam_policy_arn = module.ses.ses_iam_policy_arn
 
   max_email_size_kb     = var.max_email_size_kb
   rate_limit_per_minute = var.rate_limit_per_minute
@@ -47,6 +46,4 @@ module "api_gateway" {
   lambda_function_name = module.lambda.lambda_function_name
   allowed_origins      = var.allowed_origins
   log_retention_days   = var.log_retention_days
-
-  tags = local.tags
 }
