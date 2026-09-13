@@ -1,7 +1,7 @@
 # Lambda Function
 resource "aws_lambda_function" "contact_form" {
   filename      = var.lambda_zip_path
-  function_name = "${local.app_name_lower}-contact-form"
+  function_name = "${local.app_name_lower}-contact-form-${var.environment}"
   role          = aws_iam_role.lambda_role.arn
   handler       = "handler.lambda_handler"
   runtime       = "python3.13"
@@ -35,31 +35,31 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
   retention_in_days = var.log_retention_days
 }
 
-# S3 Event Notification for Image Processor
-resource "aws_s3_bucket_notification" "images" {
-  count = var.create_s3_notification ? 1 : 0
+# # S3 Event Notification for Image Processor
+# resource "aws_s3_bucket_notification" "images" {
+#   count = var.create_s3_notification ? 1 : 0
 
-  bucket = data.aws_s3_bucket.static_bucket.bucket
+#   bucket = data.aws_s3_bucket.static_bucket.bucket
 
-  lambda_function {
-    lambda_function_arn = aws_lambda_function.image_processor.arn
-    events              = ["s3:ObjectCreated:*"]
-    filter_prefix       = var.s3_notification_prefix
-    filter_suffix       = var.environment
-  }
+#   lambda_function {
+#     lambda_function_arn = aws_lambda_function.contact_form.arn
+#     events              = ["s3:ObjectCreated:*"]
+#     filter_prefix       = var.s3_notification_prefix
+#     filter_suffix       = var.environment
+#   }
 
-  depends_on = [
-    aws_lambda_permission.allow_s3
-  ]
-}
+#   depends_on = [
+#     aws_lambda_permission.allow_s3
+#   ]
+# }
 
-# Lambda permission for S3
-resource "aws_lambda_permission" "allow_s3" {
-  count = var.create_s3_notification ? 1 : 0
+# # Lambda permission for S3
+# resource "aws_lambda_permission" "allow_s3" {
+#   count = var.create_s3_notification ? 1 : 0
 
-  statement_id  = "AllowS3Invocation"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.contact_form.function_name
-  principal     = "s3.amazonaws.com"
-  source_arn    = data.aws_s3_bucket.static_bucket.arn
-}
+#   statement_id  = "AllowS3Invocation"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.contact_form.function_name
+#   principal     = "s3.amazonaws.com"
+#   source_arn    = data.aws_s3_bucket.static_bucket.arn
+# }

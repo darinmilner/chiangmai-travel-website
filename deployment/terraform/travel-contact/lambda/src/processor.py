@@ -4,8 +4,8 @@ SES processing logic
 import os
 from typing import Dict, Any, List
 
-from python.clients.ses import SESClient
-from python.logger import get_logger
+from clients.ses import SESClient
+from logger import get_logger
 from templates import EmailTemplates
 
 
