@@ -28,7 +28,7 @@ variable "lambda_zip_path" {
 variable "ses_domain" {
   description = "Domain to verify for SES"
   type        = string
-  default = "yourdomain.com"
+  default     = "yourdomain.com"
 }
 
 variable "ses_source_email" {
