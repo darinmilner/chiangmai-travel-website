@@ -28,18 +28,22 @@ variable "lambda_zip_path" {
 variable "ses_domain" {
   description = "Domain to verify for SES"
   type        = string
+  default = "yourdomain.com"
 }
 
 variable "ses_source_email" {
   description = "Email address to send from (must be verified in SES)"
   type        = string
   sensitive   = true
+  # default     = "npraprudchob@gmail.com"
+  default = "darin.milner@gmail.com"
 }
 
 variable "ses_destination_email" {
   description = "Email address to receive contact form submissions"
   type        = string
   sensitive   = true
+  default     = "darin.milner@gmail.com"
 }
 
 variable "create_route53_records" {
