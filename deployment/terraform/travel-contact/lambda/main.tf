@@ -11,8 +11,7 @@ resource "aws_lambda_function" "contact_form" {
   environment {
     variables = {
       SES_SOURCE_EMAIL      = var.ses_source_email
-      SES_REGION            = var.ses_region     # Singapore region
-      AWS_REGION            = var.bangkok_region # Bangkok region
+      SES_REGION            = var.ses_region # Singapore region
       MAX_EMAIL_SIZE_KB     = var.max_email_size_kb
       RATE_LIMIT_PER_MINUTE = var.rate_limit_per_minute
       LOG_LEVEL             = var.log_level

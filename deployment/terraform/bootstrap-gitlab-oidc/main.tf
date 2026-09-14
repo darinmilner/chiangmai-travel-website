@@ -183,7 +183,15 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "logs:ListTagsForResource",
           "logs:TagResource",
           "logs:UntagResource",
-          "logs:DescribeLogStreams"
+          "logs:DescribeLogStreams",
+          "logs:CreateLogDelivery",
+          "logs:GetLogDelivery",
+          "logs:UpdateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutResourcePolicy",
+          "logs:DescribeResourcePolicies",
+          "logs:DescribeLogGroups"
         ]
         Resource = "*"
       },
@@ -227,6 +235,37 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "iam:ListRoleTags"
         ]
         Resource = "*"
+      },
+
+      {
+        "Sid" : "SESManagementPermissions",
+        "Effect" : "Allow",
+        "Action" : [
+          "ses:VerifyDomainIdentity",
+          "ses:VerifyDomainDkim",
+          "ses:VerifyEmailIdentity",
+          "ses:DeleteIdentity",
+          "ses:GetIdentityVerificationAttributes",
+          "ses:GetIdentityDkimAttributes",
+          "ses:GetIdentityPolicies",
+          "ses:ListIdentities",
+          "ses:PutIdentityPolicy",
+          "ses:DeleteIdentityPolicy",
+          "ses:SetIdentityDkimEnabled",
+          "ses:SetIdentityFeedbackForwardingEnabled",
+          "ses:SetIdentityHeadersInNotificationsEnabled",
+          "ses:CreateConfigurationSet",
+          "ses:DeleteConfigurationSet",
+          "ses:DescribeConfigurationSet",
+          "ses:ListConfigurationSets",
+          "ses:UpdateConfigurationSetEventDestination",
+          "ses:CreateConfigurationSetEventDestination",
+          "ses:DeleteConfigurationSetEventDestination",
+          "ses:TagResource",
+          "ses:UntagResource",
+          "ses:ListTagsForResource"
+        ],
+        "Resource" : "*"
       },
 
       # ----------------------------------------------------------

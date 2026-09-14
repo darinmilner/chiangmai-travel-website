@@ -38,5 +38,5 @@ output "ses_dkim_tokens" {
 
 output "ses_iam_policy_arn" {
   description = "SES policy arn"
-  value = module.ses.ses_iam_policy_arn
+  value       = module.ses.ses_iam_policy_arn
 }

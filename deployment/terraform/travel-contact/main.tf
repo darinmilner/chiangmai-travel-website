@@ -46,4 +46,5 @@ module "api_gateway" {
   lambda_function_name = module.lambda.lambda_function_name
   allowed_origins      = var.allowed_origins
   log_retention_days   = var.log_retention_days
+  region               = var.bangkok_region
 }
