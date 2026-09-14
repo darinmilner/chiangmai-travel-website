@@ -248,16 +248,21 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "ses:GetIdentityVerificationAttributes",
           "ses:GetIdentityDkimAttributes",
           "ses:GetIdentityPolicies",
+          "ses:GetIdentityMailFromDomainAttributes",
           "ses:ListIdentities",
           "ses:PutIdentityPolicy",
           "ses:DeleteIdentityPolicy",
           "ses:SetIdentityDkimEnabled",
           "ses:SetIdentityFeedbackForwardingEnabled",
           "ses:SetIdentityHeadersInNotificationsEnabled",
+          "ses:SetIdentityMailFromDomain",
           "ses:CreateConfigurationSet",
           "ses:DeleteConfigurationSet",
           "ses:DescribeConfigurationSet",
           "ses:ListConfigurationSets",
+          "ses:PutConfigurationSetDeliveryOptions",
+          "ses:PutConfigurationSetTrackingOptions",
+          "ses:PutConfigurationSetReputationOptions",
           "ses:UpdateConfigurationSetEventDestination",
           "ses:CreateConfigurationSetEventDestination",
           "ses:DeleteConfigurationSetEventDestination",
@@ -267,7 +272,6 @@ resource "aws_iam_role_policy" "terraform_deployment" {
         ],
         "Resource" : "*"
       },
-
       # ----------------------------------------------------------
       # Route 53 (DNS Management)
       # ----------------------------------------------------------

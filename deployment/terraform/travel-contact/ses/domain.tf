@@ -13,8 +13,9 @@ resource "aws_ses_domain_dkim" "main" {
 # SES Domain Mail From
 resource "aws_ses_domain_mail_from" "main" {
   provider         = aws.singapore
-  domain           = aws_ses_domain_identity.main.domain
-  mail_from_domain = "bounce.${var.ses_domain}"
+  count            = var.ses_domain != "" ? 1 : 0
+  domain           = aws_ses_domain_identity.main[0].domain
+  mail_from_domain = "mail.${var.ses_domain}"
 }
 
 # SES Verified Domain SPF Record

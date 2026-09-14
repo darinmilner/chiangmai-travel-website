@@ -1,6 +1,7 @@
 variable "ses_domain" {
+  description = "Domain for the application"
   type        = string
-  description = "Domain name for SES identity and records"
+  default     = ""
 }
 
 variable "ses_source_email" {
