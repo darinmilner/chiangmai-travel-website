@@ -9,9 +9,9 @@ resource "aws_ses_configuration_set" "main" {
 
   reputation_metrics_enabled = true
 
-  tracking_options {
-    custom_redirect_domain = var.ses_domain
-  }
+  # tracking_options {
+  #   custom_redirect_domain = var.ses_domain
+  # }
 }
 
 # SES Event Destination (CloudWatch)
