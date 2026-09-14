@@ -1,7 +1,5 @@
 # SES IAM Policy for Lambda
 resource "aws_iam_policy" "ses_lambda_policy" {
-  count = var.create_lambda_policy ? 1 : 0
-
   name        = "${local.app_name_lower}-ses-lambda-policy"
   description = "Policy for Lambda to send emails using SES"
 

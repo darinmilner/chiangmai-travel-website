@@ -12,7 +12,7 @@ output "ses_configuration_set_name" {
 }
 
 output "ses_iam_policy_arn" {
-  value = try(aws_iam_policy.ses_lambda_policy[0].arn, null)
+  value = aws_iam_policy.ses_lambda_policy.arn
 }
 
 output "ses_source_email" {

@@ -54,9 +54,3 @@ variable "route53_zone_id" {
   default     = ""
   description = "Route53 Hosted Zone ID"
 }
-
-variable "create_lambda_policy" {
-  type        = bool
-  default     = false
-  description = "Whether to create IAM policy for Lambda to send emails"
-}

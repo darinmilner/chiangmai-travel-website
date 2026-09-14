@@ -35,3 +35,8 @@ output "ses_dkim_tokens" {
   description = "DKIM tokens for manual DNS setup"
   value       = module.ses.ses_dkim_tokens
 }
+
+output "ses_iam_policy_arn" {
+  description = "SES policy arn"
+  value = module.ses.ses_iam_policy_arn
+}
