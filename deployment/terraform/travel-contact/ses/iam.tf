@@ -1,6 +1,6 @@
 # SES IAM Policy for Lambda
 resource "aws_iam_policy" "ses_lambda_policy" {
-  name        = "${local.app_name_lower}-ses-lambda-policy"
+  name        = "${local.app_name_lower}-ses-lambda-policy-${local.bucket_short_region}"
   description = "Policy for Lambda to send emails using SES"
 
   policy = jsonencode({
