@@ -61,14 +61,14 @@ variable "log_level" {
   default     = "Debug"
 }
 
-variable "create_s3_notification" {
-  description = "Create S3 Notification"
-  type        = bool
-  default     = false
-}
+# variable "create_s3_notification" {
+#   description = "Create S3 Notification"
+#   type        = bool
+#   default     = false
+# }
 
-variable "s3_notification_prefix" {
-  description = "S3 Notification prefix"
-  type        = string
-  default     = "notifications"
-}
+# variable "s3_notification_prefix" {
+#   description = "S3 Notification prefix"
+#   type        = string
+#   default     = "notifications"
+# }

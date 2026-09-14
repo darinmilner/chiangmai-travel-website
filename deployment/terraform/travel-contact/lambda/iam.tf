@@ -42,7 +42,6 @@ resource "aws_iam_role_policy_attachment" "lambda_logs_attach" {
 
 # Attach SES policy (from SES module)
 resource "aws_iam_role_policy_attachment" "lambda_ses_attach" {
-  count      = var.ses_iam_policy_arn != "" ? 1 : 0
   role       = aws_iam_role.lambda_role.name
   policy_arn = var.ses_iam_policy_arn
 }

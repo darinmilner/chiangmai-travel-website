@@ -4,5 +4,5 @@ data "aws_lambda_layer_version" "shared" {
 }
 
 data "aws_s3_bucket" "static_bucket" {
-  bucket = "${local.app_name_lower}-static-file-${local.short_region}"
+  bucket = "${local.app_name_lower}-static-files-${local.short_region}"
 }
