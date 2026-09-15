@@ -194,7 +194,7 @@ def main():
     default_env = os.environ.get("ENVIRONMENT") or os.environ.get("TF_VAR_environment") or "beta"
     parser = argparse.ArgumentParser(description="Deployer CLI")
     parser.add_argument("--command", choices=["deploy", "destroy", "all", "component"], required=True)
-    parser.add_argument("--component", default="all", help="Component name (e.g., layer, ses, image-processor, or all)")
+    parser.add_argument("--component", default="all", help="Component name (e.g., layer, kms, ses, image-processor, or all)")
     parser.add_argument("--config", required=True, help="Path to components config file")
     parser.add_argument("--environment", default=default_env, help="Deployment environment")
 
