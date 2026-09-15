@@ -150,10 +150,10 @@ class DeployOrchestrator:
         """
         target_dir = Path(output_dir)
         target_dir.mkdir(parents=True, exist_ok=True)
-        zip_path = target_dir / "pillow_layer.zip"
+        zip_path = target_dir / "pillow-layer.zip"
 
         # Temporary build directory
-        build_root = Path(".layer_temp")
+        build_root = Path(".layer-temp")
         python_dir = build_root / "python"
 
         if build_root.exists():
@@ -206,11 +206,11 @@ def main():
     )
 
   # Only build the Pillow layer when deploying image-compression or 'all'
-    if args.component in ["image-compression", "all"]:
-        layer_zip = Path("./lambda/pillow_layer.zip")
+    if args.component in ["image-processor", "all"]:
+        layer_zip = Path("./src/pillow-layer.zip")
 
          # Build layer if zip doesn't exist or if specifically targeted
-        if not layer_zip.exists() or args.component == "image-compression":
+        if not layer_zip.exists() or args.component == "image-processor":
             print("⚙️ Target involves image compression. Building Pillow layer...")
             deployer.build_pillow_layer(output_dir="./src")
         else:

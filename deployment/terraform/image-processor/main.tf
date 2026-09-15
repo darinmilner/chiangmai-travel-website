@@ -39,10 +39,10 @@ resource "aws_lambda_function" "image_processor" {
 }
 
 resource "aws_lambda_layer_version" "pillow" {
-  filename            = "${path.module}/pillow_layer.zip"
+  filename            = "${path.module}/pillow-layer.zip"
   layer_name          = "${local.app_name_lower}-pillow-python313-${var.environment}"
   compatible_runtimes = ["python3.13"]
-  source_code_hash    = filebase64sha256("${path.module}/pillow_layer.zip")
+  source_code_hash    = filebase64sha256("${path.module}/pillow-layer.zip")
 }
 
 # CloudWatch Logs
