@@ -8,8 +8,12 @@ import argparse
 import logging
 from pathlib import Path
 from typing import Dict, Any
-import os 
+import os
 import yaml
+import shutil
+import subprocess
+import zipfile
+
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent))
@@ -135,6 +139,56 @@ class DeployOrchestrator:
         logger.info(f"✅ Component module '{component_name}' destroyed successfully")
         return True
 
+    def build_pillow_layer(
+        output_dir: str = "./src",
+        python_version: str = "3.13",
+        platform: str = "manylinux2014_x86_64"
+    ) -> Path:
+        """
+        Downloads platform-specific Pillow wheels for AWS Lambda and packages
+        them into a zipped layer structure (python/ directory at archive root).
+        """
+        target_dir = Path(output_dir)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        zip_path = target_dir / "pillow_layer.zip"
+
+        # Temporary build directory
+        build_root = Path(".layer_temp")
+        python_dir = build_root / "python"
+
+        if build_root.exists():
+            shutil.rmtree(build_root)
+        python_dir.mkdir(parents=True, exist_ok=True)
+
+        print(f"📦 Fetching Pillow binary for Python {python_version} ({platform})...")
+
+        # Target specific Linux architecture binary wheels
+        pip_cmd = [
+            "python3", "-m", "pip", "install",
+            "--platform", platform,
+            "--target", str(python_dir),
+            "--implementation", "cp",
+            "--python-version", python_version,
+            "--only-binary=:all:",
+            "--upgrade",
+            "Pillow"
+        ]
+
+        res = subprocess.run(pip_cmd, capture_output=True, text=True)
+        if res.returncode != 0:
+            raise RuntimeError(f"Pip download failed:\n{res.stderr}")
+
+        print(f"🗜️ Creating layer archive at {zip_path}...")
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for file in build_root.rglob("*"):
+                # Ensure archive paths start with 'python/...'
+                arcname = file.relative_to(build_root)
+                zf.write(file, arcname)
+
+        # Clean up temporary build files
+        shutil.rmtree(build_root)
+        print("✅ Pillow layer prepared successfully.")
+        return zip_path
 
 def main():
     default_env = os.environ.get("ENVIRONMENT") or os.environ.get("TF_VAR_environment") or "beta"
@@ -150,6 +204,19 @@ def main():
         config_path=Path(args.config),
         environment=args.environment
     )
+
+  # Only build the Pillow layer when deploying image-compression or 'all'
+    if args.component in ["image-compression", "all"]:
+        layer_zip = Path("./lambda/pillow_layer.zip")
+
+         # Build layer if zip doesn't exist or if specifically targeted
+        if not layer_zip.exists() or args.component == "image-compression":
+            print("⚙️ Target involves image compression. Building Pillow layer...")
+            deployer.build_pillow_layer(output_dir="./src")
+        else:
+             print("Pillow layer zip exists. Skipping build.")
+    else:
+         print(f"⏩ Skipping Pillow layer build for component: {args.component}")
 
     if args.command == "deploy":
         if args.component == "all":
