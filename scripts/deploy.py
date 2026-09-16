@@ -139,6 +139,7 @@ class DeployOrchestrator:
         logger.info(f"✅ Component module '{component_name}' destroyed successfully")
         return True
 
+    @staticmethod
     def build_pillow_layer(
         output_dir: str = "./src",
         python_version: str = "3.13",
