@@ -83,23 +83,27 @@ class DeployOrchestrator:
         module_dir = Path(__file__).parent.parent / comp['path']
         logger.info(f"📤 Deploying module '{component_name}' at {module_dir}")
 
+        # --- BUILD HOOK FOR IMAGE PROCESSOR ---
+        if component_name == "image-processor":
+            target_src_dir = module_dir / "src"
+            logger.info(f"⚙️ Pre-building Pillow layer at {target_src_dir}...")
+            self.build_pillow_layer(output_dir=target_src_dir)
+        # --------------------------------------
+
         extra_env = {}
         tf_var_name = comp.get('tf_var_name')
         artifact_rel_path = comp.get('artifact')
 
         if tf_var_name and artifact_rel_path:
-            # Resolves /builds/.../artifacts/villa-shared-layer.zip
             abs_artifact_path = (Path(__file__).parent.parent / artifact_rel_path).resolve()
 
             if not abs_artifact_path.exists():
                 logger.error(f"❌ Required deployment zip missing at: {abs_artifact_path}")
                 return False
 
-            # Passes absolute path so Terraform can open the file regardless of cwd
             extra_env[f"TF_VAR_{tf_var_name}"] = str(abs_artifact_path)
             logger.info(f"🔑 Injected variable: TF_VAR_{tf_var_name}={abs_artifact_path}")
 
-        # Pass extra_env to TerraformWrapper
         tf = TerraformWrapper(
             environment=self.environment,
             tf_dir=module_dir,
@@ -115,7 +119,6 @@ class DeployOrchestrator:
 
         logger.info(f"✅ Component module '{component_name}' deployed successfully")
         return True
-
 
     def destroy_component(self, component_name: str) -> bool:
         """Destroy an entire Terraform module directory for a component"""
@@ -139,9 +142,9 @@ class DeployOrchestrator:
         logger.info(f"✅ Component module '{component_name}' destroyed successfully")
         return True
 
-    @staticmethod
     def build_pillow_layer(
-        output_dir: str = "./src",
+        self,
+        output_dir: Path,
         python_version: str = "3.13",
         platform: str = "manylinux2014_x86_64"
     ) -> Path:
@@ -153,7 +156,6 @@ class DeployOrchestrator:
         target_dir.mkdir(parents=True, exist_ok=True)
         zip_path = target_dir / "pillow-layer.zip"
 
-        # Temporary build directory
         build_root = Path(".layer-temp")
         python_dir = build_root / "python"
 
@@ -161,9 +163,8 @@ class DeployOrchestrator:
             shutil.rmtree(build_root)
         python_dir.mkdir(parents=True, exist_ok=True)
 
-        print(f"📦 Fetching Pillow binary for Python {python_version} ({platform})...")
+        logger.info(f"📦 Fetching Pillow binary for Python {python_version} ({platform})...")
 
-        # Target specific Linux architecture binary wheels
         pip_cmd = [
             "python3", "-m", "pip", "install",
             "--platform", platform,
@@ -179,17 +180,16 @@ class DeployOrchestrator:
         if res.returncode != 0:
             raise RuntimeError(f"Pip download failed:\n{res.stderr}")
 
-        print(f"🗜️ Creating layer archive at {zip_path}...")
+        logger.info(f"🗜️ Creating layer archive at {zip_path}...")
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for file in build_root.rglob("*"):
-                # Ensure archive paths start with 'python/...'
                 arcname = file.relative_to(build_root)
                 zf.write(file, arcname)
 
-        # Clean up temporary build files
         shutil.rmtree(build_root)
-        print("✅ Pillow layer prepared successfully.")
+        logger.info("✅ Pillow layer prepared successfully.")
         return zip_path
+
 
 def main():
     default_env = os.environ.get("ENVIRONMENT") or os.environ.get("TF_VAR_environment") or "beta"
@@ -206,20 +206,7 @@ def main():
         environment=args.environment
     )
 
-  # Only build the Pillow layer when deploying image-compression or 'all'
-    if args.component in ["image-processor", "all"]:
-        layer_zip = Path("./src/pillow-layer.zip")
-
-         # Build layer if zip doesn't exist or if specifically targeted
-        if not layer_zip.exists() or args.component == "image-processor":
-            print("⚙️ Target involves image compression. Building Pillow layer...")
-            deployer.build_pillow_layer(output_dir="./src")
-        else:
-             print("Pillow layer zip exists. Skipping build.")
-    else:
-         print(f"⏩ Skipping Pillow layer build for component: {args.component}")
-
-    if args.command == "deploy":
+    if args.command in ["deploy", "all", "component"]:
         if args.component == "all":
             if not deployer.deploy_all():
                 sys.exit(1)
@@ -233,18 +220,6 @@ def main():
             sys.exit(1)
 
         if not deployer.destroy_component(args.component):
-            sys.exit(1)
-
-    elif args.command == "all":
-        if not deployer.deploy_all():
-            sys.exit(1)
-
-    elif args.command == "component":
-        if not args.component or args.component == "all":
-            logger.error("❌ Component name is required for --command component")
-            sys.exit(1)
-
-        if not deployer.deploy_component(args.component):
             sys.exit(1)
 
 
