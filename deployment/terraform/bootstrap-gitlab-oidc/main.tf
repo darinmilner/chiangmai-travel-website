@@ -62,16 +62,20 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "lambda:GetFunctionCodeSigningConfig",
           "lambda:GetPolicy",
           "lambda:GetLayerVersion",
+          "lambda:ListLayerVersions",
+          "lambda:ListLayers",
           "lambda:ListVersionsByFunction",
           "lambda:ListProvisionedConcurrencyConfigs",
           "lambda:ListTags",
 
-          # Create / Update / Delete
+          # Create / Update / Delete Functions & Layers
           "lambda:CreateFunction",
           "lambda:UpdateFunctionCode",
           "lambda:UpdateFunctionConfiguration",
           "lambda:DeleteFunction",
           "lambda:PublishVersion",
+          "lambda:PublishLayerVersion",
+          "lambda:DeleteLayerVersion",
 
           # Resource-based Policies & Triggers
           "lambda:AddPermission",
@@ -81,7 +85,7 @@ resource "aws_iam_role_policy" "terraform_deployment" {
           "lambda:TagResource",
           "lambda:UntagResource",
 
-          # Event Source Mappings (S3/DynamoDB/SQS triggers if needed)
+          # Event Source Mappings (S3/DynamoDB/SQS triggers)
           "lambda:ListEventSourceMappings",
           "lambda:CreateEventSourceMapping",
           "lambda:DeleteEventSourceMapping",

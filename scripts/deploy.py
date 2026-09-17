@@ -85,9 +85,8 @@ class DeployOrchestrator:
 
         # --- BUILD HOOK FOR IMAGE PROCESSOR ---
         if component_name == "image-processor":
-            target_src_dir = module_dir / "src"
-            logger.info(f"⚙️ Pre-building Pillow layer at {target_src_dir}...")
-            self.build_pillow_layer(output_dir=target_src_dir)
+            logger.info(f"⚙️ Pre-building Pillow layer at {module_dir}...")
+            self.build_pillow_layer(output_dir=module_dir)
         # --------------------------------------
 
         extra_env = {}
