@@ -2,8 +2,8 @@
 Tests for SES client
 """
 import importlib
-from python.clients import ses
-from python.clients.ses import SESClient
+from clients import ses
+from clients.ses import SESClient
 
 
 class TestSESClient:

@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 
 import importlib
 import pytest
-from python.clients.s3 import S3Client
-from python.clients import s3
+from clients.s3 import S3Client
+from clients import s3
 
 
 class TestS3Client:

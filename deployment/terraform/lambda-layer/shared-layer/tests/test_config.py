@@ -2,8 +2,8 @@
 Tests for configuration module
 """
 import importlib
-from python import config
-from python.config import load_config
+import config
+from config import load_config
 
 
 class TestConfig:

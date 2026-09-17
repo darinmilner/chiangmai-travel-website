@@ -4,9 +4,9 @@ Tests for logger module
 import importlib
 import json
 import logging
-from python.logger import get_logger
-from python.logger import JSONFormatter
-from python import logger
+from logger import get_logger
+from logger import JSONFormatter
+import logger
 
 
 class TestLogger:

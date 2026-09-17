@@ -7,8 +7,8 @@ from typing import Dict, Any, List, Optional
 
 import boto3
 
-from python.config import config
-from python.logger import get_logger
+from config import config
+from logger import get_logger
 
 logger = get_logger(__name__)
 
