@@ -8,10 +8,11 @@ import sys
 import subprocess
 import argparse
 import logging
+import yaml
 from pathlib import Path
 from typing import Dict, Any
 
-import yaml
+
 
 logging.basicConfig(
     level=logging.INFO,
