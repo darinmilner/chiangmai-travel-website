@@ -117,6 +117,11 @@ class TestOrchestrator:
 
             extra_paths.append(str(path.resolve()))
 
+            # Place fake_layer BEFORE shared_layer_paths
+            fake_layer_path = test_dir / "fake_layer"
+            if fake_layer_path.is_dir():
+                extra_paths.append(str(fake_layer_path.resolve()))
+                
             # Inject shared layer paths into PYTHONPATH for shared imports
             extra_paths.extend(self.shared_layer_paths)
 

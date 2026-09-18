@@ -1,5 +1,5 @@
 """
-Test configuration with fake layer
+Test configuration with fake layer for Image Processor Lambda
 """
 import os
 import sys
@@ -10,20 +10,36 @@ import pytest
 # Get the absolute path to the tests directory
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # src directory
+FAKE_LAYER_DIR = os.path.join(TESTS_DIR, "fake_layer")
 
-# Add paths BEFORE any imports
-sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
+# CRITICAL: Insert fake_layer at position 0 to override real shared-layer imports
+if FAKE_LAYER_DIR not in sys.path:
+    sys.path.insert(0, FAKE_LAYER_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(1, PROJECT_ROOT)
 
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
     """Mock environment variables for tests"""
-    with patch.dict(os.environ, {
-        'AWS_REGION': 'ap-southeast-7',
+    env_vars = {
+        # AWS Dummy Credentials for Boto3
+        'AWS_ACCESS_KEY_ID': 'testing',
+        'AWS_SECRET_ACCESS_KEY': 'testing',
+        'AWS_SECURITY_TOKEN': 'testing',
+        'AWS_SESSION_TOKEN': 'testing',
+        'AWS_DEFAULT_REGION': 'ap-southeast-1',
+        'AWS_REGION': 'ap-southeast-1',
         'AWS_ACCOUNT_ID': '123456789012',
+
+        # S3 Bucket env variables (covering all possible key names used in code)
         'S3_BUCKET': 'test-bucket',
+        'BUCKET_NAME': 'test-bucket',
+        'SOURCE_BUCKET_NAME': 'test-bucket',
+        'PROCESSED_BUCKET_NAME': 'test-bucket',
         'S3_PREFIX': 'villa/',
+
+        # Image Processor settings
         'CLOUDFRONT_URL': 'https://test.cloudfront.net',
         'THUMBNAIL_SIZE': '300,200',
         'MEDIUM_SIZE': '800,600',
@@ -31,8 +47,10 @@ def mock_env_vars():
         'QUALITY': '85',
         'LOG_LEVEL': 'DEBUG',
         'ENVIRONMENT': 'test',
-        'MAX_IMAGE_SIZE_MB': '10'
-    }):
+        'MAX_IMAGE_SIZE_MB': '10',
+    }
+
+    with patch.dict(os.environ, env_vars, clear=False):
         yield
 
 

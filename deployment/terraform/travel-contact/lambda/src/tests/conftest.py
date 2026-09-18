@@ -11,24 +11,38 @@ import pytest
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # lambda directory
 SRC_PATH = os.path.join(PROJECT_ROOT, "src")
+FAKE_LAYER_DIR = os.path.join(TESTS_DIR, "fake_layer")
 
-# Add paths BEFORE any imports
-sys.path.insert(0, PROJECT_ROOT)
-sys.path.insert(0, SRC_PATH)
-sys.path.insert(0, os.path.join(TESTS_DIR, "fake_layer"))
+# CRITICAL: Insert fake_layer at position 0 to override real shared-layer imports
+if FAKE_LAYER_DIR not in sys.path:
+    sys.path.insert(0, FAKE_LAYER_DIR)
+if SRC_PATH not in sys.path:
+    sys.path.insert(1, SRC_PATH)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(2, PROJECT_ROOT)
 
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
     """Mock environment variables for tests"""
-    with patch.dict(os.environ, {
+    env_vars = {
+        # AWS Dummy Credentials for Boto3
+        'AWS_ACCESS_KEY_ID': 'testing',
+        'AWS_SECRET_ACCESS_KEY': 'testing',
+        'AWS_SECURITY_TOKEN': 'testing',
+        'AWS_SESSION_TOKEN': 'testing',
+        'AWS_DEFAULT_REGION': 'ap-southeast-1',
         'AWS_REGION': 'ap-southeast-1',
         'AWS_ACCOUNT_ID': '123456789012',
+
+        # SES settings
         'SES_REGION': 'ap-southeast-1',
         'SES_FROM_EMAIL': 'test@example.com',
         'LOG_LEVEL': 'DEBUG',
         'ENVIRONMENT': 'test'
-    }):
+    }
+
+    with patch.dict(os.environ, env_vars, clear=False):
         yield
 
 
