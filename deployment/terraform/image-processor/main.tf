@@ -17,7 +17,7 @@ resource "aws_lambda_function" "image_processor" {
 
   environment {
     variables = {
-      S3_BUCKET      = data.aws_s3_bucket.image_bucket.arn
+      S3_BUCKET      = data.aws_s3_bucket.image_bucket.bucket 
       OUTPUT_PREFIX  = var.output_prefix
       INPUT_PREFIX   = var.input_prefix
       CLOUDFRONT_URL = "https://${data.terraform_remote_state.cloudfront.outputs.cloudfront_domain_name}"
