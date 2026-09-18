@@ -23,13 +23,37 @@ logger = logging.getLogger(__name__)
 class TestOrchestrator:
     def __init__(self, config_path: Path, artifacts_dir: Path):
         self.config_path = config_path.resolve()
-        # Anchor relative component paths to the directory containing the config file
-        self.repo_root = self.config_path.parent
+        self.repo_root = self._find_repo_root(self.config_path)
         self.artifacts_dir = artifacts_dir.resolve()
         self.config = self._load_config()
         self.components = self.config.get('components', {})
         self.reports_dir = self.artifacts_dir / "test-reports"
         self.reports_dir.mkdir(parents=True, exist_ok=True)
+        # Locate shared-layer python directories across the repo
+        self.shared_layer_paths = self._find_shared_layer_paths()
+
+    def _find_repo_root(self, start_path: Path) -> Path:
+        """Find repo root by searching upward for .git or fallback to config parent"""
+        curr = start_path.parent
+        while curr != curr.parent:
+            if (curr / ".git").exists():
+                return curr
+            curr = curr.parent
+        return start_path.parent
+
+    def _find_shared_layer_paths(self) -> List[str]:
+        """Locate all shared-layer 'python' directories for PYTHONPATH"""
+        layer_paths = []
+        for p in self.repo_root.rglob("python"):
+            if p.is_dir() and "shared-layer" in str(p):
+                layer_paths.append(str(p.resolve()))
+        if not layer_paths:
+            for p in self.repo_root.rglob("lambda-layer"):
+                py_dir = p / "shared-layer" / "python"
+                if py_dir.is_dir():
+                    layer_paths.append(str(py_dir.resolve()))
+        logger.info(f"📍 Discovered Shared Layer paths for PYTHONPATH: {layer_paths}")
+        return layer_paths
 
     def _load_config(self) -> Dict[str, Any]:
         if not self.config_path.exists():
@@ -47,23 +71,18 @@ class TestOrchestrator:
     def _test_component(self, name: str, comp: Dict[str, Any]) -> bool:
         comp_type = comp.get('type', '')
 
-        # Skip pure infrastructure components
         if comp_type == 'infra':
             logger.info(f"⏭️ Skipping {name} (infrastructure-only component)")
             return True
 
         raw_path = Path(comp.get('path', ''))
-
-        # Resolve path by checking candidate locations to avoid path-doubling
         candidates = [
-            raw_path,                                   # Direct path relative to CWD
-            Path.cwd() / raw_path,                      # Explicit CWD join
-            self.repo_root / raw_path,                  # Relative to config file
-            self.repo_root.parent / raw_path,           # One level above config
-            self.repo_root.parent.parent / raw_path     # Repo root if config is deeply nested
+            raw_path,
+            Path.cwd() / raw_path,
+            self.repo_root / raw_path,
+            self.config_path.parent / raw_path,
         ]
-
-        path = next((c.resolve() for c in candidates if c.exists()), raw_path.resolve())
+        path = next((c.resolve() for c in candidates if c.exists()), (self.repo_root / raw_path).resolve())
 
         test_dirs = self._find_test_dirs(path)
 
@@ -71,7 +90,7 @@ class TestOrchestrator:
             logger.info(f"⏭️ No 'tests/' directory found for {name} under ({path}), skipping...")
             return True
 
-        # Install component requirements if present anywhere in module
+        # Install component requirements if present
         for req_file in set(path.rglob("requirements.txt")):
             logger.info(f"📦 Installing dependencies for {name} from {req_file}...")
             subprocess.run(
@@ -87,23 +106,21 @@ class TestOrchestrator:
             sub_name = test_dir.parent.name if test_dir.parent != path else name
             xml_report = self.reports_dir / f"junit-{name}-{sub_name}.xml"
 
-            # Build PYTHONPATH entries dynamically based on directory layout
             parent = test_dir.parent
-            extra_paths = []
+            extra_paths = [str(parent.resolve())]
 
-            # 1. If sibling 'python' directory exists (e.g., shared-layer/python)
             if (parent / "python").is_dir():
                 extra_paths.append(str((parent / "python").resolve()))
 
-            # 2. If sibling 'src' directory exists (e.g., image-processor/src)
             if (parent / "src").is_dir():
                 extra_paths.append(str((parent / "src").resolve()))
 
-            # 3. Include parent and component root path
-            extra_paths.append(str(parent.resolve()))
             extra_paths.append(str(path.resolve()))
 
-            # Deduplicate paths preserving insertion order
+            # Inject shared layer paths into PYTHONPATH for shared imports
+            extra_paths.extend(self.shared_layer_paths)
+
+            # Deduplicate preserving order
             seen = set()
             unique_paths = [p for p in extra_paths if not (p in seen or seen.add(p))]
 
@@ -118,8 +135,8 @@ class TestOrchestrator:
             ]
 
             result = subprocess.run(cmd, env=env, capture_output=False)
-            if result.returncode not in (0, 5):  # 0 = passed, 5 = no tests collected
-                logger.error(f"❌ Tests failed for {name} in {test_dir}")
+            if result.returncode != 0:
+                logger.error(f"❌ Tests failed for {name} in {test_dir} (exit code: {result.returncode})")
                 component_success = False
 
         return component_success
@@ -143,7 +160,13 @@ def main():
         artifacts_dir=Path(args.artifacts)
     )
 
-    sys.exit(0 if orchestrator.test_all() else 1)
+    all_passed = orchestrator.test_all()
+    if not all_passed:
+        logger.error("❌ One or more component test suites failed!")
+        sys.exit(1)
+    else:
+        logger.info("✅ All test suites passed!")
+        sys.exit(0)
 
 
 if __name__ == "__main__":

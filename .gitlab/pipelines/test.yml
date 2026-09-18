@@ -3,6 +3,7 @@ include:
 
 test:all:
   stage: test
+  allow_failure: false
   extends: .python-base
   before_script:
     - pip install pyyaml pytest pytest-cov pytest-mock

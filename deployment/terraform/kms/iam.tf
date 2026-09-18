@@ -8,7 +8,6 @@ resource "aws_kms_key_policy" "s3_kms_policy" {
     Version = "2012-10-17"
     Id      = "kms-key-policy"
     Statement = [
-      # 1. Enable IAM User & Role Permissions Delegation (CRITICAL)
       {
         Sid    = "Enable IAM User Permissions"
         Effect = "Allow"
@@ -18,7 +17,6 @@ resource "aws_kms_key_policy" "s3_kms_policy" {
         Action   = "kms:*"
         Resource = "*"
       },
-      # 2. Allow S3 Service to encrypt/decrypt objects
       {
         Sid    = "Allow S3 Service Use of the Key"
         Effect = "Allow"
