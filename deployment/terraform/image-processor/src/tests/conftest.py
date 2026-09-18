@@ -18,6 +18,10 @@ if FAKE_LAYER_DIR not in sys.path:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(1, PROJECT_ROOT)
 
+@pytest.fixture
+def mock_s3_client(mocker):
+    return mocker.patch("clients.s3.s3_client")
+
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
@@ -28,8 +32,8 @@ def mock_env_vars():
         'AWS_SECRET_ACCESS_KEY': 'testing',
         'AWS_SECURITY_TOKEN': 'testing',
         'AWS_SESSION_TOKEN': 'testing',
-        'AWS_DEFAULT_REGION': 'ap-southeast-1',
-        'AWS_REGION': 'ap-southeast-1',
+        'AWS_DEFAULT_REGION': 'ap-southeast-7',
+        'AWS_REGION': 'ap-southeast-7',
         'AWS_ACCOUNT_ID': '123456789012',
 
         # S3 Bucket env variables (covering all possible key names used in code)

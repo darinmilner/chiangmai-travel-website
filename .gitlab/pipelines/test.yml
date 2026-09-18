@@ -6,7 +6,7 @@ test:all:
   allow_failure: false
   extends: .python-base
   before_script:
-    - pip install pyyaml pytest pytest-cov pytest-mock
+    - pip install pyyaml pytest pytest-cov pytest-mock pytest-env
   script:
     - python ${SCRIPTS_DIR}/test.py --config ${COMPONENTS_CONFIG} --artifacts ${ARTIFACTS_DIR}
   artifacts:

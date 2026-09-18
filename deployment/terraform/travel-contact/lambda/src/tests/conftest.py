@@ -3,7 +3,7 @@ Test configuration with fake layer for SES processor
 """
 import os
 import sys
-from unittest.mock import patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -21,6 +21,12 @@ if SRC_PATH not in sys.path:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(2, PROJECT_ROOT)
 
+@pytest.fixture(autouse=True)
+def mock_ses_client(mocker):
+    mock_client = MagicMock()
+    mock_client.send_raw_email.return_value = {"MessageId": "test-message-id"}
+    mocker.patch("clients.ses.boto3.client", return_value=mock_client)
+    return mock_client
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
