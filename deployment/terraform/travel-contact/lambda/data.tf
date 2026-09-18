@@ -1,6 +1,6 @@
 data "aws_lambda_layer_version" "shared" {
   layer_name = "${var.layer_name}-${var.environment}-${local.short_region}"
-  version    = 2  # Increment to the new version
+  version    = 2 # Increment to the new version
 }
 
 data "aws_s3_bucket" "static_bucket" {

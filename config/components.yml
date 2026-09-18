@@ -1,6 +1,6 @@
 components:
   layer:
-    type: layer
+    type: lambda
     path: deployment/terraform/lambda-layer
     source_path: deployment/terraform/lambda-layer/shared-layer
     artifact: "artifacts/villa-shared-layer.zip"

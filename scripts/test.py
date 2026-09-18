@@ -52,9 +52,18 @@ class TestOrchestrator:
             logger.info(f"⏭️ Skipping {name} (infrastructure-only component)")
             return True
 
-        # Resolve relative to config location
-        raw_path = comp.get('path', '')
-        path = (self.repo_root / raw_path).resolve()
+        raw_path = Path(comp.get('path', ''))
+
+        # Resolve path by checking candidate locations to avoid path-doubling
+        candidates = [
+            raw_path,                                   # Direct path relative to CWD
+            Path.cwd() / raw_path,                      # Explicit CWD join
+            self.repo_root / raw_path,                  # Relative to config file
+            self.repo_root.parent / raw_path,           # One level above config
+            self.repo_root.parent.parent / raw_path     # Repo root if config is deeply nested
+        ]
+
+        path = next((c.resolve() for c in candidates if c.exists()), raw_path.resolve())
 
         test_dirs = self._find_test_dirs(path)
 
