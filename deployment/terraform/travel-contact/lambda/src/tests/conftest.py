@@ -4,7 +4,6 @@ Test configuration with fake layer for SES processor
 import os
 import sys
 from unittest.mock import MagicMock, patch
-
 import pytest
 
 # Get the absolute path to the tests directory
@@ -53,10 +52,12 @@ def mock_env_vars():
     with patch.dict(os.environ, env_vars, clear=False):
         yield
 
+
 @pytest.fixture(autouse=True)
 def set_env_vars(monkeypatch):
     monkeypatch.setenv("BUCKET_NAME", "test-bucket")
     monkeypatch.setenv("S3_BUCKET_NAME", "test-bucket")
+
 
 @pytest.fixture
 def booking_request():

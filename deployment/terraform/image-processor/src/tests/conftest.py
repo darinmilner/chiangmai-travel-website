@@ -18,9 +18,30 @@ if FAKE_LAYER_DIR not in sys.path:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(1, PROJECT_ROOT)
 
+
+class MockS3Client:
+    def __init__(self):
+        self.should_fail = False
+        self.error_message = "S3 Error"
+
+    def set_fail_mode(self, fail: bool, message: str = "S3 Error"):
+        self.should_fail = fail
+        self.error_message = message
+
+    def download_file(self, bucket, key, destination):
+        if self.should_fail:
+            raise Exception(self.error_message)
+        return True
+
+    def upload_file(self, file_path, bucket, key, content_type=None):
+        if self.should_fail:
+            raise Exception(self.error_message)
+        return True
+
+
 @pytest.fixture
-def mock_s3_client(mocker):
-    return mocker.patch("clients.s3.boto3.client")
+def mock_s3_client():
+    return MockS3Client()
 
 
 @pytest.fixture(autouse=True)
