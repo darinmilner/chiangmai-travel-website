@@ -20,7 +20,7 @@ if PROJECT_ROOT not in sys.path:
 
 @pytest.fixture
 def mock_s3_client(mocker):
-    return mocker.patch("clients.s3.s3_client")
+    return mocker.patch("clients.s3.boto3.client")
 
 
 @pytest.fixture(autouse=True)

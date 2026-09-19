@@ -4,6 +4,7 @@ include:
 lint:all:
   stage: lint
   extends: .python-base
+  allow_failure: false
   before_script:
     - pip install flake8 pyyaml
   script:

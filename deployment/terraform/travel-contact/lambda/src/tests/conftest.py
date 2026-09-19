@@ -3,7 +3,7 @@ Test configuration with fake layer for SES processor
 """
 import os
 import sys
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -21,12 +21,14 @@ if SRC_PATH not in sys.path:
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(2, PROJECT_ROOT)
 
+
 @pytest.fixture(autouse=True)
 def mock_ses_client(mocker):
     mock_client = MagicMock()
     mock_client.send_raw_email.return_value = {"MessageId": "test-message-id"}
     mocker.patch("clients.ses.boto3.client", return_value=mock_client)
     return mock_client
+
 
 @pytest.fixture(autouse=True)
 def mock_env_vars():
@@ -51,6 +53,10 @@ def mock_env_vars():
     with patch.dict(os.environ, env_vars, clear=False):
         yield
 
+@pytest.fixture(autouse=True)
+def set_env_vars(monkeypatch):
+    monkeypatch.setenv("BUCKET_NAME", "test-bucket")
+    monkeypatch.setenv("S3_BUCKET_NAME", "test-bucket")
 
 @pytest.fixture
 def booking_request():
