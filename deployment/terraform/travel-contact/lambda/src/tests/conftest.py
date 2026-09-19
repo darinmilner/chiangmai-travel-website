@@ -1,9 +1,9 @@
 """
 Test configuration with fake layer for SES processor
 """
+import json
 import os
 import sys
-from unittest.mock import MagicMock, patch
 import pytest
 
 # Get the absolute path to the tests directory
@@ -21,19 +21,48 @@ if PROJECT_ROOT not in sys.path:
     sys.path.insert(2, PROJECT_ROOT)
 
 
+class MockSESClient:
+    def __init__(self):
+        self.sent_emails = []
+        self.should_fail = False
+        self.error_message = "SES Error"
+
+    def set_fail_mode(self, fail: bool, message: str = "SES Error"):
+        self.should_fail = fail
+        self.error_message = message
+
+    def send_email(self, to_addresses, subject, html_body, text_body=None):
+        if self.should_fail:
+            raise Exception(self.error_message)
+
+        email_data = {
+            'to': to_addresses,
+            'subject': subject,
+            'html_body': html_body,
+            'text_body': text_body,
+            'message_id': 'test-message-id-123'
+        }
+        self.sent_emails.append(email_data)
+        return 'test-message-id-123'
+
+    def get_sent_emails(self):
+        return self.sent_emails
+
+
 @pytest.fixture(autouse=True)
 def mock_ses_client(mocker):
-    mock_client = MagicMock()
-    mock_client.send_raw_email.return_value = {"MessageId": "test-message-id"}
-    mocker.patch("clients.ses.boto3.client", return_value=mock_client)
+    """Auto-patch SESClient everywhere so SESProcessor uses the mock instance."""
+    mock_client = MockSESClient()
+    mocker.patch('processor.SESClient', return_value=mock_client, create=True)
+    mocker.patch('clients.ses.SESClient', return_value=mock_client, create=True)
+    mocker.patch('lambda_function.SESClient', return_value=mock_client, create=True)
     return mock_client
 
 
 @pytest.fixture(autouse=True)
-def mock_env_vars():
-    """Mock environment variables for tests"""
+def set_env_vars(monkeypatch):
+    """Unified environment variable setup for all tests"""
     env_vars = {
-        # AWS Dummy Credentials for Boto3
         'AWS_ACCESS_KEY_ID': 'testing',
         'AWS_SECRET_ACCESS_KEY': 'testing',
         'AWS_SECURITY_TOKEN': 'testing',
@@ -41,22 +70,15 @@ def mock_env_vars():
         'AWS_DEFAULT_REGION': 'ap-southeast-1',
         'AWS_REGION': 'ap-southeast-1',
         'AWS_ACCOUNT_ID': '123456789012',
-
-        # SES settings
         'SES_REGION': 'ap-southeast-1',
         'SES_FROM_EMAIL': 'test@example.com',
         'LOG_LEVEL': 'DEBUG',
-        'ENVIRONMENT': 'test'
+        'ENVIRONMENT': 'test',
+        'BUCKET_NAME': 'test-bucket',
+        'S3_BUCKET': 'test-bucket'
     }
-
-    with patch.dict(os.environ, env_vars, clear=False):
-        yield
-
-
-@pytest.fixture(autouse=True)
-def set_env_vars(monkeypatch):
-    monkeypatch.setenv("BUCKET_NAME", "test-bucket")
-    monkeypatch.setenv("S3_BUCKET_NAME", "test-bucket")
+    for key, value in env_vars.items():
+        monkeypatch.setenv(key, value)
 
 
 @pytest.fixture
@@ -104,12 +126,9 @@ def generic_request():
 @pytest.fixture
 def sqs_event(booking_request):
     """Sample SQS event"""
-    import json
     return {
         'Records': [
-            {
-                'body': json.dumps(booking_request)
-            }
+            {'body': json.dumps(booking_request)}
         ]
     }
 
@@ -117,7 +136,6 @@ def sqs_event(booking_request):
 @pytest.fixture
 def sqs_event_multiple(booking_request, contact_request):
     """Sample SQS event with multiple records"""
-    import json
     return {
         'Records': [
             {'body': json.dumps(booking_request)},

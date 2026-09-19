@@ -38,6 +38,20 @@ class MockS3Client:
             raise Exception(self.error_message)
         return True
 
+    def get_object_url(self, bucket, key):
+        return f"https://d1111111111111.cloudfront.net/{key}"
+
+
+@pytest.fixture(autouse=True)
+def mock_s3_client_patch(mocker):
+    """Automatically patch S3Client across all tests to prevent real AWS calls."""
+    mock_client = MockS3Client()
+    # Patch where S3Client is imported/used
+    mocker.patch('processor.S3Client', return_value=mock_client)
+    mocker.patch('clients.s3.S3Client', return_value=mock_client)
+    mocker.patch('lambda_function.S3Client', return_value=mock_client)
+    return mock_client
+
 
 @pytest.fixture
 def mock_s3_client():
@@ -59,9 +73,6 @@ def mock_env_vars():
 
         # S3 Bucket env variables (covering all possible key names used in code)
         'S3_BUCKET': 'test-bucket',
-        'BUCKET_NAME': 'test-bucket',
-        'SOURCE_BUCKET_NAME': 'test-bucket',
-        'PROCESSED_BUCKET_NAME': 'test-bucket',
         'S3_PREFIX': 'villa/',
 
         # Image Processor settings
