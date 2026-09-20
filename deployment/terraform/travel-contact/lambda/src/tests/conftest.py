@@ -4,7 +4,6 @@ Test configuration for Travel Contact Lambda
 import os
 import sys
 import pytest
-import json
 
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -82,6 +81,7 @@ def set_env_vars(monkeypatch):
     for key, val in env_vars.items():
         monkeypatch.setenv(key, val)
 
+
 @pytest.fixture
 def booking_request():
     return {
@@ -95,6 +95,7 @@ def booking_request():
         'total_amount': '$120'
     }
 
+
 @pytest.fixture
 def contact_request():
     return {
@@ -104,6 +105,7 @@ def contact_request():
         'message': 'Inquiry regarding availability.'
     }
 
+
 @pytest.fixture
 def generic_request():
     return {
@@ -111,21 +113,4 @@ def generic_request():
         'to': ['user@example.com'],
         'subject': 'Welcome to Chiang Mai',
         'html_body': '<h1>Welcome!</h1>'
-    }
-
-@pytest.fixture
-def sqs_event(booking_request):
-    return {
-        'Records': [
-            {'body': json.dumps(booking_request)}
-        ]
-    }
-
-@pytest.fixture
-def sqs_event_multiple(booking_request, contact_request):
-    return {
-        'Records': [
-            {'body': json.dumps(booking_request)},
-            {'body': json.dumps(contact_request)}
-        ]
     }

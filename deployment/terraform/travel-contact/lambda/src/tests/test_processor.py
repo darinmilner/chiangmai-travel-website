@@ -92,16 +92,15 @@ class TestSESProcessor:
         assert 'SES error' in result['error']
 
     def test_unknown_email_type(self):
-        """Test unknown email type"""
+        """Test unknown email type returns success=False"""
         processor = SESProcessor()
         request = {
             'type': 'unknown_type',
             'to': ['test@example.com'],
-            'subject': 'Test',
-            'html_body': '<h1>Test</h1>'
+            'subject': 'Test'
         }
 
         result = processor.process_email_request(request)
 
         assert result['success'] is False
-        assert "error" in result 
+        assert 'Unknown email type' in result['error']

@@ -41,12 +41,11 @@ class SESProcessor:
             elif email_type == 'generic':
                 return self._send_generic_email(request)
             else:
-                # Return structured dict rather than a plain string
                 return {
                     'success': False,
                     'error': f'Unknown email type: {email_type}'
                 }
-            
+
         except Exception as e:
             logger.error(f"Failed to process email: {str(e)}")
             return {
