@@ -3,7 +3,10 @@ Test configuration for Image Processor Lambda
 """
 import os
 import sys
+from io import BytesIO
 import pytest
+from PIL import Image
+
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(TESTS_DIR)  # src directory
@@ -16,7 +19,8 @@ if PROJECT_ROOT not in sys.path:
 
 
 class MockS3Client:
-    def __init__(self):
+    def __init__(self, bucket: str = "test-bucket"):
+        self.bucket = bucket
         self.should_fail = False
         self.error_message = "S3 Error"
 
@@ -27,6 +31,9 @@ class MockS3Client:
     def download_file(self, bucket, key, destination):
         if self.should_fail:
             raise Exception(self.error_message)
+        # Create a dummy image file at destination
+        img = Image.new("RGB", (1000, 1000), color="red")
+        img.save(destination, format="JPEG")
         return True
 
     def upload_file(self, file_path, bucket, key, content_type=None):
@@ -49,6 +56,67 @@ def mock_s3_client_patch(mocker, mock_s3_client):
     mocker.patch('processor.S3Client', return_value=mock_s3_client, create=True)
     mocker.patch('lambda_function.S3Client', return_value=mock_s3_client, create=True)
     return mock_s3_client
+
+
+@pytest.fixture
+def mock_pil_image():
+    """Fixture providing a PIL Image object in memory."""
+    img = Image.new("RGB", (1000, 1000), color="blue")
+    buf = BytesIO()
+    img.save(buf, format="JPEG")
+    buf.seek(0)
+    return Image.open(buf)
+
+
+@pytest.fixture
+def s3_event():
+    """Fixture for single S3 event."""
+    return {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "static/villa/test-image.jpg"}
+                }
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def s3_event_thumb():
+    """Fixture for S3 event pointing to an already processed thumbnail."""
+    return {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "static/villa/test-image_thumb.jpg"}
+                }
+            }
+        ]
+    }
+
+
+@pytest.fixture
+def s3_event_multiple():
+    """Fixture for multiple S3 event records."""
+    return {
+        "Records": [
+            {
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "static/villa/image1.jpg"}
+                }
+            },
+            {
+                "s3": {
+                    "bucket": {"name": "test-bucket"},
+                    "object": {"key": "static/villa/image2.jpg"}
+                }
+            }
+        ]
+    }
 
 
 @pytest.fixture(autouse=True)
