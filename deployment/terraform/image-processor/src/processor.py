@@ -153,25 +153,19 @@ class ImageProcessor:
         return img.convert('RGB')
 
     def _generate_key(self, original_key: str, variant: str) -> str:
-        """
-        Preserves subfolder hierarchy (villa, home, hostel) while swapping input and output prefixes.
-        Example:
-        original_key: 'uploads/villa/bedroom.jpg'
-        Result: 'static/villa/bedroom_thumb.jpg'
-        """
         input_prefix = os.environ.get('INPUT_PREFIX', 'uploads').strip('/')
         output_prefix = os.environ.get('OUTPUT_PREFIX', 'static').strip('/')
 
-        # Strip input prefix if present
         relative_key = original_key
+        # Strip either input_prefix or output_prefix if present at the start
         if relative_key.startswith(f"{input_prefix}/"):
             relative_key = relative_key[len(f"{input_prefix}/"):]
+        elif relative_key.startswith(f"{output_prefix}/"):
+            relative_key = relative_key[len(f"{output_prefix}/"):]
 
-        # Separate directory path and filename
         dirname, filename = os.path.split(relative_key)
         name_without_ext = os.path.splitext(filename)[0]
 
-        # Reconstruct path under the output prefix
         if dirname:
             return f"{output_prefix}/{dirname}/{name_without_ext}_{variant}.jpg"
         return f"{output_prefix}/{name_without_ext}_{variant}.jpg"

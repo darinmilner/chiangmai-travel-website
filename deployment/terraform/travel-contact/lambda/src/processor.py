@@ -14,7 +14,6 @@ logger = get_logger(__name__)
 
 class SESProcessor:
     """Handles SES email processing"""
-
     def __init__(self):
         self.ses = SESClient()
         self.templates = EmailTemplates()
@@ -32,14 +31,23 @@ class SESProcessor:
             Dict with processing results
         """
         try:
+            # Extract recipient list passed from event / payload
+            to = request.get('to', [])
+            if not to:
+                return {
+                    'success': False,
+                    'error': 'No recipients specified'
+                }
+
             email_type = request.get('type')
 
+            # Pass both `to` and `request` to match method signatures
             if email_type == 'booking_confirmation':
-                return self._send_booking_confirmation(request)
+                return self._send_booking_confirmation(to, request)
             elif email_type == 'contact_response':
-                return self._send_contact_response(request)
+                return self._send_contact_response(to, request)
             elif email_type == 'generic':
-                return self._send_generic_email(request)
+                return self._send_generic_email(to, request)
             else:
                 return {
                     'success': False,

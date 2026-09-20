@@ -2,12 +2,9 @@
 Tests for image processor using fake layer
 """
 from unittest.mock import MagicMock, patch
-
-import pytest
 from PIL import Image
-
-# Import from src - path is set in conftest.py
 from processor import ImageProcessor
+import pytest
 
 
 class TestImageProcessor:

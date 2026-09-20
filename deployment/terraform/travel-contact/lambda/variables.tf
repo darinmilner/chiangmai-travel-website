@@ -21,7 +21,7 @@ variable "layer_name" {
   default     = "chiangmai-villa-shared-layer"
 }
 
-variable "ses_source_email" {
+variable "ses_from_email" {
   description = "SES source email (from Singapore region)"
   type        = string
 }
