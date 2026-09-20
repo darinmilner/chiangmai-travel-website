@@ -33,11 +33,11 @@ class MockS3Client:
         bucket = Bucket or (args[0] if len(args) > 0 else None)
         key = Key or (args[1] if len(args) > 1 else None)
         filename = Filename or (args[2] if len(args) > 2 else None)
-        print(f"Bucket location = {bucket/key} Filename = {filename}")
+        # ✅ CORRECT
+        print(f"Bucket location = {bucket}/{key} Filename = {filename}")
 
         # Ensure destination file exists so PIL.Image.open can read it
         if filename:
-            from PIL import Image
             img = Image.new('RGB', (100, 100), color="red")
             img.save(filename)
 

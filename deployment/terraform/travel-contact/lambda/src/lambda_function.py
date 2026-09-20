@@ -2,9 +2,7 @@
 SES Processor Lambda - Handler
 """
 import json
-import os
 from typing import Dict, Any
-
 from logger import get_logger
 from processor import SESProcessor
 

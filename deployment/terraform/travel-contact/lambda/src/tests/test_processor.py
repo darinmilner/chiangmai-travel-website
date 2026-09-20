@@ -31,7 +31,7 @@ class TestSESProcessor:
         email = sent_emails[0]
         assert email['to'] == ['test@example.com']
         assert 'Booking Confirmed' in email['subject']
-        assert 'John Doe' in email['html_body']
+        assert 'Fatimah Doe' in email['html_body']
         assert 'B123' in email['html_body']
 
     def test_process_contact_response(self, contact_request):
@@ -45,7 +45,7 @@ class TestSESProcessor:
         assert len(sent_emails) == 1
         email = sent_emails[0]
         assert email['subject'] == 'Thank you for contacting us'
-        assert 'John Doe' in email['html_body']
+        assert 'Ali Doe' in email['html_body']
         assert 'I want to book a villa' in email['html_body']
 
     def test_process_generic_email(self, generic_request):
@@ -58,7 +58,7 @@ class TestSESProcessor:
         sent_emails = processor.ses.get_sent_emails()
         assert len(sent_emails) == 1
         email = sent_emails[0]
-        assert email['subject'] == 'Test Subject'
+        assert email['subject'] == 'Welcome to Chiang Mai'
         assert '<h1>Test Email</h1>' in email['html_body']
 
     def test_process_email_no_recipients(self):

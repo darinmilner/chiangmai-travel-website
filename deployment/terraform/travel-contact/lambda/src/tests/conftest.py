@@ -88,7 +88,7 @@ def booking_request():
         'type': 'booking_confirmation',
         'to': ['guest@example.com'],
         'booking_id': 'BK-1001',
-        'customer_name': 'Jane Doe',
+        'customer_name': 'Fatimah Doe',
         'tour_name': 'Chiang Mai Old City Tour',
         'tour_date': '2026-10-01',
         'guests': 2,
@@ -101,7 +101,7 @@ def contact_request():
     return {
         'type': 'contact_response',
         'to': ['user@example.com'],
-        'name': 'Jane Doe',
+        'name': 'Ali Doe',
         'message': 'Inquiry regarding availability.'
     }
 

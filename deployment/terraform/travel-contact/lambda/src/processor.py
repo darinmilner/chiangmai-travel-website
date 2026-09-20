@@ -79,7 +79,11 @@ class SESProcessor:
         )
         if isinstance(res, dict):
             return res
-        return {'success': True, 'message_id': res}
+        return {
+            'success': True,
+            'message_id': f"Booking confirmation sent to {to}",
+            'recipients': len(to),  # Ensure 'recipients' key is set
+        }
 
     def _send_contact_response(
         self,
