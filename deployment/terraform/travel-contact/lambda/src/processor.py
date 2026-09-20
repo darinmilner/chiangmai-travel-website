@@ -32,25 +32,21 @@ class SESProcessor:
             Dict with processing results
         """
         try:
-            email_type = request.get('type', 'generic')
-            to = request.get('to', [])
+            email_type = request.get('type')
 
-            if not to:
+            if email_type == 'booking_confirmation':
+                return self._send_booking_confirmation(request)
+            elif email_type == 'contact_response':
+                return self._send_contact_response(request)
+            elif email_type == 'generic':
+                return self._send_generic_email(request)
+            else:
+                # Return structured dict rather than a plain string
                 return {
                     'success': False,
-                    'error': 'No recipients specified'
+                    'error': f'Unknown email type: {email_type}'
                 }
-
-            logger.info(f"Processing {email_type} email for {len(to)} recipients")
-
-            # Handle different email types
-            if email_type == 'booking_confirmation':
-                return self._send_booking_confirmation(to, request.get('data', {}))
-            elif email_type == 'contact_response':
-                return self._send_contact_response(to, request.get('data', {}))
-            else:
-                return self._send_generic_email(to, request)
-
+            
         except Exception as e:
             logger.error(f"Failed to process email: {str(e)}")
             return {

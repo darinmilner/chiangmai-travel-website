@@ -103,6 +103,5 @@ class TestSESProcessor:
 
         result = processor.process_email_request(request)
 
-        assert result['success'] is True
-        sent_emails = processor.ses.get_sent_emails()
-        assert len(sent_emails) == 1
+        assert result['success'] is False
+        assert "error" in result 

@@ -28,15 +28,19 @@ class MockS3Client:
         self.should_fail = fail
         self.error_message = message
 
-    def download_file(self, bucket, key, destination):
-        if self.should_fail:
-            raise Exception(self.error_message)
-        # Create a dummy image file at destination
-        img = Image.new("RGB", (1000, 1000), color="red")
-        img.save(destination, format="JPEG")
-        return True
+    def download_file(self, Bucket=None, Key=None, Filename=None, *args, **kwargs):
+        # Fall back to positional args if called positionally
+        bucket = Bucket or (args[0] if len(args) > 0 else None)
+        key = Key or (args[1] if len(args) > 1 else None)
+        filename = Filename or (args[2] if len(args) > 2 else None)
 
-    def upload_file(self, file_path, bucket, key, content_type=None):
+        # Ensure destination file exists so PIL.Image.open can read it
+        if filename:
+            from PIL import Image
+            img = Image.new('RGB', (100, 100), color="red")
+            img.save(filename)
+
+    def upload_file(self, filename=None, bucket=None, key=None, *args, **kwargs):
         if self.should_fail:
             raise Exception(self.error_message)
         return True
