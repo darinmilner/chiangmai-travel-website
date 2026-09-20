@@ -29,6 +29,7 @@ variable "ses_domain" {
   description = "Domain to verify for SES"
   type        = string
   default     = "yourdomain.com"
+  # default = "https://chiangmaihalal.com"
 }
 
 variable "ses_source_email" {

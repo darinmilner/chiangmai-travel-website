@@ -2,9 +2,6 @@
 Tests for image processor lambda handler using fake layer
 """
 import json
-
-
-# Import from src - path is set in conftest.py
 from lambda_function import lambda_handler
 
 

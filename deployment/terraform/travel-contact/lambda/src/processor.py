@@ -21,7 +21,7 @@ class SESProcessor:
         self.from_email = os.environ.get('SES_FROM_EMAIL', '')
         self.environment = os.environ.get('ENVIRONMENT', 'development')
 
-    def process_email_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
+    def process_email_request(self, request: dict) -> dict:
         """
         Process an email request
 

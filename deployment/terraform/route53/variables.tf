@@ -1,6 +1,7 @@
 variable "domain_name" {
-  description = "The primary domain name (e.g., chiangmaivilla.com)"
+  description = "The primary domain name (e.g., chiangmaihalal.com)"
   type        = string
+  default = "chiangmaihalal.com"
 }
 
 variable "subdomains" {

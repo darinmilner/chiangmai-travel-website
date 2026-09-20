@@ -2,7 +2,8 @@
 Fake S3 client for testing
 """
 from io import BytesIO
-from typing import Dict, BinaryIO, List, Optional
+from typing import List
+from PIL import Image
 
 
 class S3Client:
@@ -10,32 +11,20 @@ class S3Client:
 
     def __init__(self):
         self.bucket = 'test-bucket'
-        self._files = {}
-        self._should_fail = False
-        self._fail_message = None
+        # self._files = {}
+        # self._should_fail = False
+        # self._fail_message = None
 
     def download_file(self, key: str) -> BytesIO:
-        """Mock download file"""
-        if self._should_fail:
-            raise Exception(self._fail_message or 'Download error')
+        """Simulate downloading an image file from S3 into a BytesIO buffer"""
+        buffer = BytesIO()
+        img = Image.new('RGB', (1000, 1000), color='white')
+        img.save(buffer, format='JPEG')
+        buffer.seek(0)
+        return buffer
 
-        # Return mock image data
-        return BytesIO(b'mock image data')
-
-    def upload_file(
-        self,
-        content: BinaryIO,
-        key: str,
-        content_type: str = "application/octet-stream",
-        metadata: Optional[Dict[str, str]] = None,
-        cache_control: str = "max-age=31536000"
-    ) -> str:
-        """Mock upload file"""
-        if self._should_fail:
-            raise Exception(self._fail_message or 'Upload error')
-
-        self._files[key] = content.read()
-        return key
+    def upload_file(self, key: str):
+        pass
 
     def delete_file(self, key: str) -> None:
         """Mock delete file"""
