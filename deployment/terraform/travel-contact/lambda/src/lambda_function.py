@@ -21,34 +21,25 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     - LOG_LEVEL: Logging level
     - ENVIRONMENT: Environment name
     """
-    logger.info(f"Received event: {json.dumps(event)}")
-
+    logger.info(f"Received event: {json.dumps(event) if isinstance(event, dict) else event}")
     try:
+        # Parse event if passed as string
+        if isinstance(event, str):
+            request = json.loads(event)
+        else:
+            request = event
+
         processor = SESProcessor()
-        results = []
+        result = processor.process_email_request(request)
 
-        # Handle SQS events (if from SQS)
-        if 'Records' in event:
-            for record in event['Records']:
-                body = json.loads(record.get('body', '{}'))
-                result = processor.process_email_request(body)
-                results.append(result)
-
+        if result.get('success'):
             return {
                 'statusCode': 200,
-                'body': json.dumps({
-                    'message': 'Emails processed',
-                    'environment': os.environ.get('ENVIRONMENT', 'development'),
-                    'results': results
-                })
+                'body': json.dumps(result)
             }
-
-        # Direct invocation
         else:
-            result = processor.process_email_request(event)
-
             return {
-                'statusCode': 200 if result.get('success') else 400,
+                'statusCode': 500,
                 'body': json.dumps(result)
             }
 
@@ -56,7 +47,5 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         logger.error(f"Unexpected error: {str(e)}")
         return {
             'statusCode': 500,
-            'body': json.dumps({
-                'error': str(e)
-            })
+            'body': json.dumps({'success': False, 'error': str(e)})
         }

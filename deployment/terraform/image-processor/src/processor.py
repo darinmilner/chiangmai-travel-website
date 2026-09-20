@@ -34,8 +34,8 @@ class ImageProcessor:
             if ext not in self.supported_formats:
                 raise ValueError(f"Unsupported file type: {ext}")
 
-            # Download image data
-            image_data = self.s3.download_file(key)
+            # Download image data using both bucket and key
+            image_data = self.s3.download_file(bucket, key)
             img = Image.open(image_data)
 
             # Safely transpose EXIF orientation if a valid numeric orientation tag exists
@@ -46,7 +46,7 @@ class ImageProcessor:
             except Exception as e:
                 logger.warning(f"Could not parse EXIF orientation: {str(e)}")
 
-            variants = self._generate_variants(img, key)
+            variants = self._generate_variants(img, bucket, key)
 
             return {
                 'success': True,
@@ -77,7 +77,7 @@ class ImageProcessor:
                     f"({total_pixels / 1_000_000:.1f}MP). Max allowed: {max_megapixels}MP"
                 )
 
-    def _generate_variants(self, img: Image.Image, key: str) -> List[Dict]:
+    def _generate_variants(self, img: Image.Image, bucket: str, key: str) -> List[Dict]:
         """Generate image variants"""
         variants = []
         self._validate_image(img, key)
@@ -100,6 +100,7 @@ class ImageProcessor:
 
                 self.s3.upload_file(
                     buffer,
+                    bucket,
                     variant_key,
                     content_type='image/jpeg',
                     metadata={
@@ -157,7 +158,6 @@ class ImageProcessor:
         output_prefix = os.environ.get('OUTPUT_PREFIX', 'static').strip('/')
 
         relative_key = original_key
-        # Strip either input_prefix or output_prefix if present at the start
         if relative_key.startswith(f"{input_prefix}/"):
             relative_key = relative_key[len(f"{input_prefix}/"):]
         elif relative_key.startswith(f"{output_prefix}/"):

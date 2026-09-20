@@ -71,12 +71,15 @@ class SESProcessor:
         html_body = self.templates.booking_confirmation(data)
         text_body = self.templates.booking_confirmation_text(data)
 
-        return self.ses.send_email(
+        res = self.ses.send_email(
             to=to,
             subject=subject,
             html_body=html_body,
             text_body=text_body
         )
+        if isinstance(res, dict):
+            return res
+        return {'success': True, 'message_id': res}
 
     def _send_contact_response(
         self,
@@ -88,12 +91,15 @@ class SESProcessor:
         html_body = self.templates.contact_response(data)
         text_body = self.templates.contact_response_text(data)
 
-        return self.ses.send_email(
+        res = self.ses.send_email(
             to=to,
             subject=subject,
             html_body=html_body,
             text_body=text_body
         )
+        if isinstance(res, dict):
+            return res
+        return {'success': True, 'message_id': res}
 
     def _send_generic_email(
         self,
@@ -105,9 +111,12 @@ class SESProcessor:
         html_body = request.get('html_body', '')
         text_body = request.get('text_body', '')
 
-        return self.ses.send_email(
+        res = self.ses.send_email(
             to=to,
             subject=subject,
             html_body=html_body,
             text_body=text_body
         )
+        if isinstance(res, dict):
+            return res
+        return {'success': True, 'message_id': res}
