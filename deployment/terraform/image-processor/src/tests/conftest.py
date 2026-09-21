@@ -3,7 +3,7 @@ Test configuration for Image Processor Lambda
 """
 import os
 import sys
-from io import BytesIO
+import io
 import pytest
 from PIL import Image
 
@@ -33,7 +33,6 @@ class MockS3Client:
         bucket = Bucket or (args[0] if len(args) > 0 else None)
         key = Key or (args[1] if len(args) > 1 else None)
         filename = Filename or (args[2] if len(args) > 2 else None)
-        # ✅ CORRECT
         print(f"Bucket location = {bucket}/{key} Filename = {filename}")
 
         # Ensure destination file exists so PIL.Image.open can read it
@@ -51,8 +50,18 @@ class MockS3Client:
 
 
 @pytest.fixture
-def mock_s3_client():
-    return MockS3Client()
+def mock_s3_client(mocker):
+    # Create a small valid byte stream for PIL to read
+    img_byte_arr = io.BytesIO()
+    img = Image.new('RGB', (100, 100), color='red')
+    img.save(img_byte_arr, format='JPEG')
+    img_byte_arr.seek(0)
+
+    mock_client = mocker.MagicMock()
+    mock_client.get_object.return_value = {
+        'Body': img_byte_arr
+    }
+    return mock_client
 
 
 @pytest.fixture(autouse=True)
@@ -67,7 +76,7 @@ def mock_s3_client_patch(mocker, mock_s3_client):
 def mock_pil_image():
     """Fixture providing a PIL Image object in memory."""
     img = Image.new("RGB", (1000, 1000), color="blue")
-    buf = BytesIO()
+    buf = io.BytesIO()
     img.save(buf, format="JPEG")
     buf.seek(0)
     return Image.open(buf)

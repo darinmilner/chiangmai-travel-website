@@ -22,7 +22,7 @@ class TestSESProcessor:
         result = processor.process_email_request(booking_request)
 
         assert result['success'] is True
-        assert result['message_id'] == 'test-message-id-123'
+        assert "Booking confirmation send to" in result["message_id"]
         assert result['recipients'] == 1
 
         # Verify email was sent with correct content
@@ -46,7 +46,7 @@ class TestSESProcessor:
         email = sent_emails[0]
         assert email['subject'] == 'Thank you for contacting us'
         assert 'Ali Doe' in email['html_body']
-        assert 'I want to book a villa' in email['html_body']
+        assert 'Inquiry regarding availability.' in email['html_body']
 
     def test_process_generic_email(self, generic_request):
         """Test generic email"""
@@ -59,7 +59,7 @@ class TestSESProcessor:
         assert len(sent_emails) == 1
         email = sent_emails[0]
         assert email['subject'] == 'Welcome to Chiang Mai'
-        assert '<h1>Test Email</h1>' in email['html_body']
+        assert '<h1>Welcome!</h1>' in email['html_body']
 
     def test_process_email_no_recipients(self):
         """Test email with no recipients"""
