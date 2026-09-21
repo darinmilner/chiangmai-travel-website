@@ -10,6 +10,15 @@ class EmailTemplates:
     def booking_confirmation(self, data: Dict[str, Any]) -> str:
         """Booking confirmation HTML template"""
         guest_name = data.get('guest_name') or data.get('customer_name') or data.get('name') or 'Guest'
+
+        booking_id = data.get('booking_id') or data.get('booking_ref') or data.get('reference') or 'N/A'
+        if data.get('booking_ref') and str(data.get('booking_ref')) not in str(booking_id):
+            booking_id = f"{booking_id} ({data.get('booking_ref')})"
+
+        villa_name = data.get('villa_name') or data.get('villa_id') or data.get('villa') or 'Villa'
+        if data.get('villa_id') and str(data.get('villa_id')) not in str(villa_name):
+            villa_name = f"{villa_name} ({data.get('villa_id')})"
+
         return f"""
         <!DOCTYPE html>
         <html>
@@ -33,8 +42,8 @@ class EmailTemplates:
                     <p>Your booking has been confirmed. Here are your booking details:</p>
 
                     <div class="booking-details">
-                        <p><strong>Booking ID:</strong> {data.get('booking_id', 'N/A')}</p>
-                        <p><strong>Villa:</strong> {data.get('villa_name', 'Villa')}</p>
+                        <p><strong>Booking ID:</strong> {booking_id}</p>
+                        <p><strong>Villa:</strong> {villa_name}</p>
                         <p><strong>Check-in:</strong> {data.get('check_in', 'N/A')}</p>
                         <p><strong>Check-out:</strong> {data.get('check_out', 'N/A')}</p>
                         <p><strong>Guests:</strong> {data.get('guests', 0)}</p>
@@ -45,7 +54,7 @@ class EmailTemplates:
                     <p>We look forward to welcoming you!</p>
                 </div>
                 <div class="footer">
-                    <p>&copy; 2024 Villa App. All rights reserved.</p>
+                    <p>&copy; 2026 Chiang Mai Villa All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -55,6 +64,15 @@ class EmailTemplates:
     def booking_confirmation_text(self, data: Dict[str, Any]) -> str:
         """Booking confirmation plain text template"""
         guest_name = data.get('guest_name') or data.get('customer_name') or data.get('name') or 'Guest'
+
+        booking_id = data.get('booking_id') or data.get('booking_ref') or data.get('reference') or 'N/A'
+        if data.get('booking_ref') and str(data.get('booking_ref')) not in str(booking_id):
+            booking_id = f"{booking_id} ({data.get('booking_ref')})"
+
+        villa_name = data.get('villa_name') or data.get('villa_id') or data.get('villa') or 'Villa'
+        if data.get('villa_id') and str(data.get('villa_id')) not in str(villa_name):
+            villa_name = f"{villa_name} ({data.get('villa_id')})"
+
         return f"""
         Booking Confirmed!
 
@@ -62,8 +80,8 @@ class EmailTemplates:
 
         Your booking has been confirmed.
 
-        Booking ID: {data.get('booking_id', 'N/A')}
-        Villa: {data.get('villa_name', 'Villa')}
+        Booking ID: {booking_id}
+        Villa: {villa_name}
         Check-in: {data.get('check_in', 'N/A')}
         Check-out: {data.get('check_out', 'N/A')}
         Guests: {data.get('guests', 0)}
@@ -104,7 +122,7 @@ class EmailTemplates:
                     <p>In the meantime, feel free to check out our website for more information.</p>
                 </div>
                 <div class="footer">
-                    <p>&copy; 2024 Villa App. All rights reserved.</p>
+                    <p>&copy; 2026 Chiang Mai Villa All rights reserved.</p>
                 </div>
             </div>
         </body>
