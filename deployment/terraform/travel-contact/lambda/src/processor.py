@@ -41,7 +41,6 @@ class SESProcessor:
 
             email_type = request.get('type')
 
-            # Pass both `to` and `request` to match method signatures
             if email_type == 'booking_confirmation':
                 return self._send_booking_confirmation(to, request)
             elif email_type == 'contact_response':
@@ -61,29 +60,25 @@ class SESProcessor:
                 'error': str(e)
             }
 
-    def _send_booking_confirmation(
-        self,
-        to: List[str],
-        data: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        """Send booking confirmation email"""
-        subject = f"Booking Confirmed - Villa #{data.get('booking_id', '')}"
-        html_body = self.templates.booking_confirmation(data)
-        text_body = self.templates.booking_confirmation_text(data)
+    def _send_booking_confirmation(self, to: list, request: dict) -> dict:
+        subject = request.get('subject', 'Booking Confirmed!')
+        html_body = self.templates.booking_confirmation(request)
+        text_body = self.templates.booking_confirmation_text(request)
 
-        res = self.ses.send_email(
+        # Assuming self.ses.send_email handles dispatching
+        self.ses.send_email(
             to=to,
             subject=subject,
             html_body=html_body,
             text_body=text_body
         )
-        if isinstance(res, dict):
-            return res
+
         return {
             'success': True,
             'message_id': f"Booking confirmation sent to {to}",
-            'recipients': len(to),  # Ensure 'recipients' key is set
+            'recipients': len(to) if isinstance(to, list) else 1
         }
+    
 
     def _send_contact_response(
         self,
