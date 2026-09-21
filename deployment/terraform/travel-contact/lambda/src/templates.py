@@ -9,15 +9,19 @@ class EmailTemplates:
 
     def booking_confirmation(self, data: Dict[str, Any]) -> str:
         """Booking confirmation HTML template"""
-        guest_name = data.get('guest_name') or data.get('customer_name') or data.get('name') or 'Guest'
+        guest_name = (
+            data.get('guest_name')
+            or data.get('customer_name')
+            or data.get('name')
+            or 'Guest'
+        )
 
-        booking_id = data.get('booking_id') or data.get('booking_ref') or data.get('reference') or 'N/A'
-        if data.get('booking_ref') and str(data.get('booking_ref')) not in str(booking_id):
-            booking_id = f"{booking_id} ({data.get('booking_ref')})"
-
-        villa_name = data.get('villa_name') or data.get('villa_id') or data.get('villa') or 'Villa'
-        if data.get('villa_id') and str(data.get('villa_id')) not in str(villa_name):
-            villa_name = f"{villa_name} ({data.get('villa_id')})"
+        skip_keys = {'type', 'to', 'subject'}
+        details_html = ""
+        for key, value in data.items():
+            if key not in skip_keys:
+                label = key.replace('_', ' ').title()
+                details_html += f"                        <p><strong>{label}:</strong> {value}</p>\n"
 
         return f"""
         <!DOCTYPE html>
@@ -42,19 +46,13 @@ class EmailTemplates:
                     <p>Your booking has been confirmed. Here are your booking details:</p>
 
                     <div class="booking-details">
-                        <p><strong>Booking ID:</strong> {booking_id}</p>
-                        <p><strong>Villa:</strong> {villa_name}</p>
-                        <p><strong>Check-in:</strong> {data.get('check_in', 'N/A')}</p>
-                        <p><strong>Check-out:</strong> {data.get('check_out', 'N/A')}</p>
-                        <p><strong>Guests:</strong> {data.get('guests', 0)}</p>
-                        <p><strong>Total Price:</strong> ${data.get('total_price', 0)}</p>
-                    </div>
+{details_html}                    </div>
 
                     <p>If you have any questions, please don't hesitate to contact us.</p>
                     <p>We look forward to welcoming you!</p>
                 </div>
                 <div class="footer">
-                    <p>&copy; 2026 Chiang Mai Villa All rights reserved.</p>
+                    <p>&copy; 2026 Chiang Mai Villa. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -63,15 +61,19 @@ class EmailTemplates:
 
     def booking_confirmation_text(self, data: Dict[str, Any]) -> str:
         """Booking confirmation plain text template"""
-        guest_name = data.get('guest_name') or data.get('customer_name') or data.get('name') or 'Guest'
+        guest_name = (
+            data.get('guest_name')
+            or data.get('customer_name')
+            or data.get('name')
+            or 'Guest'
+        )
 
-        booking_id = data.get('booking_id') or data.get('booking_ref') or data.get('reference') or 'N/A'
-        if data.get('booking_ref') and str(data.get('booking_ref')) not in str(booking_id):
-            booking_id = f"{booking_id} ({data.get('booking_ref')})"
-
-        villa_name = data.get('villa_name') or data.get('villa_id') or data.get('villa') or 'Villa'
-        if data.get('villa_id') and str(data.get('villa_id')) not in str(villa_name):
-            villa_name = f"{villa_name} ({data.get('villa_id')})"
+        skip_keys = {'type', 'to', 'subject'}
+        details_text = ""
+        for key, value in data.items():
+            if key not in skip_keys:
+                label = key.replace('_', ' ').title()
+                details_text += f"        {label}: {value}\n"
 
         return f"""
         Booking Confirmed!
@@ -80,18 +82,18 @@ class EmailTemplates:
 
         Your booking has been confirmed.
 
-        Booking ID: {booking_id}
-        Villa: {villa_name}
-        Check-in: {data.get('check_in', 'N/A')}
-        Check-out: {data.get('check_out', 'N/A')}
-        Guests: {data.get('guests', 0)}
-        Total Price: ${data.get('total_price', 0)}
-
+{details_text}
         We look forward to welcoming you!
         """
 
     def contact_response(self, data: Dict[str, Any]) -> str:
         """Contact response HTML template"""
+        name = (
+            data.get('name')
+            or data.get('customer_name')
+            or data.get('guest_name')
+            or 'Guest'
+        )
         return f"""
         <!DOCTYPE html>
         <html>
@@ -111,7 +113,7 @@ class EmailTemplates:
                     <h1>Thank You for Contacting Us</h1>
                 </div>
                 <div class="content">
-                    <p>Dear {data.get('name', 'Guest')},</p>
+                    <p>Dear {name},</p>
                     <p>Thank you for reaching out to us. We have received your message:</p>
 
                     <div class="message">
@@ -122,7 +124,7 @@ class EmailTemplates:
                     <p>In the meantime, feel free to check out our website for more information.</p>
                 </div>
                 <div class="footer">
-                    <p>&copy; 2026 Chiang Mai Villa All rights reserved.</p>
+                    <p>&copy; 2026 Chiang Mai Villa. All rights reserved.</p>
                 </div>
             </div>
         </body>
@@ -131,10 +133,16 @@ class EmailTemplates:
 
     def contact_response_text(self, data: Dict[str, Any]) -> str:
         """Contact response plain text template"""
+        name = (
+            data.get('name')
+            or data.get('customer_name')
+            or data.get('guest_name')
+            or 'Guest'
+        )
         return f"""
         Thank You for Contacting Us!
 
-        Dear {data.get('name', 'Guest')},
+        Dear {name},
 
         We have received your message:
 

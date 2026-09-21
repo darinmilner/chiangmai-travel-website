@@ -33,7 +33,7 @@ class MockS3Client:
         # Check fail mode first
         if self.should_fail:
             raise Exception(self.error_message)
-        
+
         bucket = Bucket or (args[0] if len(args) > 0 else None)
         key = Key or (args[1] if len(args) > 1 else None)
         filename = Filename or (args[2] if len(args) > 2 else None)
