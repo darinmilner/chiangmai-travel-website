@@ -4,6 +4,7 @@ Test configuration for Image Processor Lambda
 import os
 import sys
 import io
+import tempfile
 import pytest
 from PIL import Image
 
@@ -33,35 +34,37 @@ class MockS3Client:
         bucket = Bucket or (args[0] if len(args) > 0 else None)
         key = Key or (args[1] if len(args) > 1 else None)
         filename = Filename or (args[2] if len(args) > 2 else None)
-        print(f"Bucket location = {bucket}/{key} Filename = {filename}")
+
+        # If no target filename was passed, create a temporary file path
+        if not filename:
+            tf = tempfile.NamedTemporaryFile(delete=False, suffix=".jpg")
+            filename = tf.name
+            tf.close()
 
         # Ensure destination file exists so PIL.Image.open can read it
-        if filename:
-            img = Image.new('RGB', (100, 100), color="red")
-            img.save(filename)
+        img = Image.new('RGB', (100, 100), color="red")
+        img.save(filename, format="JPEG")
+        return filename
 
     def upload_file(self, filename=None, bucket=None, key=None, *args, **kwargs):
         if self.should_fail:
             raise Exception(self.error_message)
         return True
 
+    def get_object(self, *args, **kwargs):
+        img_byte_arr = io.BytesIO()
+        img = Image.new('RGB', (100, 100), color='red')
+        img.save(img_byte_arr, format='JPEG')
+        img_byte_arr.seek(0)
+        return {'Body': img_byte_arr}
+
     def get_object_url(self, bucket, key):
         return f"https://d1111111111111.cloudfront.net/{key}"
 
 
 @pytest.fixture
-def mock_s3_client(mocker):
-    # Create a small valid byte stream for PIL to read
-    img_byte_arr = io.BytesIO()
-    img = Image.new('RGB', (100, 100), color='red')
-    img.save(img_byte_arr, format='JPEG')
-    img_byte_arr.seek(0)
-
-    mock_client = mocker.MagicMock()
-    mock_client.get_object.return_value = {
-        'Body': img_byte_arr
-    }
-    return mock_client
+def mock_s3_client():
+    return MockS3Client()
 
 
 @pytest.fixture(autouse=True)
