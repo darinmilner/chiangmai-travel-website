@@ -9,6 +9,7 @@ class EmailTemplates:
 
     def booking_confirmation(self, data: Dict[str, Any]) -> str:
         """Booking confirmation HTML template"""
+        guest_name = data.get('guest_name') or data.get('customer_name') or data.get('name') or 'Guest'
         return f"""
         <!DOCTYPE html>
         <html>
@@ -28,7 +29,7 @@ class EmailTemplates:
                     <h1>Booking Confirmed! 🎉</h1>
                 </div>
                 <div class="content">
-                    <p>Dear {data.get('guest_name', 'Guest')},</p>
+                    <p>Dear {guest_name},</p>
                     <p>Your booking has been confirmed. Here are your booking details:</p>
 
                     <div class="booking-details">
@@ -53,10 +54,11 @@ class EmailTemplates:
 
     def booking_confirmation_text(self, data: Dict[str, Any]) -> str:
         """Booking confirmation plain text template"""
+        guest_name = data.get('guest_name') or data.get('customer_name') or data.get('name') or 'Guest'
         return f"""
         Booking Confirmed!
 
-        Dear {data.get('guest_name', 'Guest')},
+        Dear {guest_name},
 
         Your booking has been confirmed.
 
