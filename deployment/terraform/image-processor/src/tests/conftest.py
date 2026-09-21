@@ -30,10 +30,14 @@ class MockS3Client:
         self.error_message = message
 
     def download_file(self, Bucket=None, Key=None, Filename=None, *args, **kwargs):
-        # Fall back to positional args if called positionally
+        # Check fail mode first
+        if self.should_fail:
+            raise Exception(self.error_message)
+        
         bucket = Bucket or (args[0] if len(args) > 0 else None)
         key = Key or (args[1] if len(args) > 1 else None)
         filename = Filename or (args[2] if len(args) > 2 else None)
+        print(f"Bucket {bucket} Key {key} Filename {filename}")
 
         # If no target filename was passed, create a temporary file path
         if not filename:

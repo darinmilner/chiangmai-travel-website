@@ -57,7 +57,7 @@ class TestImageProcessor:
         processor.s3 = mock_s3_client
         processor.s3.set_fail_mode(True, 'Download error')
 
-        result = processor.process_image('test-bucket', 'uploads/villa/test-image.jpg')
+        result = processor.process_image('test-bucket-wrong', 'uploads/villa/test-image.jpg')
         assert result['success'] is False
 
     def test_resize_image_with_both_dimensions(self):

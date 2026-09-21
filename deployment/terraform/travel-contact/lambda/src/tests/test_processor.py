@@ -29,7 +29,7 @@ class TestSESProcessor:
         sent_emails = processor.ses.get_sent_emails()
         assert len(sent_emails) == 1
         email = sent_emails[0]
-        assert email['to'] == ['test@example.com']
+        assert email['to'] == ['guest@example.com']
         assert 'Booking Confirmed' in email['subject']
         assert 'Fatimah Doe' in email['html_body']
         assert 'B123' in email['html_body']
