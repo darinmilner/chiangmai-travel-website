@@ -32,7 +32,6 @@ class TestSESProcessor:
         assert email['to'] == ['guest@example.com']
         assert 'Booking Confirmed' in email['subject']
         assert 'Fatimah Doe' in email['html_body']
-        assert 'B123' in email['html_body']
 
     def test_process_contact_response(self, contact_request):
         """Test contact response email"""

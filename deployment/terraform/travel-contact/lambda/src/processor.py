@@ -31,7 +31,6 @@ class SESProcessor:
             Dict with processing results
         """
         try:
-            # Extract recipient list passed from event / payload
             to = request.get('to', [])
             if not to:
                 return {
@@ -65,7 +64,6 @@ class SESProcessor:
         html_body = self.templates.booking_confirmation(request)
         text_body = self.templates.booking_confirmation_text(request)
 
-        # Assuming self.ses.send_email handles dispatching
         self.ses.send_email(
             to=to,
             subject=subject,
@@ -78,7 +76,7 @@ class SESProcessor:
             'message_id': f"Booking confirmation sent to {to}",
             'recipients': len(to) if isinstance(to, list) else 1
         }
-    
+
 
     def _send_contact_response(
         self,
