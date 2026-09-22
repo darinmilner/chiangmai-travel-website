@@ -77,7 +77,6 @@ class SESProcessor:
             'recipients': len(to) if isinstance(to, list) else 1
         }
 
-
     def _send_contact_response(
         self,
         to: List[str],

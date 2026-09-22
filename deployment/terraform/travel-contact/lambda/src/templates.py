@@ -9,6 +9,7 @@ class EmailTemplates:
 
     def booking_confirmation(self, data: Dict[str, Any]) -> str:
         """Booking confirmation HTML template"""
+        data = data or {}
         guest_name = (
             data.get('guest_name')
             or data.get('customer_name')
@@ -16,12 +17,43 @@ class EmailTemplates:
             or 'Guest'
         )
 
-        skip_keys = {'type', 'to', 'subject'}
-        details_html = ""
+        booking_ref = (
+            data.get('booking_reference')
+            or data.get('booking_id')
+            or data.get('reference')
+            or 'N/A'
+        )
+
+        villa = (
+            data.get('villa_name')
+            or data.get('villa_id')
+            or data.get('villa')
+            or data.get('property_id')
+            or 'N/A'
+        )
+
+        check_in = data.get('check_in', 'N/A')
+        check_out = data.get('check_out', 'N/A')
+
+        known_keys = {
+            'guest_name', 'customer_name', 'name',
+            'booking_reference', 'booking_id', 'reference',
+            'villa_name', 'villa_id', 'villa', 'property_id',
+            'check_in', 'check_out', 'type', 'to', 'subject'
+        }
+
+        details_html = (
+            f"<p><strong>Booking Reference:</strong> {booking_ref}</p>\n"
+            f"<p><strong>Villa:</strong> {villa}</p>\n"
+            f"<p><strong>Check-in:</strong> {check_in}</p>\n"
+            f"<p><strong>Check-out:</strong> {check_out}</p>\n"
+        )
+
+        # Include any additional payload key-values dynamically
         for key, value in data.items():
-            if key not in skip_keys:
+            if key not in known_keys:
                 label = key.replace('_', ' ').title()
-                details_html += f"                        <p><strong>{label}:</strong> {value}</p>\n"
+                details_html += f"<p><strong>{label}:</strong> {value}</p>\n"
 
         return f"""
         <!DOCTYPE html>
@@ -46,8 +78,8 @@ class EmailTemplates:
                     <p>Your booking has been confirmed. Here are your booking details:</p>
 
                     <div class="booking-details">
-{details_html}                    </div>
-
+                    {details_html}
+                </div>
                     <p>If you have any questions, please don't hesitate to contact us.</p>
                     <p>We look forward to welcoming you!</p>
                 </div>
@@ -61,6 +93,7 @@ class EmailTemplates:
 
     def booking_confirmation_text(self, data: Dict[str, Any]) -> str:
         """Booking confirmation plain text template"""
+        data = data or {}
         guest_name = (
             data.get('guest_name')
             or data.get('customer_name')
@@ -68,10 +101,40 @@ class EmailTemplates:
             or 'Guest'
         )
 
-        skip_keys = {'type', 'to', 'subject'}
-        details_text = ""
+        booking_ref = (
+            data.get('booking_reference')
+            or data.get('booking_id')
+            or data.get('reference')
+            or 'N/A'
+        )
+
+        villa = (
+            data.get('villa_name')
+            or data.get('villa_id')
+            or data.get('villa')
+            or data.get('property_id')
+            or 'N/A'
+        )
+
+        check_in = data.get('check_in', 'N/A')
+        check_out = data.get('check_out', 'N/A')
+
+        known_keys = {
+            'guest_name', 'customer_name', 'name',
+            'booking_reference', 'booking_id', 'reference',
+            'villa_name', 'villa_id', 'villa', 'property_id',
+            'check_in', 'check_out', 'type', 'to', 'subject'
+        }
+
+        details_text = (
+            f"Booking Reference: {booking_ref}\n"
+            f"Villa: {villa}\n"
+            f"Check-in: {check_in}\n"
+            f"Check-out: {check_out}\n"
+        )
+
         for key, value in data.items():
-            if key not in skip_keys:
+            if key not in known_keys:
                 label = key.replace('_', ' ').title()
                 details_text += f"        {label}: {value}\n"
 
@@ -82,12 +145,13 @@ class EmailTemplates:
 
         Your booking has been confirmed.
 
-{details_text}
+        {details_text}
         We look forward to welcoming you!
         """
 
     def contact_response(self, data: Dict[str, Any]) -> str:
         """Contact response HTML template"""
+        data = data or {}
         name = (
             data.get('name')
             or data.get('customer_name')
@@ -133,6 +197,7 @@ class EmailTemplates:
 
     def contact_response_text(self, data: Dict[str, Any]) -> str:
         """Contact response plain text template"""
+        data = data or {}
         name = (
             data.get('name')
             or data.get('customer_name')
