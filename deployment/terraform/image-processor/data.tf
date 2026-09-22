@@ -14,5 +14,5 @@ data "aws_s3_bucket" "image_bucket" {
 
 data "aws_lambda_layer_version" "shared_layer" {
   layer_name = "${var.layer_name}-${var.environment}-${local.short_region}"
-  version    = 2
+  version    = 3
 }
