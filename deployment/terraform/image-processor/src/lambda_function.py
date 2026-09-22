@@ -19,9 +19,6 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     - S3_BUCKET: S3 bucket name
     - S3_PREFIX: S3 prefix for images
     - CLOUDFRONT_URL: CloudFront distribution URL
-    - THUMBNAIL_SIZE: Thumbnail dimensions (width,height)
-    - MEDIUM_SIZE: Medium image dimensions (width,height)
-    - CAROUSEL_SIZE: Carousel image dimensions (width,height)
     - QUALITY: JPEG quality (1-100)
     - LOG_LEVEL: Logging level
     - ENVIRONMENT: Environment name

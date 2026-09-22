@@ -5,7 +5,7 @@ from io import BytesIO
 from PIL import Image, ImageOps
 
 from logger import get_logger
-from s3 import S3Client
+from clients.s3 import S3Client
 
 logger = get_logger(__name__)
 
