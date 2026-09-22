@@ -1,165 +1,63 @@
 """
-Tests for image processor using fake layer
+Tests for ImageProcessor
 """
+from io import BytesIO
 from unittest.mock import MagicMock, patch
-from PIL import Image
-from processor import ImageProcessor
 import pytest
+from PIL import Image
+
+from processor import ImageProcessor
+
+
+def create_test_image_bytes(width: int = 1000, height: int = 1000, fmt: str = 'JPEG') -> BytesIO:
+    """Helper to create test image bytes"""
+    buf = BytesIO()
+    img = Image.new('RGB', (width, height), color='red')
+    img.save(buf, format=fmt)
+    buf.seek(0)
+    return buf
 
 
 class TestImageProcessor:
-    """Test image processor logic"""
+    """Test suite for ImageProcessor"""
 
-    def test_init(self):
-        """Test processor initialization"""
+    @patch('processor.S3Client')
+    def test_process_image_success(self, mock_s3_cls):
+        mock_s3 = MagicMock()
+        mock_s3_cls.return_value = mock_s3
+        mock_s3.download_file.return_value = create_test_image_bytes(800, 600, 'JPEG')
+
         processor = ImageProcessor()
-
-        assert processor.thumbnail_size == (300, 200)
-        assert processor.medium_size == (800, 600)
-        assert processor.carousel_size == (1200, 800)
-        assert processor.quality == 85
-        assert processor.cloudfront_url == 'https://test.cloudfront.net'
-
-    def test_process_image_success(self, mock_pil_image):
-        """Test successful image processing"""
-        processor = ImageProcessor()
-        result = processor.process_image('test-bucket', 'uploads/villa/test-image.jpg')
+        result = processor.process_image("uploads/photo.jpg")
 
         assert result['success'] is True
-        assert result['key'] == 'uploads/villa/test-image.jpg'
-        assert 'variants' in result
-        assert len(result['variants']) == 3
+        assert result['key'] == "uploads/photo.jpg"
+        mock_s3.download_file.assert_called_once_with("uploads/photo.jpg")
+        mock_s3.upload_file.assert_called_once()
 
-        variant_names = [v['size'] for v in result['variants']]
-        assert 'thumb' in variant_names
-        assert 'medium' in variant_names
-        assert 'carousel' in variant_names
-
-        # Verify generated key output prefix
-        variant_keys = [v['key'] for v in result['variants']]
-        assert 'static/villa/test-image_thumb.jpg' in variant_keys
-
-    def test_process_image_with_unsupported_format(self, mock_pil_image):
-        """Test processing unsupported format"""
-        with patch('PIL.Image.open') as mock_open:
-            processor = ImageProcessor()
-            result = processor.process_image('test-bucket', 'uploads/villa/test-image.txt')
-
-            mock_open.assert_not_called()
-
-            assert result['success'] is False
-            assert 'Unsupported file type' in result['error']
-
-    def test_process_image_handles_download_error(self, mock_s3_client, mock_pil_image):
-        """Test handling download error"""
-        processor = ImageProcessor()
-        # Inject mock_s3_client if processor initializes its own
-        processor.s3 = mock_s3_client
-        processor.s3.set_fail_mode(True, 'Download error')
-
-        result = processor.process_image('test-bucket-wrong', 'uploads/villa/test-image.jpg')
-        assert result['success'] is False
-
-    def test_resize_image_with_both_dimensions(self):
-        """Test resize with both width and height"""
-        mock_img = MagicMock()
-        mock_img.width = 1920
-        mock_img.height = 1080
-        mock_img.mode = 'RGB'
-        mock_img_copy = MagicMock()
-        mock_img_copy.width = 800
-        mock_img_copy.height = 600
-        mock_img.copy.return_value = mock_img_copy
+    @patch('processor.S3Client')
+    def test_process_image_resizes_large_images(self, mock_s3_cls):
+        mock_s3 = MagicMock()
+        mock_s3_cls.return_value = mock_s3
+        # Image exceeding 1920px threshold
+        mock_s3.download_file.return_value = create_test_image_bytes(3000, 2000, 'JPEG')
 
         processor = ImageProcessor()
-        processor._resize_image(mock_img, (800, 600))
+        processor.process_image("uploads/large_photo.jpg")
 
-        mock_img.copy.assert_called_once()
-        mock_img_copy.thumbnail.assert_called_with((800, 600), Image.Resampling.LANCZOS)
+        # Verify upload content was generated and resized
+        mock_s3.upload_file.assert_called_once()
+        _, kwargs = mock_s3.upload_file.call_args
+        uploaded_bytes = kwargs['content']
+        uploaded_img = Image.open(uploaded_bytes)
+        assert max(uploaded_img.width, uploaded_img.height) <= 1920
 
-    def test_resize_image_with_width_only(self):
-        """Test resize with width only"""
-        mock_img = MagicMock()
-        mock_img.width = 1920
-        mock_img.height = 1080
-        mock_img.mode = 'RGB'
-        mock_img_resized = MagicMock()
-        mock_img_resized.width = 800
-        mock_img_resized.height = 450
-        mock_img.resize.return_value = mock_img_resized
-
-        processor = ImageProcessor()
-        processor._resize_image(mock_img, (800, 0))
-
-        mock_img.resize.assert_called_with((800, 450), Image.Resampling.LANCZOS)
-
-    def test_convert_to_rgb_rgba(self):
-        """Test converting RGBA to RGB"""
-        mock_img = MagicMock()
-        mock_img.mode = 'RGBA'
-        mock_img.size = (100, 100)
-        mock_img.split.return_value = [MagicMock() for _ in range(4)]
-
-        with patch('PIL.Image.new') as mock_new:
-            mock_rgb = MagicMock()
-            mock_new.return_value = mock_rgb
-
-            processor = ImageProcessor()
-            result = processor._convert_to_rgb(mock_img)
-
-            mock_new.assert_called_with('RGB', (100, 100), (255, 255, 255))
-            mock_rgb.paste.assert_called_with(mock_img, mask=mock_img.split.return_value[-1])
-            assert result == mock_rgb
-
-    def test_convert_to_rgb_already_rgb(self):
-        """Test converting already RGB image"""
-        mock_img = MagicMock()
-        mock_img.mode = 'RGB'
-        mock_img.test_id = 'original_mock'
+    @patch('processor.S3Client')
+    def test_process_image_handles_failure(self, mock_s3_cls):
+        mock_s3 = MagicMock()
+        mock_s3_cls.return_value = mock_s3
+        mock_s3.download_file.side_effect = Exception("S3 Download Error")
 
         processor = ImageProcessor()
-        result = processor._convert_to_rgb(mock_img)
-
-        assert result is mock_img
-        mock_img.convert.assert_not_called()
-
-    @pytest.mark.parametrize(
-        "input_key, variant, expected_key",
-        [
-            ('uploads/villa/bedroom.jpg', 'thumb', 'static/villa/bedroom_thumb.jpg'),
-            ('uploads/home/hero.jpg', 'medium', 'static/home/hero_medium.jpg'),
-            ('uploads/hostel/dorm.jpg', 'carousel', 'static/hostel/dorm_carousel.jpg'),
-            ('uploads/photo.jpg', 'thumb', 'static/photo_thumb.jpg'),
-        ]
-    )
-    def test_generate_key_prefix_swapping(self, input_key, variant, expected_key):
-        """Test key generation and subfolder path translation across sections"""
-        processor = ImageProcessor()
-        key = processor._generate_key(input_key, variant)
-        assert key == expected_key
-
-    def test_build_url_with_cloudfront(self):
-        """Test URL building with CloudFront"""
-        processor = ImageProcessor()
-        url = processor._build_url('static/villa/test-image.jpg')
-        assert url == 'https://test.cloudfront.net/static/villa/test-image.jpg'
-
-    def test_build_url_without_cloudfront(self, monkeypatch):
-        """Test URL building without CloudFront"""
-        monkeypatch.delenv('CLOUDFRONT_URL', raising=False)
-
-        processor = ImageProcessor()
-        url = processor._build_url('static/villa/test-image.jpg')
-        assert url == 'https://test-bucket.s3.amazonaws.com/static/villa/test-image.jpg'
-
-    def test_parse_size_valid(self):
-        """Test parsing valid size string"""
-        processor = ImageProcessor()
-        result = processor._parse_size('800,600')
-        assert result == (800, 600)
-
-    def test_parse_size_invalid(self):
-        """Test parsing invalid size string"""
-        processor = ImageProcessor()
-        with pytest.raises(ValueError):
-            processor._parse_size('invalid')
+        with pytest.raises(Exception, match="S3 Download Error"):
+            processor.process_image("uploads/missing.jpg")

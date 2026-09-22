@@ -54,20 +54,6 @@ variable "image_quality" {
     error_message = "Image quality must be between 1 and 100."
   }
 }
-variable "thumbnail_size" {
-  type    = string
-  default = "150,150"
-}
-
-variable "medium_size" {
-  type    = string
-  default = "600,600"
-}
-
-variable "carousel_size" {
-  type    = string
-  default = "1200,800"
-}
 
 variable "log_level" {
   description = "Lambda log level"
@@ -102,12 +88,6 @@ variable "create_alarms" {
   description = "Create CloudWatch alarms"
   type        = bool
   default     = false
-}
-
-variable "sns_topic_arns" {
-  description = "SNS topic ARNs for alarms"
-  type        = list(string)
-  default     = []
 }
 
 variable "region" {

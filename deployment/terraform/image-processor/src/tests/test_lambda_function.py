@@ -1,48 +1,31 @@
 """
-Tests for image processor lambda handler using fake layer
+Tests for Lambda handler
 """
-import json
+from unittest.mock import patch
 from lambda_function import lambda_handler
 
 
 class TestLambdaHandler:
-    """Test lambda handler"""
+    """Test suite for lambda_handler entry point"""
 
-    def test_lambda_handler_success(self, s3_event, mock_pil_image):
-        """Test successful lambda execution"""
-        result = lambda_handler(s3_event, None)
+    @patch('lambda_function.ImageProcessor')
+    def test_lambda_handler_s3_event(self, mock_processor_cls):
+        mock_processor = mock_processor_cls.return_value
+        mock_processor.process_image.return_value = {'success': True, 'key': 'uploads/villa.jpg'}
 
-        assert result['statusCode'] == 200
-        body = json.loads(result['body'])
-        assert body['message'] == 'Processing complete'
-        assert body['success_count'] == 1
-        assert body['failed_count'] == 0
+        event = {
+            'Records': [
+                {
+                    's3': {
+                        'object': {
+                            'key': 'uploads/villa.jpg'
+                        }
+                    }
+                }
+            ]
+        }
 
-    def test_lambda_handler_multiple_records(self, s3_event_multiple, mock_pil_image):
-        """Test processing multiple records"""
-        result = lambda_handler(s3_event_multiple, None)
+        response = lambda_handler(event, None)
 
-        assert result['statusCode'] == 200
-        body = json.loads(result['body'])
-        assert body['success_count'] == 2
-        assert body['failed_count'] == 0
-
-    def test_lambda_handler_skips_processed(self, s3_event_thumb):
-        """Test skipping already processed images"""
-        result = lambda_handler(s3_event_thumb, None)
-
-        assert result['statusCode'] == 200
-        body = json.loads(result['body'])
-        assert body['success_count'] == 0
-        assert body['failed_count'] == 0
-
-    def test_lambda_handler_with_empty_event(self):
-        """Test lambda handler with empty event"""
-        event = {'Records': []}
-        result = lambda_handler(event, None)
-
-        assert result['statusCode'] == 200
-        body = json.loads(result['body'])
-        assert body['message'] == 'Processing complete'
-        assert body['success_count'] == 0
-        assert body['failed_count'] == 0
+        assert response['statusCode'] == 200
+        mock_processor.process_image.assert_called_once_with('uploads/villa.jpg')

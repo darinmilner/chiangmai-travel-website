@@ -21,9 +21,6 @@ resource "aws_lambda_function" "image_processor" {
       OUTPUT_PREFIX  = var.output_prefix
       INPUT_PREFIX   = var.input_prefix
       CLOUDFRONT_URL = "https://${data.terraform_remote_state.cloudfront.outputs.cloudfront_domain_name}"
-      THUMBNAIL_SIZE = var.thumbnail_size
-      MEDIUM_SIZE    = var.medium_size
-      CAROUSEL_SIZE  = var.carousel_size
       QUALITY        = tostring(var.image_quality)
       LOG_LEVEL      = var.log_level
       ENVIRONMENT    = var.environment

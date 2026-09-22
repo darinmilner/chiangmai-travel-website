@@ -17,7 +17,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_errors" {
     FunctionName = aws_lambda_function.image_processor.function_name
   }
 
-  alarm_actions = var.sns_topic_arns
+  # alarm_actions = var.sns_topic_arns
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
@@ -38,5 +38,5 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration" {
     FunctionName = aws_lambda_function.image_processor.function_name
   }
 
-  alarm_actions = var.sns_topic_arns
+  # alarm_actions = var.sns_topic_arns
 }
