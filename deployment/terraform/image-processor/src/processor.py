@@ -34,8 +34,7 @@ class ImageProcessor:
             if ext not in self.supported_formats:
                 raise ValueError(f"Unsupported file type: {ext}")
 
-            # Download image data using both bucket and key
-            image_data = self.s3.download_file(bucket, key)
+            image_data = self.s3.download_file(key)
             img = Image.open(image_data)
 
             # Safely transpose EXIF orientation if a valid numeric orientation tag exists
