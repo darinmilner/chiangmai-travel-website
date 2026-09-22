@@ -17,6 +17,9 @@ class TestLambdaHandler:
             'Records': [
                 {
                     's3': {
+                        'bucket': {
+                            'name': 'chiangmai-villa-assets'
+                        },
                         'object': {
                             'key': 'uploads/villa.jpg'
                         }
