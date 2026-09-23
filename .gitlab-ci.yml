@@ -49,7 +49,7 @@ include:
   - local: '.gitlab/pipelines/test.yml'
   - local: '.gitlab/pipelines/package.yml'
   - local: ".gitlab/pipelines/deploy.yml"
-  - local: ".gitlab/pipelines/app.yaml"
+  - local: ".gitlab/pipelines/app.yml"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}

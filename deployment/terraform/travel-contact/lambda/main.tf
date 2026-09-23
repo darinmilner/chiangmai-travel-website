@@ -10,7 +10,7 @@ resource "aws_lambda_function" "contact_form" {
 
   environment {
     variables = {
-      SES_FROM_EMAIL      = var.ses_from_email
+      SES_FROM_EMAIL        = var.ses_from_email
       SES_REGION            = var.ses_region # Singapore region
       MAX_EMAIL_SIZE_KB     = var.max_email_size_kb
       RATE_LIMIT_PER_MINUTE = var.rate_limit_per_minute

@@ -13,21 +13,17 @@ test:golang-api:
   stage: test
   image: golang:1.25-alpine
   rules:
-    # 1. Runs automatically if selected 'true' in the GitLab UI manual pipeline drop-down
-    - if: '$RUN_GO_TESTS == "true" && $CI_PIPELINE_SOURCE == "web"'
+    # 1. ONLY run when manually triggered via GitLab UI ("Run pipeline") with RUN_GO_TESTS="true"
+    - if: '$CI_PIPELINE_SOURCE == "web" && $RUN_GO_TESTS == "true"'
       when: always
-    # 2. Runs automatically on Merge Requests and main branch commits
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
-      when: always
-    # 3. Allows triggering manually from the Pipeline UI graph
-    - when: manual
-      allow_failure: false
+
+    # 2. Never run on standard pushes, merge requests, or commits
+    - when: never
 
   before_script:
     - apk add --no-libc-dev gcc musl-dev # Required if CGO or race detector is enabled
-    - cd api
+    - cd api                          
 
   script:
     - go mod download
-    # './...' recursively targets all packages (internal/handlers, internal/router, etc.)
     - go test -v -race -cover ./...

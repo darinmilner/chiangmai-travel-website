@@ -7,7 +7,7 @@ module "ses" {
 
   singapore_region      = var.singapore_region
   ses_domain            = var.ses_domain
-  ses_from_email      = var.ses_from_email
+  ses_from_email        = var.ses_from_email
   ses_destination_email = var.ses_destination_email
 
   create_receipt_rules   = false

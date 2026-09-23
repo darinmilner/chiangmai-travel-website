@@ -1,5 +1,5 @@
 variable "domain_name" {
-  type = string
+  type    = string
   default = "chiangmaihalal.com"
 }
 
@@ -9,6 +9,6 @@ variable "subdomains" {
 }
 
 variable "region" {
-    type = string
-    default = "us-east-1"
+  type    = string
+  default = "us-east-1"
 }
