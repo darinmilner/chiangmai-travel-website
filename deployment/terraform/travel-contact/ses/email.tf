@@ -1,8 +1,8 @@
 # SES Sender Email Identity
 resource "aws_ses_email_identity" "sender" {
   provider = aws.singapore
-  count    = var.ses_source_email != "" ? 1 : 0
-  email    = var.ses_source_email
+  count    = var.ses_from_email != "" ? 1 : 0
+  email    = var.ses_from_email
 }
 
 # SES Recipient Email Identity

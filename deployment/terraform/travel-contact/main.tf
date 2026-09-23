@@ -7,7 +7,7 @@ module "ses" {
 
   singapore_region      = var.singapore_region
   ses_domain            = var.ses_domain
-  ses_source_email      = var.ses_source_email
+  ses_from_email      = var.ses_from_email
   ses_destination_email = var.ses_destination_email
 
   create_receipt_rules   = false
@@ -25,8 +25,8 @@ module "lambda" {
   bangkok_region  = var.bangkok_region
   lambda_zip_path = var.lambda_zip_path
 
-  ses_source_email   = var.ses_source_email
   ses_region         = var.singapore_region
+  ses_from_email     = var.ses_from_email
   ses_iam_policy_arn = module.ses.ses_iam_policy_arn
 
   max_email_size_kb     = var.max_email_size_kb

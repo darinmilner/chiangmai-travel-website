@@ -4,7 +4,7 @@ variable "ses_domain" {
   default     = ""
 }
 
-variable "ses_source_email" {
+variable "ses_from_email" {
   type        = string
   description = "Optional source email address for testing"
 }

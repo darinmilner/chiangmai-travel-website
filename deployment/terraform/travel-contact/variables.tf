@@ -29,10 +29,10 @@ variable "ses_domain" {
   description = "Domain to verify for SES"
   type        = string
   default     = "yourdomain.com"
-  # default = "https://chiangmaihalal.com"
+  # default = "https://www.chiangmaihalal.com"
 }
 
-variable "ses_source_email" {
+variable "ses_from_email" {
   description = "Email address to send from (must be verified in SES)"
   type        = string
   sensitive   = true

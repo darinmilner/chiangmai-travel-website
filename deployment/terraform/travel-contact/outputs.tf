@@ -13,12 +13,6 @@ output "ses_domain" {
   value       = module.ses.ses_domain_identity_arn
 }
 
-output "ses_source_email" {
-  description = "SES source email"
-  value       = var.ses_source_email
-  sensitive   = true
-}
-
 output "ses_destination_email" {
   description = "SES destination email"
   value       = var.ses_destination_email
