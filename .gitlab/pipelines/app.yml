@@ -1,0 +1,33 @@
+variables:
+  RUN_GO_TESTS:
+    value: "true"
+    options:
+      - "true"
+      - "false"
+    description: "Select whether to run Golang application tests"
+
+stages:
+  - test
+
+test:golang-api:
+  stage: test
+  image: golang:1.25-alpine
+  rules:
+    # 1. Runs automatically if selected 'true' in the GitLab UI manual pipeline drop-down
+    - if: '$RUN_GO_TESTS == "true" && $CI_PIPELINE_SOURCE == "web"'
+      when: always
+    # 2. Runs automatically on Merge Requests and main branch commits
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
+      when: always
+    # 3. Allows triggering manually from the Pipeline UI graph
+    - when: manual
+      allow_failure: false
+
+  before_script:
+    - apk add --no-libc-dev gcc musl-dev # Required if CGO or race detector is enabled
+    - cd api
+
+  script:
+    - go mod download
+    # './...' recursively targets all packages (internal/handlers, internal/router, etc.)
+    - go test -v -race -cover ./...

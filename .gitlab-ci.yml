@@ -32,6 +32,8 @@ variables:
       - "cloudfront"
       - "travel-contact"
       - "route53"
+      - "acm"
+      - "app"
     description: "Select component to target"
 
   AWS_REGION: "ap-southeast-7"
@@ -46,7 +48,8 @@ include:
   - local: '.gitlab/pipelines/lint.yml'
   - local: '.gitlab/pipelines/test.yml'
   - local: '.gitlab/pipelines/package.yml'
-  - local: '.gitlab/pipelines/deploy.yml'
+  - local: ".gitlab/pipelines/deploy.yml"
+  - local: ".gitlab/pipelines/app.yaml"
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}

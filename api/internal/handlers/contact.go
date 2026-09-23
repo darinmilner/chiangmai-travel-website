@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"time"
@@ -101,7 +102,7 @@ func sendToLambda(req models.ContactRequest, apiURL string) error {
 	// Prepare request body
 	body, err := json.Marshal(req)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal contact request: %w", err)
 	}
 
 	// Create HTTP client with timeout
@@ -112,20 +113,21 @@ func sendToLambda(req models.ContactRequest, apiURL string) error {
 	// Create request
 	httpReq, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(body))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	// Send request
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to dispatch request to API Gateway: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Check response
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("lambda returned status: %d", resp.StatusCode)
+	// Check response status range (200-299)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API Gateway returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return nil

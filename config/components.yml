@@ -31,3 +31,11 @@ components:
   route53:
     type: "terraform"
     path: "deployment/terraform/route53"
+
+  acm:
+    type: "terraform"
+    path: "deployment/terraform/acm"
+
+  app:
+    type: "app"
+    path: "api"

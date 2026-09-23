@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket = "chiangmaivilla-backendfiles-apsoutheast7-beta"
-    key    = "statefiles/route53/terraform.tfstate"
+    key    = "statefiles/acm/terraform.tfstate"
     region = "ap-southeast-7"
   }
 

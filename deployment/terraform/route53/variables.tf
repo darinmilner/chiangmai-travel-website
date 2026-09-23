@@ -1,7 +1,7 @@
 variable "domain_name" {
   description = "The primary domain name (e.g., chiangmaihalal.com)"
   type        = string
-  default = "www.chiangmaihalal.com"
+  default     = "chiangmaihalal.com"
 }
 
 variable "subdomains" {
@@ -20,4 +20,10 @@ variable "cloudfront_hosted_zone_id" {
   description = "CloudFront hosted zone ID (Always Z2FDTNDATAQYW2 for CloudFront)"
   type        = string
   default     = "Z2FDTNDATAQYW2"
+}
+
+variable "region" {
+  description = "Region for Route53"
+  type        = string
+  default     = "ap-southeast-7"
 }

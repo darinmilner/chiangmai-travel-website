@@ -1,5 +1,3 @@
-
-
 # Apex Domain IPv4 Record (A -> CloudFront)
 resource "aws_route53_record" "apex_a" {
   zone_id = data.aws_route53_zone.primary.zone_id

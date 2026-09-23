@@ -2,14 +2,13 @@ package models
 
 import "time"
 
-// ContactRequest represents the contact form submission
 type ContactRequest struct {
-	Name    string `json:"name"`
-	Email   string `json:"email"`
-	Phone   string `json:"phone"`
-	Subject string `json:"subject"`
-	Message string `json:"message"`
-	Website string `json:"website"` // Honeypot
+    Name    string `json:"name"`
+    Email   string `json:"email"`
+    Phone   string `json:"phone"`
+    Subject string `json:"subject"`
+    Message string `json:"message"`
+    Website string `json:"website"` // Honeypot
 }
 
 // ContactResponse represents the contact form response
