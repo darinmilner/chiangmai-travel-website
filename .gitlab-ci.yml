@@ -33,6 +33,7 @@ variables:
       - "travel-contact"
       - "route53"
       - "acm"
+      - "ecr"
       - "app"
     description: "Select component to target"
 
