@@ -12,6 +12,7 @@ stages:
   - test
   - package
   - deploy
+  - build
 
 variables:
   AWS_ROLE_ARN: "arn:aws:iam::433339368384:role/chiangmaivilla-gitlab-oidc-deploy-dev"
