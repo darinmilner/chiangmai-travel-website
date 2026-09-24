@@ -17,7 +17,7 @@ test:all:
       junit: artifacts/test-reports/junit-*.xml
     expire_in: 7 days
   rules:
-    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms|route53)$/'
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms|route53|ecr|app|acm)$/'
       when: never
     - when: always
     - if: $CI_PIPELINE_SOURCE == "web"

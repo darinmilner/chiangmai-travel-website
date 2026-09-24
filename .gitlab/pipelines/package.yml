@@ -3,7 +3,7 @@ package:
   image: python:3.13-slim
   allow_failure: false
   rules:
-    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms|route53)$/'
+    - if: '$DEPLOY_TARGET =~ /^(cloudfront|kms|route53|ecr|app|acm)$/'
       when: never
     - when: always
   before_script:
