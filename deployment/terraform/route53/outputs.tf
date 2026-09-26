@@ -9,5 +9,5 @@ output "cloudfront_domain_name" {
 }
 
 output "route53_nameservers" {
-  value = aws_route53_zone.site.name_servers
+  value = data.aws_route53_zone.primary.name_servers
 }

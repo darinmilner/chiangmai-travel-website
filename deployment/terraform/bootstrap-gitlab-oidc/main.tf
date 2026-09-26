@@ -99,21 +99,7 @@ resource "aws_iam_role_policy" "terraform_deployment" {
       {
         Effect = "Allow"
         Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:CreateRepository",
-          "ecr:DeleteRepository",
-          "ecr:DescribeRepositories",
-          "ecr:PutImage",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload",
-          "ecr:BatchGetImage",
-          "ecr:DescribeImages",
-          "ecr:ListImages",
-          "ecr:DeleteRepositoryPolicy",
-          "ecr:SetRepositoryPolicy",
-          "ecr:TagResource"
+          "ecr:*",
         ]
         Resource = "*"
       },
