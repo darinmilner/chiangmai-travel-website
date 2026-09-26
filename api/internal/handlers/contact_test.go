@@ -212,7 +212,7 @@ func TestSendToLambda(t *testing.T) {
 			Message: "Test message",
 		}
 
-		err := sendToLambda(req, "")
+		err := sendToLambda(req, "", "")
 		assert.NoError(t, err)
 	})
 

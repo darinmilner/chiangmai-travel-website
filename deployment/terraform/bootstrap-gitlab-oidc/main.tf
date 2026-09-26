@@ -244,13 +244,7 @@ resource "aws_iam_role_policy" "terraform_deployment" {
       {
         Effect = "Allow"
         Action = [
-          "route53:GetHostedZone",
-          "route53:ListHostedZones",
-          "route53:ListHostedZonesByName",
-          "route53:ChangeResourceRecordSets",
-          "route53:GetChange",
-          "route53:ListResourceRecordSets",
-          "route53:ListTagsForResource"
+          "route53:*",
         ]
         Resource = "*"
       },

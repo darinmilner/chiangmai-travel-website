@@ -8,39 +8,6 @@ import (
 	"api/internal/models"
 )
 
-// LoadConfig loads configuration from environment variables
-func LoadConfig() models.ImageServiceConfig {
-	return models.ImageServiceConfig{
-		S3Bucket:      getEnv("S3_BUCKET", ""),
-		S3Region:      getEnv("AWS_REGION", "ap-southeast-7"),
-		S3Prefix:      getEnv("S3_PREFIX", "villa/"),
-		CloudFrontURL: getEnv("CLOUDFRONT_URL", ""),
-		LocalImageDir: getEnv("LOCAL_IMAGE_DIR", "static/images/villa"),
-		UseLocal:      getBoolEnv("USE_LOCAL_IMAGES", false),
-		CacheTTL:      getDurationEnv("IMAGE_CACHE_TTL", 5*time.Minute),
-		EnableCache:   getBoolEnv("DISABLE_IMAGE_CACHE", true),
-	}
-}
-
-// LoadFullConfig loads all application configuration
-func LoadFullConfig() *AppConfig {
-	return &AppConfig{
-		Contact: ContactConfig{
-			RecipientEmail: getEnv("CONTACT_RECIPIENT_EMAIL", ""),
-			APIURL:         getEnv("CONTACT_API_URL", "https://your-api-gateway-url.com/contact"),
-		},
-		AWS: AWSConfig{
-			Region:     getEnv("AWS_REGION", "ap-southeast-7"),
-			Bucket:     getEnv("S3_BUCKET", ""),
-			CloudFront: getEnv("CLOUDFRONT_URL", ""),
-		},
-		Image: ImageConfig{
-			LocalDir: getEnv("LOCAL_IMAGE_DIR", "static/images/villa"),
-			UseLocal: getBoolEnv("USE_LOCAL_IMAGES", false),
-		},
-	}
-}
-
 // AppConfig holds all application configuration
 type AppConfig struct {
 	Contact ContactConfig
@@ -65,6 +32,44 @@ type AWSConfig struct {
 type ImageConfig struct {
 	LocalDir string
 	UseLocal bool
+}
+
+// GetContactConfig returns the contact configuration subset
+func GetContactConfig() ContactConfig {
+	return LoadFullConfig().Contact
+}
+
+// LoadConfig loads configuration from environment variables
+func LoadConfig() models.ImageServiceConfig {
+	return models.ImageServiceConfig{
+		S3Bucket:      getEnv("S3_BUCKET", ""),
+		S3Region:      getEnv("AWS_REGION", "ap-southeast-7"),
+		S3Prefix:      getEnv("S3_PREFIX", "uploads/static/"),
+		CloudFrontURL: getEnv("CLOUDFRONT_URL", ""),
+		LocalImageDir: getEnv("LOCAL_IMAGE_DIR", "static/images/villa"),
+		UseLocal:      getBoolEnv("USE_LOCAL_IMAGES", false),
+		CacheTTL:      getDurationEnv("IMAGE_CACHE_TTL", 5*time.Minute),
+		EnableCache:   getBoolEnv("DISABLE_IMAGE_CACHE", true),
+	}
+}
+
+// LoadFullConfig loads all application configuration
+func LoadFullConfig() *AppConfig {
+	return &AppConfig{
+		Contact: ContactConfig{
+			RecipientEmail: getEnv("CONTACT_RECIPIENT_EMAIL", "darin.milner@gmail.com"),
+			APIURL:         getEnv("CONTACT_API_URL", "https://ylv17bm40c.execute-api.ap-southeast-7.amazonaws.com/beta/contact"),
+		},
+		AWS: AWSConfig{
+			Region:     getEnv("AWS_REGION", "ap-southeast-7"),
+			Bucket:     getEnv("S3_BUCKET", ""),
+			CloudFront: getEnv("CLOUDFRONT_URL", ""),
+		},
+		Image: ImageConfig{
+			LocalDir: getEnv("LOCAL_IMAGE_DIR", "static/images/villa"),
+			UseLocal: getBoolEnv("USE_LOCAL_IMAGES", false),
+		},
+	}
 }
 
 // GetImageServiceConfig converts to models.ImageServiceConfig

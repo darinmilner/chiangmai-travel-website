@@ -1,13 +1,13 @@
 Build and Run with Docker
 bash
 # Build the Docker image
-docker build -t chiang-mai-business .
+docker build -t chiang-mai-halal .
 
 # Run the container
-docker run -p 8080:8080 chiang-mai-business
+docker run -p 8080:8080 chiang-mai-halal
 
 # Or run with environment variables
-docker run -p 8080:8080 -e GIN_MODE=release chiang-mai-business
+docker run -p 8080:8080 -e GIN_MODE=release chiang-mai-halal
 🏃 Local Development
 bash
 # Build CSS with Tailwind (requires Node.js/npm)
