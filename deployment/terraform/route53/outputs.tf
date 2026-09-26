@@ -1,6 +1,6 @@
 output "zone_id" {
   description = "The Route 53 Hosted Zone ID"
-  value       = data.aws_route53_zone.primary.zone_id
+  value       = aws_route53_zone.primary.zone_id
 }
 
 output "cloudfront_domain_name" {
@@ -9,5 +9,5 @@ output "cloudfront_domain_name" {
 }
 
 output "route53_nameservers" {
-  value = data.aws_route53_zone.primary.name_servers
+  value = aws_route53_zone.primary.name_servers
 }

@@ -1,6 +1,6 @@
 # Apex Domain IPv4 Record (A -> CloudFront)
 resource "aws_route53_record" "apex_a" {
-  zone_id = data.aws_route53_zone.primary.zone_id
+  zone_id = aws_route53_zone.primary.zone_id
   name    = var.domain_name
   type    = "A"
 
@@ -13,7 +13,7 @@ resource "aws_route53_record" "apex_a" {
 
 # Apex Domain IPv6 Record (AAAA -> CloudFront)
 resource "aws_route53_record" "apex_aaaa" {
-  zone_id = data.aws_route53_zone.primary.zone_id
+  zone_id = aws_route53_zone.primary.zone_id
   name    = var.domain_name
   type    = "AAAA"
 
@@ -28,7 +28,7 @@ resource "aws_route53_record" "apex_aaaa" {
 resource "aws_route53_record" "subdomain_a" {
   for_each = toset(var.subdomains)
 
-  zone_id = data.aws_route53_zone.primary.zone_id
+  zone_id = aws_route53_zone.primary.zone_id
   name    = "${each.value}.${var.domain_name}"
   type    = "A"
 
@@ -37,4 +37,9 @@ resource "aws_route53_record" "subdomain_a" {
     zone_id                = data.aws_cloudfront_distribution.existing.hosted_zone_id
     evaluate_target_health = false
   }
+}
+
+#Route 53 Hosted Zone
+resource "aws_route53_zone" "primary" {
+  name         = var.domain_name
 }
