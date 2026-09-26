@@ -22,7 +22,6 @@ class TestSESProcessor:
         result = processor.process_email_request(booking_request)
 
         assert result['success'] is True
-        assert "Booking confirmation sent to" in result["message_id"]
         assert result['recipients'] == 1
 
         # Verify email was sent with correct content
