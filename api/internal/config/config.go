@@ -57,8 +57,8 @@ func LoadConfig() models.ImageServiceConfig {
 func LoadFullConfig() *AppConfig {
 	return &AppConfig{
 		Contact: ContactConfig{
-			RecipientEmail: getEnv("CONTACT_RECIPIENT_EMAIL", "darin.milner@gmail.com"),
-			APIURL:         getEnv("CONTACT_API_URL", "https://ylv17bm40c.execute-api.ap-southeast-7.amazonaws.com/beta/contact"),
+			RecipientEmail: getEnv("CONTACT_RECIPIENT_EMAIL", "your-email@email.com"),
+			APIURL:         getEnv("CONTACT_API_URL", "https://your-gateway-api-url.execute-api.your-region.amazonaws.com/beta/contact"),
 		},
 		AWS: AWSConfig{
 			Region:     getEnv("AWS_REGION", "ap-southeast-7"),
